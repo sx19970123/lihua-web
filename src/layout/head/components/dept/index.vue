@@ -2,10 +2,10 @@
   <a-dropdown v-model:open="open" :trigger="['contextmenu', 'click']">
     <a-tooltip title="默认部门" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
       <a-button type="text" class="btn">
-        <a-typography-text ellipsis class="text-default-color" :type="userStore.defaultDeptName ? '' : 'secondary'" :content="userStore.defaultDeptName ? userStore.defaultDeptName : '设置默认部门'"/>
+        <a-typography-text ellipsis class="text-default-color" :type="userStore.defaultDeptName ? '' : 'secondary'">{{ userStore.defaultDeptName ? userStore.defaultDeptName : '设置默认部门' }}</a-typography-text>
       </a-button>
     </a-tooltip>
-    <template #overlay>
+    <template #popupRender>
       <div class="default-dept-card">
         <default-dept @dept-select="handleDeptSelect"/>
       </div>
@@ -17,7 +17,7 @@
 import {useUserStore} from "@/stores/user.ts";
 import DefaultDept from "@/components/default-dept-select/index.vue"
 import {ref} from "vue";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import type {ResponseType} from "@/api/global/type.ts";
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 
