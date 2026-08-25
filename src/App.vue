@@ -20,7 +20,7 @@ import {getBrowserMajorVersion, getBrowserType} from "@/utils/browser.ts"
 import {useThemeStore} from "@/stores/theme"
 import {usePermissionStore} from "@/stores/permission.ts";
 import {useSettingStore} from "@/stores/setting.ts";
-import zhCN from 'ant-design-vue/es/locale/zh_CN';
+import zhCN from 'antdv-next/locale/zh_CN';
 import {onMounted, onUnmounted, ref, watch} from "vue";
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';

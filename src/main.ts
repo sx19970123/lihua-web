@@ -7,10 +7,9 @@ import router from './router'
 import './permission'
 import directive from './directive'
 
-// antd
-import Antd from 'ant-design-vue';
-import 'ant-design-vue/dist/reset.css';
-// andv-next 图标
+// antdv-next 组件库
+import AntdvNext from 'antdv-next';
+// antdv-next 图标
 import * as Icons from "@antdv-next/icons";
 import "@/static/css/index.css"
 
@@ -19,7 +18,7 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(Antd)
+app.use(AntdvNext)
 // 指令
 directive(app)
 // ant 自带图标
