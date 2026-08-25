@@ -1,4 +1,4 @@
-import type {SpinProps} from 'ant-design-vue';
+import type {SpinProps} from '@/antd-adapter/types';
 import {createSpinComponent} from './index';
 
 /** @name 通过交叉类型(&)扩展已有的类型声明 **/

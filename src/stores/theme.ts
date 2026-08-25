@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {theme} from "ant-design-vue";
+import {theme} from "antdv-next";
 import settings from "@/settings";
 
 export const useThemeStore = defineStore('theme',{

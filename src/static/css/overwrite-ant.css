@@ -11,3 +11,10 @@
 .ant-table-wrapper .ant-table {
     border-radius: 8px !important;
 }
+
+/**
+    tag 默认外边距（antdv-next 移除了默认 margin-inline-end，此处恢复 antdv 4 的全局 8px 行为）
+ */
+.ant-tag {
+    margin-inline-end: 8px;
+}

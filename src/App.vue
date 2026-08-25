@@ -24,7 +24,7 @@ import zhCN from 'antdv-next/locale/zh_CN';
 import {onMounted, onUnmounted, ref, watch} from "vue";
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';
-import {theme} from "ant-design-vue";
+import {theme} from "antdv-next";
 
 const { token } = theme.useToken()
 const themeStore = useThemeStore()
