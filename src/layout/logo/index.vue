@@ -8,7 +8,11 @@
         </template>
       </a-avatar>
       <!--    系统名称-->
-      <a-typography-title content="Lihua Admin" class="title" :class="{'title-color': darkSiderColor}" :level="4" ellipsis v-if="showTitle"/>
+      <!--margin: 0 保证与头像同轴线；样式走 styles 语义 prop（scoped 样式无法穿透组件深层渲染链）-->
+      <a-typography-title :level="4" ellipsis v-if="showTitle"
+                          :styles="{root: {margin: 0, overflow: 'hidden', color: darkSiderColor ? 'var(--lihua-alpha-level-5)' : undefined}}">
+        Lihua Admin
+      </a-typography-title>
     </a-flex>
   </div>
 </template>
@@ -48,13 +52,6 @@ const darkSiderColor = computed(() => {
 
   .logo {
     min-width: 32px;
-  }
-  .title {
-    margin: 0;
-    overflow: hidden;
-  }
-  .title-color {
-    color: var(--lihua-alpha-level-5);
   }
 }
 
