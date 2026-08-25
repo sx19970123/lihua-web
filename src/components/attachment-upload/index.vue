@@ -102,7 +102,7 @@ import {ResponseError} from "@/api/global/type.ts";
 import {currentRequests} from "@/utils/request.ts";
 import type {SysAttachment} from "@/api/system/attachment/type/sys-attachment.ts";
 import {download} from "@/utils/attachment-download.ts";
-import {ExclamationCircleOutlined} from '@ant-design/icons-vue';
+import {ExclamationCircleOutlined} from '@antdv-next/icons';
 import {useThemeStore} from "@/stores/theme.ts";
 
 const { getToken } = token

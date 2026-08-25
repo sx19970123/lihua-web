@@ -62,7 +62,7 @@
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import {viewTab} from "@/api/system/view-tab/view-tab.ts";
 import {message} from "ant-design-vue";
-import {LockOutlined, StarFilled, StarOutlined, UnlockOutlined} from '@ant-design/icons-vue';
+import {LockOutlined, StarFilled, StarOutlined, UnlockOutlined} from '@antdv-next/icons';
 import {h, ref} from "vue";
 import type {ResponseType} from "@/api/global/type.ts";
 import type {StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";

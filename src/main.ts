@@ -10,8 +10,8 @@ import directive from './directive'
 // antd
 import Antd from 'ant-design-vue';
 import 'ant-design-vue/dist/reset.css';
-// andv 图标
-import * as Icons from "@ant-design/icons-vue";
+// andv-next 图标
+import * as Icons from "@antdv-next/icons";
 import "@/static/css/index.css"
 
 

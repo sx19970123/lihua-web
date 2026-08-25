@@ -115,7 +115,7 @@ import DictTag from "@/components/dict-tag/index.vue"
 import type {SysNotice, SysNoticeDTO} from "@/api/system/notice/type/sys-notice.ts";
 import {Button, message, notification} from "ant-design-vue";
 import {h, onMounted, onUnmounted, ref} from "vue";
-import {MessageOutlined, NotificationOutlined} from "@ant-design/icons-vue";
+import {MessageOutlined, NotificationOutlined} from "@antdv-next/icons";
 import {useThemeStore} from "@/stores/theme.ts";
 import {getDictLabel, initDict} from "@/helpers/dict.ts";
 import {queryUnReadCount, read, star, userMessageList} from "@/api/system/notice/notice.ts";

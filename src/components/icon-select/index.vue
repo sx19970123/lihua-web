@@ -114,7 +114,7 @@
 
 <script setup lang="ts">
 import {type Component, nextTick, onMounted, onUnmounted, type PropType, reactive, ref, useTemplateRef} from "vue";
-import * as Icons from "@ant-design/icons-vue";
+import * as Icons from "@antdv-next/icons";
 import {cloneDeep} from "lodash-es";
 import {useThemeStore} from "@/stores/theme.ts";
 

@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import {h, nextTick, onMounted, onUnmounted, ref} from "vue";
 import {useThemeStore} from "@/stores/theme.ts";
-import {CheckOutlined} from "@ant-design/icons-vue";
+import {CheckOutlined} from "@antdv-next/icons";
 import {v4 as uuidv4} from "uuid";
 
 const themeStore = useThemeStore()

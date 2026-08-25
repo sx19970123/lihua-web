@@ -370,7 +370,7 @@ import type {SysRole} from "@/api/system/role/type/sys-role.ts";
 import type {SysPost} from "@/api/system/post/type/sys-post.ts";
 import type {UploadRequestOption} from "ant-design-vue/lib/vc-upload/interface";
 import Spin from "@/components/spin";
-import {ExclamationCircleOutlined} from "@ant-design/icons-vue";
+import {ExclamationCircleOutlined} from "@antdv-next/icons";
 import {useSettingStore} from "@/stores/setting.ts";
 import {type BaseModalActiveType} from "@/api/global/type.ts";
 import {download} from "@/utils/attachment-download.ts";

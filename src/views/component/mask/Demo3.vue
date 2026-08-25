@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import Spin from '@/components/spin';
-import {LoadingOutlined} from "@ant-design/icons-vue";
+import {LoadingOutlined} from "@antdv-next/icons";
 import {h} from 'vue';
 
 const indicator = h(LoadingOutlined, {
