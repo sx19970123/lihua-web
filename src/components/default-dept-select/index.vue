@@ -1,16 +1,14 @@
 <template>
   <div>
-    <a-form>
-      <a-form-item>
-        <easy-tree-select :tree-data="deptTree"
-                          :default-expand-all="true"
-                          :multiple="false"
-                          :field-names="{children:'children', title:'name', key:'id'}"
-                          :body-style="{padding: 'var(--lihua-space-base)', backgroundColor: themeStore.isDarkTheme ? '#1f1f1f' : '', borderRadius: 'var(--lihua-radius-sm)'}"
-                          :bordered="false"
-                          :show-toolbar="false"
-                          v-model="userStore.defaultDept.id"
-        >
+    <easy-tree-select :tree-data="deptTree"
+                      :default-expand-all="true"
+                      :multiple="false"
+                      :field-names="{children:'children', title:'name', key:'id'}"
+                      :body-style="{padding: 0}"
+                      :bordered="false"
+                      :show-toolbar="false"
+                      v-model="userStore.defaultDept.id"
+    >
           <template #title="{name, code, id, keyword}">
             <div @mouseover="handleMouseOver(id)" @mouseleave="handleMouseLeave" @click="handleSetDefaultDept(id)">
               <a-space>
@@ -31,9 +29,7 @@
               </a-space>
             </div>
           </template>
-        </easy-tree-select>
-      </a-form-item>
-    </a-form>
+    </easy-tree-select>
   </div>
 </template>
 

@@ -6,9 +6,9 @@
       </a-button>
     </a-tooltip>
     <template #popupRender>
-      <div class="default-dept-card">
+      <a-card size="small" class="default-dept-card" :styles="{root: {'box-shadow': 'var(--lihua-box-shadow)'}}">
         <default-dept @dept-select="handleDeptSelect"/>
-      </div>
+      </a-card>
     </template>
   </a-dropdown>
 </template>
@@ -34,8 +34,6 @@ const handleDeptSelect = (resp: ResponseType<SysDept>) => {
 <style scoped>
 .default-dept-card {
   max-height: 500px;
-  box-shadow: var(--lihua-box-shadow);
-  border-radius: var(--lihua-radius-sm);
 }
 .btn {
   max-width: 130px;
