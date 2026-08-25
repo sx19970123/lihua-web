@@ -14,7 +14,7 @@
       />
     </a-space>
     <template #overlay>
-      <a-menu @click="handleClickMenuTab" v-rollDisable="true">
+      <a-menu @click="handleClickMenuTab">
         <a-menu-item key="newPage">
           <ImportOutlined style="transform: rotate(180deg)"/>
           新页打开

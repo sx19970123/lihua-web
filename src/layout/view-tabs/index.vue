@@ -24,7 +24,7 @@
       <!--view-tabs 右侧下拉菜单-->
       <template #rightExtra>
         <a-space :size="0">
-          <tab-right-menu v-rollDisable="true" ref="tabRightMenuRef" @route-skip="routeSkip" @cancel-keep-alive="cancelKeepAliveCache"/>
+          <tab-right-menu ref="tabRightMenuRef" @route-skip="routeSkip" @cancel-keep-alive="cancelKeepAliveCache"/>
         </a-space>
       </template>
     </a-tabs>

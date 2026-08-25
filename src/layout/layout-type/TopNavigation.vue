@@ -10,7 +10,7 @@
             <Logo/>
             <!--导航（顶部导航占用剩余空间）-->
             <a-flex class="sider" :flex="1">
-              <Side class="header-menu-fill" sider-mode="horizontal" v-rollDisable="true"/>
+              <Side class="header-menu-fill" sider-mode="horizontal"/>
             </a-flex>
             <!--页头-->
             <div id="lihua-layout-head"/>
