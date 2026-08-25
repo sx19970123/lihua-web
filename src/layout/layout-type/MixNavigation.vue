@@ -25,12 +25,11 @@
           <a-flex class="side-navigation-header-inner"
                   :style="{'padding-left': !showSider ? 'var(--lihua-layout-head-space)' : 0}"
                   align="center"
+                  gap="middle"
                   v-show="props.showLayout">
-            <Logo class="top-logo" :auto-color="false" v-if="!showSider"/>
+            <Logo :auto-color="false" v-if="!showSider"/>
             <!--顶部导航占用剩余空间-->
-            <a-flex class="top-sider"
-                    :flex="1"
-                    :style="{'margin-left': !showSider ? 'var(--lihua-layout-head-space)' : 0}">
+            <a-flex class="top-sider" :flex="1">
               <Side is-mix-top
                     class="header-menu-fill"
                     :menu="cloneDeep(permissionStore.menuRouters).map((item: MenuItemGroupType) => {delete item.children; return item})"
@@ -140,9 +139,6 @@ const showSider = computed(() => {
 }
 .logo {
   padding: var(--lihua-space-sm) var(--lihua-space-base)
-}
-.top-logo {
-  padding-left: var(--lihua-space-sm);
 }
 .side-navigation-sider {
   position: sticky;

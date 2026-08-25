@@ -89,6 +89,7 @@ closeSide()
 }
 .drawer-navigation-head {
   box-shadow: var(--lihua-layout-box-shadow);
+  padding-left: var(--lihua-space-base);
   padding-right: var(--lihua-layout-head-space);
 }
 .sider {
