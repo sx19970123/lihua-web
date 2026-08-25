@@ -7,7 +7,7 @@ import MiddleView from "@/components/middle-view/index.vue";
 import type {RouterType} from "@/api/system/profile/type/auth-info-type.ts";
 import {h} from "vue";
 import Icon from "@/components/icon/index.vue";
-import type {ItemType} from "ant-design-vue";
+import type {ItemType} from "@/antd-adapter";
 import {hasRouteRole} from "@/helpers/auth.ts"
 import {isEqual} from "lodash-es"
 import {useThemeStore} from "@/stores/theme.ts";

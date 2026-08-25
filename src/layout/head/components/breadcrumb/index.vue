@@ -1,6 +1,6 @@
 <template>
   <transition :name="theme.$state.routeTransition" mode="out-in">
-    <a-breadcrumb :routes="pageRoute" v-if="pageRoute && pageRoute.length > 1 && pageRoute[0].path !== ''">
+    <a-breadcrumb :items="pageRoute" v-if="pageRoute && pageRoute.length > 1 && pageRoute[0].path !== ''">
       <template #itemRender="{route}">
         {{ route.meta.label }}
       </template>

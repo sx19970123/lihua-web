@@ -17,7 +17,7 @@ import {useThemeStore} from "@/stores/theme";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import {useRoute, useRouter} from "vue-router";
 import {computed, nextTick, onMounted, reactive, watch} from "vue";
-import type {ItemType} from "ant-design-vue";
+import type {ItemType} from "@/antd-adapter";
 
 const themeStore = useThemeStore()
 const route = useRoute()

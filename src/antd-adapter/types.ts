@@ -33,8 +33,6 @@ export type {
 // vnext 顶层无导出：本地定义/别名
 /** antdv4 的 menu ItemType → 由 MenuProps['items'] 派生 */
 export type ItemType = NonNullable<MenuProps['items']>[number]
-/** antdv4 的 MenuItemGroupType（项目仅 MixNavigation 使用）→ 以 items 元素类型近似 */
-export type MenuItemGroupType = ItemType
 /** antdv4 的 RcFile → vnext 在 @v-c/upload 中改名 VcFile，形状一致：File & { uid: string } */
 export type RcFile = VcFile
 /** antdv4 的 vc-upload UploadRequestOption → vnext 由 @v-c/upload 子包导出 */

@@ -32,7 +32,7 @@
             <a-flex class="top-sider" :flex="1">
               <Side is-mix-top
                     class="header-menu-fill"
-                    :menu="cloneDeep(permissionStore.menuRouters).map((item: MenuItemGroupType) => {delete item.children; return item})"
+                    :menu="cloneDeep(permissionStore.menuRouters).map((item: ItemType) => item && {...item, children: undefined})"
                     sider-theme="light"
                     sider-mode="horizontal"
                     @route-change="(keys: string[]) => loadSideMenu(keys[0], false)"
@@ -65,8 +65,7 @@ import Logo from "@/layout/logo/index.vue";
 import {usePermissionStore} from "@/stores/permission";
 import {useThemeStore} from "@/stores/theme";
 import {cloneDeep} from 'lodash-es'
-import type {ItemType} from "ant-design-vue";
-import type {MenuItemGroupType} from "ant-design-vue/es/menu/src/hooks/useItems";
+import type {ItemType} from "@/antd-adapter";
 import {computed, nextTick, ref, useTemplateRef} from "vue";
 import PageFooter from "@/layout/footer/index.vue";
 
@@ -86,18 +85,22 @@ const initSplitMenu = () => {
   // 处理点击菜单（顶部）
   const loadSideMenu = (key: string, autoClick: boolean) => {
     // 加载侧边菜单
-    const targetMenu = permissionStore.menuRouters.filter((item: ItemType) => item && item.key === key)
+    const targetMenu = permissionStore.menuRouters.filter((item) => item && 'key' in item && item.key === key)
     if (targetMenu && targetMenu.length > 0) {
-      const menu = targetMenu[0] as MenuItemGroupType;
-      subMenu.value = menu.children || []
+      const menu = targetMenu[0]
+      const children = menu && 'children' in menu ? menu.children : undefined
+      subMenu.value = children || []
       // 存在子菜单并设置了自动选中，则默认跳转到第一个
-      if (menu.children && autoClick) {
-        const key = menu.children[0].key as string
-        nextTick(() => {
-          if (sideRef.value) {
-            sideRef.value.handleClickMenuItem({key});
-          }
-        })
+      if (children && autoClick) {
+        const firstChild = children[0]
+        if (firstChild && 'key' in firstChild) {
+          const key = firstChild.key as string
+          nextTick(() => {
+            if (sideRef.value) {
+              sideRef.value.handleClickMenuItem({key});
+            }
+          })
+        }
       }
     } else {
       subMenu.value = []
