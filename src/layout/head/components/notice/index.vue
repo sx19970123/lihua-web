@@ -5,83 +5,60 @@
                 v-model:open="open"
                 @openChange="handleChangeNoticeList"
     >
-      <template #overlay>
-        <div :style="{padding: 'var(--lihua-space-sm)',borderRadius: 'var(--lihua-radius-sm)', width: '340px', maxHeight: '500px', background: 'var(--lihua-background-color-level-2)', boxShadow: 'var(--lihua-box-shadow)'}">
-          <a-tabs centered @change="handleChangeTabs">
-            <a-tab-pane key="ALL">
-              <template #tab>
-                <span>
-                  <MessageOutlined />
-                </span>
-                全部通知
-              </template>
-            </a-tab-pane>
-            <a-tab-pane key="STAR">
-              <template #tab>
-                <span>
-                  <StarOutlined />
-                </span>
-                标星通知
-              </template>
-            </a-tab-pane>
-          </a-tabs>
-          <!--          通知列表-->
-          <a-list item-layout="horizontal"
-                  :data-source="userNoticeList"
-                  :loading="loading"
-                  :split="false"
-                  class="notice-list scrollbar"
-          >
-            <template #renderItem="{ item }">
-              <a-list-item class="notice-list-item" @click="readNoticeDetail(item.readFlag, item.noticeId)">
-                <a-list-item-meta>
-                  <!--                      发布时间-->
-                  <template #description>
-                    <a-typography-text type="secondary" ellipsis v-model:content="item.releaseUser"/>
-                    <a-divider type="vertical" />
-                    <a-typography-text type="secondary">
-                      {{handleTime(dayjs(item.releaseTime).format('YYYY-MM-DD HH:mm')) }}
-                    </a-typography-text>
-                  </template>
-                  <template #title>
-                    <a-flex justify="space-between" align="flex-start">
-                      <!--                      标题-->
-                      <div>
-                        <a-tooltip :title="item.title" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
-                          <a-typography-text class="notice-title" ellipsis v-model:content="item.title"/>
-                        </a-tooltip>
-                      </div>
-                      <!--                      标星-->
-                      <a-rate :count="1"
-                              class="notice-star"
-                              v-model:value="item.starFlagNumber"
-                              @click="(event:MouseEvent) => event.stopPropagation()"
-                              @change="(value: number) => handleStar(item.noticeId, value)" />
-                      <!--                      优先级-->
-                      <dict-tag :dict-data-option="sys_notice_priority" :dict-data-value="item.priority"/>
-                    </a-flex>
-                  </template>
+    <template #popupRender>
+      <a-card size="small" class="notice-card" :styles="{root: {'box-shadow': 'var(--lihua-box-shadow)'}}">
+        <a-tabs :centered="true" :items="noticeTabs" @change="handleChangeTabs"/>
+        <!--通知列表（a-list 已被 vnext 移除，改用 a-listy；列表项布局自行排版；查询中由 a-spin 遮罩）-->
+        <a-flex vertical>
+          <a-spin :spinning="loading">
+            <a-listy v-if="userNoticeList.length > 0" :items="userNoticeList" :row-key="(item: SysUserNoticeVO) => item.noticeId" :height="400" :styles="{item: {borderBottom: 'none'}}" class="notice-list scrollbar">
+              <template #itemRender="item">
+                <a-flex :gap="16" align="center" :style="{cursor: 'pointer'}"
+                        @click="readNoticeDetail(item.readFlag, item.noticeId)">
                   <!--                      图标-->
-                  <template #avatar>
-                    <a-badge :dot="item.readFlag === '0'">
-                      <a-avatar :style="{'background-color': themeStore.getColorPrimary()}">
-                        <component :is="item.icon"/>
-                      </a-avatar>
-                    </a-badge>
-                  </template>
-                </a-list-item-meta>
-              </a-list-item>
-            </template>
-            <!--                      加载更多-->
-            <template #loadMore v-if="userNoticeList.length > 0">
-              <a-flex align="center" justify="center">
-                <a-button type="text" class="more-btn" @click="queryMore" :disabled="total === userNoticeList.length">
-                  {{total === userNoticeList.length ? '没有更多' : '加载更多'}}
-                </a-button>
-              </a-flex>
-            </template>
-          </a-list>
-        </div>
+                  <a-badge :dot="item.readFlag === '0'">
+                    <a-avatar :style="{'background-color': themeStore.getColorPrimary()}">
+                      <component :is="item.icon"/>
+                    </a-avatar>
+                  </a-badge>
+                  <!--                      中间体：上=标题+标星+优先级，下=发布人+时间-->
+                  <a-flex vertical :flex="1">
+                    <a-flex justify="space-between" align="center">
+                      <!--                      标题-->
+                      <a-tooltip :title="item.title" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
+                        <a-typography-text ellipsis :styles="{root: {width: '130px'}}">{{ item.title }}</a-typography-text>
+                      </a-tooltip>
+                      <!--                      标星 + 优先级-->
+                      <a-flex gap="middle" align="center">
+                        <a-rate :count="1"
+                                v-model:value="item.starFlagNumber"
+                                @click="(event:MouseEvent) => event.stopPropagation()"
+                                @change="(value: number) => handleStar(item.noticeId, value)" />
+                        <dict-tag :dict-data-option="sys_notice_priority" :dict-data-value="item.priority"/>
+                      </a-flex>
+                    </a-flex>
+                    <!--                      发布人/发布时间：两端对齐-->
+                    <a-flex justify="space-between" align="center">
+                      <a-typography-text type="secondary" ellipsis>{{ item.releaseUser }}</a-typography-text>
+                      <a-typography-text type="secondary">
+                        {{handleTime(dayjs(item.releaseTime).format('YYYY-MM-DD HH:mm')) }}
+                      </a-typography-text>
+                    </a-flex>
+                  </a-flex>
+                </a-flex>
+              </template>
+            </a-listy>
+            <!--                      空状态占位（查询中由外层 a-spin 遮罩；列表清空重查时只显示转圈）-->
+            <a-empty v-else-if="!loading" description="暂无通知" class="notice-empty"/>
+          </a-spin>
+        </a-flex>
+        <!--                      加载更多-->
+        <a-flex v-if="userNoticeList.length > 0" align="center" justify="center">
+          <a-button type="text" class="more-btn" @click="queryMore" :disabled="total === userNoticeList.length">
+            {{total === userNoticeList.length ? '没有更多' : '加载更多'}}
+          </a-button>
+        </a-flex>
+      </a-card>
       </template>
 <!--                      通知公告主体-->
       <div @click="() => open = true">
@@ -100,7 +77,7 @@
     <a-modal v-model:open="previewModelOpen"
              :footer="false"
              :width="960"
-             destroy-on-close
+             :destroy-on-hidden="true"
     >
       <notice-preview :notice-id="noticeId"/>
     </a-modal>
@@ -113,9 +90,10 @@ import {addEventListener, removeEventListener} from "@/utils/web-socket.ts";
 import NoticePreview from "@/components/notice-preview/index.vue"
 import DictTag from "@/components/dict-tag/index.vue"
 import type {SysNotice, SysNoticeDTO} from "@/api/system/notice/type/sys-notice.ts";
-import {Button, message, notification} from "ant-design-vue";
+import {Button} from "antdv-next";
+import {message, notification} from "@/antd-adapter";
 import {h, onMounted, onUnmounted, ref} from "vue";
-import {MessageOutlined, NotificationOutlined} from "@antdv-next/icons";
+import {MessageOutlined, NotificationOutlined, StarOutlined} from "@antdv-next/icons";
 import {useThemeStore} from "@/stores/theme.ts";
 import {getDictLabel, initDict} from "@/helpers/dict.ts";
 import {queryUnReadCount, read, star, userMessageList} from "@/api/system/notice/notice.ts";
@@ -124,6 +102,12 @@ import {handleTime} from "@/utils/handle-date.ts";
 import dayjs from "dayjs";
 
 const themeStore = useThemeStore();
+
+// 通知类型 tab：label 用渲染函数保持「图标 + 文案」结构
+const noticeTabs = [
+  {key: 'ALL', label: () => h('span', null, [h(MessageOutlined), '全部通知'])},
+  {key: 'STAR', label: () => h('span', null, [h(StarOutlined), '标星通知'])},
+]
 
 const previewModelOpen = ref<boolean>(false)
 const {sys_notice_type, sys_notice_priority} = initDict("sys_notice_type", "sys_notice_priority")
@@ -146,9 +130,9 @@ const handleWebsocketMessage = (data: SysNotice) => {
   handleUnReadCount()
   // 弹出消息通知
   notification.open({
-    message: '您有一条新' + getDictLabel(sys_notice_type.value, type),
+    title: '您有一条新' + getDictLabel(sys_notice_type.value, type),
     description: title,
-    btn: () => h( Button, {
+    actions: () => h( Button, {
       type: "text",
       size: "small",
       onClick: () => {
@@ -156,7 +140,7 @@ const handleWebsocketMessage = (data: SysNotice) => {
           // 显示详情
           showNoticeDetail(id)
           // 关闭消息提醒
-          notification.close(id)
+          notification.destroy(id)
           // 处理已读
           handleRead(id)
         }
@@ -324,20 +308,12 @@ onUnmounted(() => {
 })
 </script>
 <style scoped>
-.notice-list-item:hover {
-  background-color: var(--lihua-hover-color);
-  cursor: pointer;
-  border-radius: var(--lihua-radius-sm);
+.notice-card {
+  width: 340px;
+  max-height: 500px;
 }
-.notice-list {
-  max-height: 400px
-}
-.notice-title {
-  width: 130px
-}
-.notice-star {
-  margin-top: -5px;
-  margin-bottom: -5px;
+.notice-empty {
+  margin-block: var(--lihua-space-base);
 }
 .more-btn {
   width: 100%;
