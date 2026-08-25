@@ -3,7 +3,7 @@ import {getDictDataOption, getDictDataOptionByCodeList} from "@/api/system/dict/
 import {ref, toRefs} from "vue";
 import type {SysDictDataType} from "@/api/system/dict/type/sys-dict-data-type.ts";
 import {ResponseError, type ResponseType} from "@/api/global/type.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 // 初始化组件中需要的字典数据
 export const initDict = (...dictTypeCodes: string[]) => {
   // 返回 key 为字典编码，value 为字典集合结构

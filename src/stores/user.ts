@@ -2,7 +2,7 @@ import {defineStore} from "pinia";
 import {logout} from "@/api/system/authentication/authentication.ts";
 import {saveTheme, queryAuthInfo} from "@/api/system/profile/profile.ts";
 import token from "@/helpers/token.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {ResponseError, type ResponseType} from "@/api/global/type.ts";
 import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
 import type {AuthInfoType, UserInfoType} from "@/api/system/profile/type/auth-info-type.ts";

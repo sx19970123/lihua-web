@@ -3,7 +3,7 @@ import token from "@/helpers/token.ts"
 import {ResponseError, type ResponseType} from "@/api/global/type.ts"
 import {useUserStore} from "@/stores/user";
 import router from "@/router";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 const { getToken } = token
 // 当前正在进行的请求url集合
 export const currentRequests = new Set<string>([]);

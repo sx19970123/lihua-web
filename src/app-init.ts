@@ -6,7 +6,7 @@ import {useThemeStore} from "@/stores/theme.ts";
 import {useDictStore} from "@/stores/dict.ts";
 import {cloneDeep} from 'lodash-es'
 import {reloadData} from "@/api/system/authentication/authentication.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {type RouteLocationNormalizedLoaded} from "vue-router";
 
 /**

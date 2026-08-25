@@ -6,7 +6,7 @@ import {
     getDefaultPassword,
     getSysSettingByKey
 } from "@/api/system/setting/setting.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 
 export const useSettingStore = defineStore('setting', {
     state:() => {
