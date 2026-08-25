@@ -32,7 +32,7 @@
             <a-flex class="top-sider" :flex="1">
               <Side is-mix-top
                     class="header-menu-fill"
-                    :menu="cloneDeep(permissionStore.menuRouters).map((item: ItemType) => item && {...item, children: undefined})"
+                    :menu="topMenu"
                     sider-theme="light"
                     sider-mode="horizontal"
                     @route-change="(keys: string[]) => loadSideMenu(keys[0], false)"
@@ -48,7 +48,7 @@
       </a-layout-header>
       <a-layout-content>
         <!--内容-->
-        <div id="lihua-layout-content" class="layout-content" />
+        <div id="lihua-layout-content" class="layout-content"/>
       </a-layout-content>
       <!--页脚-->
       <a-layout-footer class="layout-footer" v-if="themeStore.$state.showFooter">
@@ -114,6 +114,10 @@ const initSplitMenu = () => {
 }
 
 const {subMenu, loadSideMenu} = initSplitMenu()
+
+// 顶部一级菜单（剥离 children）：computed 缓存深拷贝结果，menuRouters 不变时保持引用稳定
+const topMenu = computed(() =>
+    cloneDeep(permissionStore.menuRouters).map((item: ItemType) => item && {...item, children: undefined}))
 
 // 显示侧边栏
 const showSider = computed(() => {
