@@ -27,17 +27,20 @@
                   align="center"
                   v-show="props.showLayout">
             <Logo class="top-logo" :auto-color="false" v-if="!showSider"/>
-            <!--顶部导航-->
-            <Side is-mix-top
-                  class="top-sider"
-                  :style="{'margin-left': !showSider ? 'var(--lihua-layout-head-space)' : 0}"
-                  :menu="cloneDeep(permissionStore.menuRouters).map((item: MenuItemGroupType) => {delete item.children; return item})"
-                  sider-theme="light"
-                  sider-mode="horizontal"
-                  @route-change="(keys: string[]) => loadSideMenu(keys[0], false)"
-                  @mounted="(keys: string[]) => loadSideMenu(keys[0], false)"
-                  @menu-click="(key) => loadSideMenu(key, true)"
-            />
+            <!--顶部导航占用剩余空间-->
+            <a-flex class="top-sider"
+                    :flex="1"
+                    :style="{'margin-left': !showSider ? 'var(--lihua-layout-head-space)' : 0}">
+              <Side is-mix-top
+                    class="header-menu-fill"
+                    :menu="cloneDeep(permissionStore.menuRouters).map((item: MenuItemGroupType) => {delete item.children; return item})"
+                    sider-theme="light"
+                    sider-mode="horizontal"
+                    @route-change="(keys: string[]) => loadSideMenu(keys[0], false)"
+                    @mounted="(keys: string[]) => loadSideMenu(keys[0], false)"
+                    @menu-click="(key) => loadSideMenu(key, true)"
+              />
+            </a-flex>
             <!-- 右侧头部-->
             <div id="lihua-layout-head"/>
           </a-flex>
@@ -134,7 +137,6 @@ const showSider = computed(() => {
 }
 .top-sider {
   min-width: 0;
-  flex: 1
 }
 .logo {
   padding: var(--lihua-space-sm) var(--lihua-space-base)

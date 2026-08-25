@@ -5,12 +5,13 @@
         <a-layout-header class="top-navigation-layout-header"
                          :class="themeStore.siderTheme === 'light' ? 'background-glass' : ''"
                          v-show="props.showLayout">
-          <a-flex align="center"
-                  style="margin: 0 var(--lihua-layout-head-space) 0 var(--lihua-layout-head-space)">
+          <a-flex align="center" style="margin: 0 var(--lihua-layout-head-space) 0 var(--lihua-layout-head-space)">
             <!--logo-->
             <Logo class="logo"/>
-            <!--导航-->
-            <Side class="sider" sider-mode="horizontal" v-rollDisable="true"/>
+            <!--导航（顶部导航占用剩余空间）-->
+            <a-flex class="sider" :flex="1">
+              <Side class="header-menu-fill" sider-mode="horizontal" v-rollDisable="true"/>
+            </a-flex>
             <!--页头-->
             <div id="lihua-layout-head"/>
           </a-flex>
@@ -61,7 +62,6 @@ const props = defineProps<{showLayout: boolean }>()
 }
 
 .sider {
-  flex: 1 1 0;
   min-width: 0;
   margin-left: var(--lihua-layout-head-space);
 }

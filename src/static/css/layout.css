@@ -9,6 +9,16 @@
     overflow-x: hidden;
 }
 
+/**
+   顶部导航菜单填充
+   Menu 为多根（fragment）组件，scoped 样式无法作用于其根元素，故走全局类
+   min-width: 0 解除 flex 项 min-width:auto 地板，溢出折叠（"..."）的宽度测量才能生效
+ */
+.header-menu-fill {
+    width: 100%;
+    min-width: 0;
+}
+
 /* 页脚 */
 .layout-footer {
     height: var(--footer-height) !important;

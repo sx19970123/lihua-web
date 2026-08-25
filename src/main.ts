@@ -9,10 +9,10 @@ import directive from './directive'
 
 // antdv-next 组件库
 import AntdvNext from 'antdv-next';
-// antdv-next 全局 reset（等价旧包 ant-design-vue/dist/reset.css，1.1 移除后补引入）
-import 'antdv-next/dist/reset.css';
 // antdv-next 图标
 import * as Icons from "@antdv-next/icons";
+// antdv-next 全局 reset
+import 'antdv-next/dist/reset.css';
 import "@/static/css/index.css"
 
 
