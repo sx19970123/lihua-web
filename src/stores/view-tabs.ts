@@ -216,6 +216,10 @@ export const useViewTabsStore = defineStore('viewTabs',{
         // 移动元素
         move(fromIndex: number, toIndex: number) {
             const viewTabs = this.$state.viewTabs
+            // 越界保护：splice 越界会取出 undefined 插回数组，污染整个列表
+            if (fromIndex < 0 || fromIndex >= viewTabs.length || toIndex < 0) {
+                return
+            }
             const item = viewTabs.splice(fromIndex, 1)[0] // 取出元素
             viewTabs.splice(toIndex, 0, item)            // 插入到目标位置
         },

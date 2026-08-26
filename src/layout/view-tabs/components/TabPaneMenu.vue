@@ -1,6 +1,7 @@
 <template>
-  <a-dropdown :trigger="['contextmenu']" class="view-tab-dropdown" overlayClassName="enable-glass">
-    <a-space>
+  <a-dropdown :trigger="['contextmenu']" :classes="{root: 'enable-glass'}">
+    <!-- 触发区域的 class 必须挂在触发元素上：Dropdown 底层渲染 Fragment 根，组件上的 class 无法落到触发元素 -->
+    <a-space class="view-tab-dropdown">
       <component :is="tabPane.tab.icon" style="margin: 0"/>
       {{ tabPane.tab.label }}
       <ReloadOutlined v-if="tabPane.tab.routerPathKey === viewTabsStore.$state.activeKey"
@@ -13,7 +14,7 @@
                      @click="(event: MouseEvent) => handleCloseTab(event, tabPane.tab.routerPathKey)"
       />
     </a-space>
-    <template #overlay>
+    <template #popupRender>
       <a-menu @click="handleClickMenuTab">
         <a-menu-item key="newPage">
           <ImportOutlined style="transform: rotate(180deg)"/>
@@ -61,7 +62,7 @@
 <script setup lang="ts">
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import {viewTab} from "@/api/system/view-tab/view-tab.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {LockOutlined, StarFilled, StarOutlined, UnlockOutlined} from '@antdv-next/icons';
 import {h, ref} from "vue";
 import type {ResponseType} from "@/api/global/type.ts";

@@ -14,11 +14,11 @@
       <CompressOutlined v-else />
     </button>
     <!--  更多操作  -->
-    <a-dropdown overlayClassName="enable-glass">
+    <a-dropdown :classes="{root: 'enable-glass'}">
       <button class="ant-tabs-nav-more">
         <MoreOutlined />
       </button>
-      <template #overlay>
+      <template #popupRender>
         <a-menu @click="handleClickMenuTab">
           <a-sub-menu class="menu-item-min-width" key="recent" popupClassName="enable-glass">
             <template #title>
