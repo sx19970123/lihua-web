@@ -1,0 +1,4 @@
+interface:
+  display_name: "lihua init 模式"
+  short_description: "lihua-web Vue 组件的 init* 工厂函数（闭包组合式函数）组织约定"
+  default_prompt: "按项目 init* 工厂函数约定组织这个组件的状态与方法"
