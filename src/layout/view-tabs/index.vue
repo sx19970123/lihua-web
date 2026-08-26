@@ -32,17 +32,17 @@
 </template>
 
 <script lang="ts" setup>
-import SortableTabLabel from "@/layout/view-tabs/components/SortableTabLabel.vue";
-import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
 import {computed, onMounted, ref, useTemplateRef, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
-import {isMobile} from 'is-mobile'
 import type {DragEndEvent, DragMoveEvent, DragOverEvent, DragStartEvent} from '@dnd-kit/vue'
-import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {PointerActivationConstraints} from '@dnd-kit/dom'
+import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {isSortable} from '@dnd-kit/vue/sortable'
+import {isMobile} from 'is-mobile'
 import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composables/useTrackModifiers";
+import SortableTabLabel from "@/layout/view-tabs/components/SortableTabLabel.vue";
+import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
 
 const tabRightMenuRef = useTemplateRef<typeof TabRightMenu>('tabRightMenuRef')
 const viewTabsStore = useViewTabsStore()

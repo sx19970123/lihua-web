@@ -21,11 +21,11 @@ const sortableOwners = new Map<string, object>()
 </script>
 
 <script lang="ts" setup>
-import TabPaneMenu from '@/layout/view-tabs/components/TabPaneMenu.vue';
-import type {StarViewType} from '@/api/system/view-tab/type/sys-view-tab.ts';
 import {computed, onUnmounted, ref, watch} from 'vue';
 import {useSortable} from '@dnd-kit/vue/sortable';
+import type {StarViewType} from '@/api/system/view-tab/type/sys-view-tab.ts';
 import {trackModifiers} from '@/layout/view-tabs/composables/useTrackModifiers';
+import TabPaneMenu from '@/layout/view-tabs/components/TabPaneMenu.vue';
 
 const props = defineProps<{
   /** a-tabs #labelRender 插槽项：key 为路由路径键，raw 透传原始 tab */

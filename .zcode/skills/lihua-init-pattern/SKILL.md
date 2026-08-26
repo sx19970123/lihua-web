@@ -1,6 +1,6 @@
 ---
 name: lihua-init-pattern
-description: 狸花猫项目 lihua-web 的 Vue 3 组件代码组织约定：init* 工厂函数（闭包组合式函数）。当在 lihua-web 中新建或重构 script setup 组件、为组件添加一组相关功能（状态+方法+watch+生命周期）、整理散落在 setup 顶层的逻辑、或需要遵循/扩展已有 initXxx() 写法时使用。核心：按关注点把相关逻辑收进 initXxx 工厂函数，闭包持有私有状态，统一 return 导出并在 setup 顶层解构使用。
+description: 狸花猫项目 lihua-web 的 Vue 3 组件代码组织约定：init* 工厂函数（闭包组合式函数）与导包顺序。当在 lihua-web 中新建或重构 script setup 组件、为组件添加一组相关功能（状态+方法+watch+生命周期）、整理散落在 setup 顶层的逻辑、整理/编写 import 导入语句、或需要遵循/扩展已有 initXxx() 写法时使用。核心：按关注点把相关逻辑收进 initXxx 工厂函数，闭包持有私有状态，统一 return 导出并在 setup 顶层解构使用；导入按依赖类型分组排序。
 ---
 
 # lihua init 模式
@@ -33,6 +33,36 @@ const {a, b} = initXxx()   // 解构紧随定义
 6. **跨实例共享状态放模块级**：SFC 用独立 `<script lang="ts">` 块；跨组件共享用独立 `.ts` 模块（如 `useTrackModifiers.ts`——它有两个消费方，不并入任何组件）。
 7. **注释一句话**：写明函数/块的作用即可，不写调查叙事（详细根因分析放迁移文档的问题记录）。
 8. 依赖外部上下文（store、其他 ref）通过闭包引用，定义在 init 之前即可。
+
+## 导包顺序
+
+按依赖类型分组排序（约束新写/重写的代码，旧文件不回改）：
+
+1. `vue` 原生
+2. Vue 生态：`vue-router`、pinia（`@/stores/*`）
+3. 第三方库
+4. 项目 ts 模块（`@/api`、`@/helpers`、`@/utils`、composables 等）
+5. 项目组件（`@/**/*.vue`）
+6. 相对路径导入（`./`、`../`）
+7. 副作用导入（样式、locale 等）最后
+
+同组内按包名/路径字典序；`import type` 与同源模块归同一组。
+
+示例（view-tabs/index.vue）：
+
+```ts
+import {computed, onMounted, ref, useTemplateRef, watch} from "vue";
+import {useRoute, useRouter} from "vue-router";
+import {useViewTabsStore} from "@/stores/view-tabs.ts";
+import type {DragEndEvent, DragMoveEvent, DragOverEvent, DragStartEvent} from '@dnd-kit/vue'
+import {PointerActivationConstraints} from '@dnd-kit/dom'
+import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
+import {isSortable} from '@dnd-kit/vue/sortable'
+import {isMobile} from 'is-mobile'
+import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composables/useTrackModifiers";
+import SortableTabLabel from "@/layout/view-tabs/components/SortableTabLabel.vue";
+import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
+```
 
 ## 何时不用
 
