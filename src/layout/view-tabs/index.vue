@@ -222,6 +222,14 @@ unset 掉 background/border/margin/padding/color——被破坏的外观按实�
   color: var(--ant-tabs-item-selected-color);
 }
 
+/* 拖「首位页签」的布局抖动修复：Feedback 将本体 popover 化（脱离布局）后，占位克隆插在本体 DOM 之后，
+   会命中 .ant-tabs-tab + .ant-tabs-tab 相邻选择器获得 2px 间距——而本体 popover 化前作为首位无间距，
+   克隆实际顶替首位布局，凭空多出的 2px 使整个列表右移（抖动），并连环触发 tabs 位置重测 → scrollToTab 跳转。
+   仅在「首位页签被拖（popover 化）」时，把紧随其后的克隆间距清零，恢复与拖拽前一致的布局 */
+.ant-tabs-nav-list > .ant-tabs-tab:first-child[popover] + .ant-tabs-tab {
+  margin-inline-start: 0 !important;
+}
+
 .tab-none-padding {
   .ant-tabs-tab {
     padding: 0 !important;
