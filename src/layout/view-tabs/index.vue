@@ -1,6 +1,7 @@
 <template>
-  <DragDropProvider :sensors="sensors" :modifiers="trackModifiers"
-                    @drag-start="onDragStart" @drag-end="onDragEnd">
+  <DragDropProvider :sensors="sensors"
+                    @drag-start="onDragStart" @drag-end="onDragEnd"
+                    @drag-over="onDragOver" @drag-move="onDragMove">
     <a-tabs :activeKey="activeKey"
             class="unselectable tab-none-padding enable-glass"
             style="padding: var(--lihua-space-sm) var(--lihua-space-sm) 0;"
@@ -33,15 +34,15 @@
 <script lang="ts" setup>
 import SortableTabLabel from "@/layout/view-tabs/components/SortableTabLabel.vue";
 import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
-import {type ComponentPublicInstance, computed, onMounted, useTemplateRef, watch} from "vue";
+import {computed, onMounted, ref, useTemplateRef, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import {isMobile} from 'is-mobile'
-import type {DragEndEvent, DragStartEvent} from '@dnd-kit/vue'
+import type {DragEndEvent, DragMoveEvent, DragOverEvent, DragStartEvent} from '@dnd-kit/vue'
 import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {PointerActivationConstraints} from '@dnd-kit/dom'
 import {isSortable} from '@dnd-kit/vue/sortable'
-import {resetTrackBounds, snapshotTrackBounds, trackModifiers} from "@/layout/view-tabs/composables/useTrackModifiers";
+import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composables/useTrackModifiers";
 
 const tabRightMenuRef = useTemplateRef<typeof TabRightMenu>('tabRightMenuRef')
 const viewTabsStore = useViewTabsStore()
@@ -60,12 +61,6 @@ const init = () => {
   }
 }
 const {activeKey} = init()
-
-/** tabs 的 items：key 为路由路径键，label 为必填占位（实际渲染走 #labelRender 插槽）；Tabs 会把 item.icon 原生渲染成 tab 前置内容（字符串按文本渲染），故剔除 icon 后经 raw 透传原始 tab 供插槽使用 */
-const tabItems = computed(() => viewTabsStore.viewTabs.map(tab => {
-  const {icon, ...rest} = tab
-  return {...rest, key: tab.routerPathKey, label: tab.label, raw: tab}
-}))
 
 /**
  * 删除标签，根据情况进行路由切换
@@ -128,54 +123,195 @@ const routeSkip = (path: string, query?: string) => {
 }
 
 /**
- * 拖拽排序（@dnd-kit/vue，替代原 vue-draggable-plus 对 .ant-tabs-nav-list 的直挂）
+ * 初始化拖拽排序（@dnd-kit/vue）：集中定义拖拽相关的状态与方法，统一导出
  */
-/** 拖拽传感器：4px 距离激活，避免点击/右键/中键误触拖拽；移动端不启用拖拽 */
-const sensors = isMobile() ? [] : [
-  PointerSensor.configure({activationConstraints: [new PointerActivationConstraints.Distance({value: 4})]}),
-  KeyboardSensor,
-]
+const initDrag = () => {
+  /** 拖拽传感器：4px 距离激活防误触；移动端不启用 */
+  const sensors = isMobile() ? [] : [
+    PointerSensor.configure({activationConstraints: [new PointerActivationConstraints.Distance({value: 4})]}),
+    KeyboardSensor,
+  ]
 
-/** 取消拖拽时回滚用的 key 序列快照 */
-let snapshotKeys: Array<string> = []
-/** 拖拽期间冻结轨道滚轮：nav-list 依靠 transform 平移滚动，拖拽中滚动会与让位/碰撞互相干扰 */
-let frozenWheelTarget: HTMLElement | undefined
-const freezeWheel = (event: Event) => event.preventDefault()
+  /** 拖拽中的本地顺序覆盖；null 时回落 store 顺序（拖拽期间不动 store，松手才提交） */
+  const dragOrder = ref<Array<string> | null>(null)
 
-const onDragStart = (event: DragStartEvent) => {
-  const tabEl = event.operation.source?.element as HTMLElement | undefined
-  if (tabEl) {
-    // 快照轨道边界（水平 clamp 依据）
-    snapshotTrackBounds(tabEl)
+  /** tabs 的 items：key 为路由路径键；剔除 icon（Tabs 会把它原生渲染成前置内容），raw 透传原始 tab 供 #labelRender 使用 */
+  const tabItems = computed(() => {
+    const items = viewTabsStore.viewTabs.map(tab => {
+      const {icon, ...rest} = tab
+      return {...rest, key: tab.routerPathKey, label: tab.label, raw: tab}
+    })
+    if (!dragOrder.value) return items
+    const byKey = new Map(items.map(item => [item.key, item]))
+    return dragOrder.value.map(key => byKey.get(key)).filter(item => item !== undefined)
+  })
+
+  /** 取消拖拽时回滚用的 key 序列快照（同时用于初始化 dragOrder） */
+  let snapshotKeys: Array<string> = []
+  /** 拖拽期间冻结轨道滚轮：捕获阶段拦截，阻断 @v-c 的滚轮处理器（防内部 transformLeft 漂移） */
+  let frozenWheelTarget: HTMLElement | undefined
+  const freezeWheel = (event: Event) => {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  /** 否决库的乐观物理重排（宽度差歧义区会来回振荡），换位决策收归 onDragMove */
+  const onDragOver = (event: DragOverEvent) => {
+    if (isSortable(event.operation.source)) {
+      event.preventDefault()
+    }
+  }
+
+  const arrayMove = <T>(array: Array<T>, from: number, to: number): Array<T> => {
+    const copy = array.slice()
+    copy.splice(to, 0, copy.splice(from, 1)[0])
+    return copy
+  }
+
+  /** 中心线迟滞换位：指针越过目标页签中心才换位；占位克隆（data-dnd-placeholder）矩形即被拖页签的槽位 */
+  const onDragMove = (event: DragMoveEvent) => {
+    const {source, position} = event.operation
+    if (!source || !isSortable(source) || !dragOrder.value) return
+    const sourceEl = source.element as HTMLElement | undefined
+    const navList = sourceEl?.closest<HTMLElement>('.ant-tabs-nav-list')
+    if (!sourceEl || !navList) return
+    const sourceKey = String(source.id)
+    const pointerX = position.current.x
+    const slots: Array<{ key: string, left: number, right: number, center: number }> = []
+    for (const el of navList.children) {
+      if (!(el instanceof HTMLElement)) continue
+      const rect = el.getBoundingClientRect()
+      if (el.hasAttribute('data-dnd-placeholder')) {
+        slots.push({key: sourceKey, left: rect.left, right: rect.right, center: (rect.left + rect.right) / 2})
+      } else if (el !== sourceEl) {
+        const key = el.getAttribute('data-node-key')
+        if (key) slots.push({key, left: rect.left, right: rect.right, center: (rect.left + rect.right) / 2})
+      }
+    }
+    const hovered = slots.find(slot => pointerX >= slot.left && pointerX <= slot.right)
+    if (!hovered || hovered.key === sourceKey) return
+    const srcIdx = slots.findIndex(slot => slot.key === sourceKey)
+    if (srcIdx < 0) return
+    let insIdx = slots.findIndex(slot => slot.key === hovered.key)
+    if (pointerX > hovered.center) insIdx += 1
+    if (insIdx > srcIdx) insIdx -= 1
+    if (insIdx !== srcIdx) {
+      dragOrder.value = arrayMove(dragOrder.value, srcIdx, insIdx)
+    }
+  }
+
+  /** 拖拽期间轨道锁：MO 把 scrollToTab 的写入弹回快照并记录组件内部值；
+   *  松手后宽限 350ms 盖过清理期的最后一轮跳转，期满再精确对账（内部值一步对齐视觉位置） */
+  let trackLockMO: MutationObserver | undefined
+  let lockedNavList: HTMLElement | undefined
+  let lockedTransform = ''
+  let internalTransform: number | undefined
+  let trackReleaseTimer: ReturnType<typeof setTimeout> | undefined
+  const TRACK_GRACE_MS = 350
+
+  /** 解析 transform 字符串中的 x 位移值 */
+  const parseTranslateX = (transform: string): number | undefined => {
+    const match = /translate\((-?\d+(?:\.\d+)?)px/.exec(transform)
+    return match ? Number(match[1]) : undefined
+  }
+
+  /** 宽限期満的实际释放：解冻滚轮、断开锁，并按需派发合成滚轮完成再同步 */
+  const releaseTrack = () => {
+    trackReleaseTimer = undefined
+    frozenWheelTarget?.removeEventListener('wheel', freezeWheel, {capture: true})
+    frozenWheelTarget = undefined
+    trackLockMO?.disconnect()
+    trackLockMO = undefined
+    const navList = lockedNavList
+    lockedNavList = undefined
+    const finalVisual = parseTranslateX(lockedTransform)
+    const internal = internalTransform
+    lockedTransform = ''
+    if (!navList || finalVisual === undefined || internal === undefined || internal === finalVisual) return
+    const wrap = navList.closest<HTMLElement>('.ant-tabs-nav-wrap')
+    if (!wrap) return
+    // @v-c 滚轮语义为 transformLeft -= 主导轴delta，故 deltaX = 内部值 − 视觉值 可一步对齐且 DOM 不动
+    wrap.dispatchEvent(new WheelEvent('wheel', {deltaX: internal - finalVisual, deltaY: 0, bubbles: true, cancelable: true}))
+  }
+
+  /** 拖拽开始时上锁：快照当前 transform、挂 MO 与滚轮冻结 */
+  const lockTrack = (tabEl: HTMLElement) => {
+    // 宽限期内的再次拖拽：取消待释放，滚动冻结解挂后按下一次快照重建
+    if (trackReleaseTimer) {
+      clearTimeout(trackReleaseTimer)
+      trackReleaseTimer = undefined
+    }
+    frozenWheelTarget?.removeEventListener('wheel', freezeWheel, {capture: true})
+    lockedNavList = tabEl.closest<HTMLElement>('.ant-tabs-nav-list') ?? undefined
+    if (!lockedNavList) return
+    lockedTransform = lockedNavList.style.transform || ''
+    internalTransform = parseTranslateX(lockedTransform)
+    trackLockMO = new MutationObserver(() => {
+      if (!lockedNavList) return
+      const attempted = lockedNavList.style.transform
+      // 自己的弹回写入不处理；其余即组件（scrollToTab）写入：记录内部值并弹回
+      if (attempted === lockedTransform) return
+      const attemptedX = parseTranslateX(attempted)
+      if (attemptedX !== undefined) internalTransform = attemptedX
+      lockedNavList.style.transform = lockedTransform
+    })
+    trackLockMO.observe(lockedNavList, {attributes: true, attributeFilter: ['style']})
     frozenWheelTarget = tabEl.closest<HTMLElement>('.ant-tabs-nav-wrap') ?? undefined
     frozenWheelTarget?.addEventListener('wheel', freezeWheel, {capture: true, passive: false})
   }
-  snapshotKeys = viewTabsStore.viewTabs.map(tab => tab.routerPathKey)
-}
 
-const onDragEnd = (event: DragEndEvent) => {
-  frozenWheelTarget?.removeEventListener('wheel', freezeWheel, {capture: true})
-  frozenWheelTarget = undefined
-  resetTrackBounds()
-  if (event.canceled) {
-    // 乐观排序已物理重排 DOM，取消时按快照重建数据，强制视图与数据对齐
-    viewTabsStore.resetViewTabsByPathKeys(snapshotKeys)
-    return
+  /** 拖拽结束时解锁：不立即释放，排一个宽限计时器 */
+  const unlockTrack = () => {
+    if (!lockedNavList) return
+    if (trackReleaseTimer) clearTimeout(trackReleaseTimer)
+    trackReleaseTimer = setTimeout(releaseTrack, TRACK_GRACE_MS)
   }
-  const {source} = event.operation
-  if (!isSortable(source)) {
-    return
+
+  /** 拖拽开始：快照轨道边界与 key 序列，上轨道锁 */
+  const onDragStart = (event: DragStartEvent) => {
+    const tabEl = event.operation.source?.element as HTMLElement | undefined
+    if (tabEl) {
+      // 快照轨道边界（水平 clamp 依据）
+      snapshotTrackBounds(tabEl)
+      lockTrack(tabEl)
+    }
+    snapshotKeys = viewTabsStore.viewTabs.map(tab => tab.routerPathKey)
+    dragOrder.value = snapshotKeys.slice()
   }
-  const {initialIndex, index} = source
-  if (initialIndex !== index) {
-    // 修改store中viewTabs中的位置
-    viewTabsStore.move(initialIndex, index)
-    // 子组件刷新缓存
-    if (tabRightMenuRef.value) {
-      tabRightMenuRef.value.setCache()
+
+  /** 拖拽结束：取消则视图随 dragOrder 清空自动回滚；否则按索引变化提交 store */
+  const onDragEnd = (event: DragEndEvent) => {
+    unlockTrack()
+    resetTrackBounds()
+    dragOrder.value = null
+    if (event.canceled) {
+      return
+    }
+    const {source} = event.operation
+    if (!isSortable(source)) {
+      return
+    }
+    const {initialIndex, index} = source
+    if (initialIndex !== index) {
+      // 修改store中viewTabs中的位置
+      viewTabsStore.move(initialIndex, index)
+      // 子组件刷新缓存
+      if (tabRightMenuRef.value) {
+        tabRightMenuRef.value.setCache()
+      }
     }
   }
+
+  return {
+    sensors,
+    tabItems,
+    onDragStart,
+    onDragEnd,
+    onDragOver,
+    onDragMove
+  }
 }
+const {sensors, tabItems, onDragStart, onDragEnd, onDragOver, onDragMove} = initDrag()
 
 onMounted(() => {
   // 调用子组件方法
@@ -204,12 +340,8 @@ watch(() => route.path,() => {
   margin-bottom: var(--lihua-space-sm) !important;
 }
 
-/* 拖拽中的页签：本体直接跟随（move 模式）。
-注意：Feedback 插件会把本体 popover 化提进顶层（脱离 nav-wrap 裁剪），其 @layer dnd-kit 样式会
-unset 掉 background/border/margin/padding/color——被破坏的外观按实测清单在此恢复（背景/边框间距用组件库 token）*/
+/* 拖拽中的页签：Feedback popover 化会剥离外观，按组件 token 恢复 */
 .ant-tabs-tab.view-tab-dragging {
-  position: relative;
-  z-index: 10;
   background: var(--ant-tabs-card-bg);
   border: var(--ant-line-width) var(--ant-line-type) var(--ant-color-border-secondary);
   color: var(--ant-tabs-item-color);
@@ -222,12 +354,22 @@ unset 掉 background/border/margin/padding/color——被破坏的外观按实�
   color: var(--ant-tabs-item-selected-color);
 }
 
-/* 拖「首位页签」的布局抖动修复：Feedback 将本体 popover 化（脱离布局）后，占位克隆插在本体 DOM 之后，
-   会命中 .ant-tabs-tab + .ant-tabs-tab 相邻选择器获得 2px 间距——而本体 popover 化前作为首位无间距，
-   克隆实际顶替首位布局，凭空多出的 2px 使整个列表右移（抖动），并连环触发 tabs 位置重测 → scrollToTab 跳转。
-   仅在「首位页签被拖（popover 化）」时，把紧随其后的克隆间距清零，恢复与拖拽前一致的布局 */
-.ant-tabs-nav-list > .ant-tabs-tab:first-child[popover] + .ant-tabs-tab {
-  margin-inline-start: 0 !important;
+/* 拖拽中的文本色钉住：不依赖 :active/:focus 伪类（换位重渲染会打断伪类导致掉色） */
+.ant-tabs-tab.view-tab-dragging .ant-tabs-tab-btn {
+  color: var(--ant-tabs-item-active-color);
+}
+
+.ant-tabs-tab.view-tab-dragging.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--ant-tabs-item-selected-color);
+}
+
+/* 页签间距用 flex gap（2px = cardGutter）替代相邻 margin：与 DOM 相邻关系解耦，拖拽换位时间距恒定 */
+.tab-none-padding .ant-tabs-nav-list {
+  gap: 0 2px;
+}
+
+.tab-none-padding .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 0 !important;
 }
 
 .tab-none-padding {

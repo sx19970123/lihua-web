@@ -14,10 +14,16 @@
   </span>
 </template>
 
+<script lang="ts">
+/** sortable 注册权声明表（模块级）：#labelRender 产物会同时流入"…"下拉（挂出同 key 的重复实例，
+ *  同 id 注册互踩会使导航条页签永久失去拖拽），故先挂载的导航条实例认领 key，重复实例不注册 */
+const sortableOwners = new Map<string, object>()
+</script>
+
 <script lang="ts" setup>
 import TabPaneMenu from '@/layout/view-tabs/components/TabPaneMenu.vue';
 import type {StarViewType} from '@/api/system/view-tab/type/sys-view-tab.ts';
-import {computed, ref, watch} from 'vue';
+import {computed, onUnmounted, ref, watch} from 'vue';
 import {useSortable} from '@dnd-kit/vue/sortable';
 import {trackModifiers} from '@/layout/view-tabs/composables/useTrackModifiers';
 
@@ -33,34 +39,54 @@ const emits = defineEmits<{
   closeViewTab: [key: string]
 }>()
 
-const anchorRef = ref<HTMLElement>()
-/** 页签容器：插槽内容渲染于 .ant-tabs-tab-btn 内，sortable 须注册到外层 .ant-tabs-tab（含 card 背景/边框的整体）。
- * 带缓存兜底：Vue 重渲染插槽时锚点 ref 会闪断（undefined→恢复），若把 undefined 写入 sortable.element，
- * dnd-kit 会摘除该页签上的 sensor 监听（pointerdown/keydown）且恢复时序错过即永久丢失——
- * 「页签进过"..."再滚回来就无法拖动」的根因。闪断期间复用缓存元素（DOM 未卸载时一直有效）。 */
-let cachedTabEl: HTMLElement | undefined
-const resolveTabEl = () => {
-  const el = anchorRef.value?.closest<HTMLElement>('.ant-tabs-tab')
-  if (el) {
-    cachedTabEl = el
-    return el
+/**
+ * 初始化 sortable 注册：注册权声明、页签容器解析、传感器注册与拖拽类切换
+ */
+const initSortable = () => {
+  // 注册权声明：先挂载的导航条实例认领 key，重复实例（"…"下拉）不注册 sortable
+  const owner = {}
+  const sortableOwned = !sortableOwners.has(props.item.key)
+  if (sortableOwned) {
+    sortableOwners.set(props.item.key, owner)
   }
-  return cachedTabEl?.isConnected ? cachedTabEl : undefined
+  onUnmounted(() => {
+    if (sortableOwners.get(props.item.key) === owner) {
+      sortableOwners.delete(props.item.key)
+    }
+  })
+
+  const anchorRef = ref<HTMLElement>()
+  /** 页签容器：sortable 注册到外层 .ant-tabs-tab；带缓存兜底，锚点 ref 闪断期间复用上次解析的 DOM */
+  let cachedTabEl: HTMLElement | undefined
+  const resolveTabEl = () => {
+    const el = anchorRef.value?.closest<HTMLElement>('.ant-tabs-tab')
+    if (el) {
+      cachedTabEl = el
+      return el
+    }
+    return cachedTabEl?.isConnected ? cachedTabEl : undefined
+  }
+  const tabEl = computed(resolveTabEl)
+
+  let isDragging = ref(false)
+  if (sortableOwned) {
+    isDragging = useSortable({
+      id: () => props.item.key,
+      index: () => props.index,
+      element: tabEl,
+      target: tabEl,
+      // 轨道修饰器配到 sortable 级：dragOperation 的 modifiers 优先取 source.draggable 上的配置
+      modifiers: trackModifiers,
+      transition: {duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)'},
+    }).isDragging
+  }
+
+  // 拖拽期间给页签容器挂类（dnd-kit popover 化会剥离外观，恢复样式挂在该类上）
+  watch([isDragging, tabEl], ([dragging, el]) => {
+    el?.classList.toggle('view-tab-dragging', dragging)
+  }, {flush: 'post'})
+
+  return {anchorRef}
 }
-const tabEl = computed(resolveTabEl)
-
-const {isDragging} = useSortable({
-  id: () => props.item.key,
-  index: () => props.index,
-  element: tabEl,
-  target: tabEl,
-  // 轨道修饰器同时配到 sortable 级：dragOperation 的 modifiers 优先取 source.draggable 上的配置
-  modifiers: trackModifiers,
-  transition: {duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)'},
-})
-
-// move 反馈模式下本体直接跟随指针，拖拽期间给页签容器挂类（dnd-kit popover 化会剥离外观，恢复样式挂在类上）
-watch([isDragging, tabEl], ([dragging, el]) => {
-  el?.classList.toggle('view-tab-dragging', dragging)
-}, {flush: 'post'})
+const {anchorRef} = initSortable()
 </script>
