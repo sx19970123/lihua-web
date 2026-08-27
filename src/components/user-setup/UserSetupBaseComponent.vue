@@ -1,5 +1,5 @@
 <template>
-  <a-card class="login-setting-card" :body-style="{margin: 'var(--lihua-space-xl)', 'padding-right': 'var(--lihua-space-base)'}">
+  <a-card class="login-setting-card" :styles="{body: {margin: 'var(--lihua-space-xl)', 'padding-right': 'var(--lihua-space-base)'}}">
     <a-button class="login-setting-prev-btn" type="text" v-if="back" @click="handleBack">
       <template #icon>
         <LeftOutlined />
