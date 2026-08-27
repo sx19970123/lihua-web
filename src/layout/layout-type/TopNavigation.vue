@@ -1,9 +1,9 @@
 <template>
   <a-layout class="layout">
-    <div class="top-navigation-header">
+    <div class="top-navigation-header background-glass">
       <transition :name="themeStore.routeTransition" mode="out-in">
         <a-layout-header class="top-navigation-layout-header"
-                         :class="themeStore.siderTheme === 'light' ? 'background-glass' : ''"
+                         :class="{'top-navigation-header-transparent': themeStore.siderTheme !== 'dark'}"
                          v-show="props.showLayout">
           <a-flex class="top-navigation-head-inner" align="center" gap="middle">
             <!--logo-->
@@ -18,7 +18,7 @@
         </a-layout-header>
       </transition>
       <!--多标签-->
-      <view-tabs v-if="themeStore.showViewTabs" class="background-glass"/>
+      <view-tabs v-if="themeStore.showViewTabs"/>
     </div>
     <a-layout-content>
       <!--内容-->
@@ -55,6 +55,11 @@ const props = defineProps<{showLayout: boolean }>()
   height: var(--lihua-layout-height);
   line-height: var(--lihua-layout-height);
   box-shadow: var(--lihua-layout-box-shadow);
+}
+/* 浅色导航压掉 Layout.Header 默认深色底、让外层容器的玻璃底透出；
+   深色导航保留默认底——菜单根背景为透明、文字是深色主题浅色字，需要深色底衬托 */
+.top-navigation-header-transparent {
+  background: transparent;
 }
 
 .top-navigation-head-inner {
