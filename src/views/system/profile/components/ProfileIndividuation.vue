@@ -3,11 +3,8 @@
     <a-form layout="vertical">
       <!-- 主题设置 -->
       <a-typography-title :level="5">主题设置</a-typography-title>
-      <a-form-item v-if="!themeStore.followSystemTheme">
+      <a-form-item>
         <head-theme-switch/>
-      </a-form-item>
-      <a-form-item label="跟随系统">
-        <a-switch v-model:checked="themeStore.followSystemTheme"/>
       </a-form-item>
       <a-form-item label="主题颜色">
         <color-select :dataSource="colorList" v-model:color="themeStore.colorPrimary" @click="themeStore.changeColorPrimary()"/>
@@ -33,23 +30,23 @@
         </a-radio-group>
       </a-form-item>
       <a-form-item label="分组导航" v-if="themeStore.layoutType !== 'top-navigation' || themeStore.isSmallWindow">
-        <a-switch v-model:checked="themeStore.siderGroup" @change="handleChangeSiderGroup"/>
+        <a-switch v-model:checked="themeStore.siderGroup"/>
       </a-form-item>
       <a-form-item label="固定头部">
-        <a-switch v-model:checked="themeStore.affixHead" @change="themeStore.changeAffixHead"></a-switch>
+        <a-switch v-model:checked="themeStore.affixHead"/>
       </a-form-item>
       <a-form-item label="多任务栏" v-if="viewTabsStore.$state.showLayout && !isMiniWindow">
-        <a-switch v-model:checked="themeStore.showViewTabs" @change="themeStore.changeShowViewTabs"/>
+        <a-switch v-model:checked="themeStore.showViewTabs"/>
       </a-form-item>
       <a-form-item label="显示页脚">
-        <a-switch v-model:checked="themeStore.showFooter"  @change="themeStore.changeFooter"/>
+        <a-switch v-model:checked="themeStore.showFooter"/>
       </a-form-item>
       <a-divider/>
 
       <!-- 其他设置 -->
       <a-typography-title :level="5">其他设置</a-typography-title>
       <a-form-item label="高级材质">
-        <a-switch v-model:checked="themeStore.groundGlass" @change="themeStore.changeGroundGlass"></a-switch>
+        <a-switch v-model:checked="themeStore.groundGlass"/>
       </a-form-item>
       <a-form-item label="切换动画">
         <a-select style="width: 200px" v-model:value="themeStore.routeTransition">
@@ -77,9 +74,9 @@ import {useUserStore} from "@/stores/user";
 import {useThemeStore} from "@/stores/theme";
 import {usePermissionStore} from "@/stores/permission.ts";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
-import {onUnmounted, ref} from "vue";
+import {onUnmounted, ref, watch} from "vue";
 import {ResponseError} from "@/api/global/type.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 
 const themeStore = useThemeStore()
 const userStore = useUserStore()
@@ -110,8 +107,10 @@ const handleSaveTheme = async () => {
   }
 }
 
-// 处理修改菜单分组模式
-const handleChangeSiderGroup = () => {
-  permissionStore.reloadMenu()
-}
+// Switch 的 change 事件先于 v-model 写回触发，回调内读状态是旧值，统一改为 watch 驱动
+watch(() => themeStore.siderGroup, () => permissionStore.reloadMenu())
+watch(() => themeStore.affixHead, () => themeStore.changeAffixHead())
+watch(() => themeStore.showViewTabs, () => themeStore.changeShowViewTabs())
+watch(() => themeStore.showFooter, () => themeStore.changeFooter())
+watch(() => themeStore.groundGlass, () => themeStore.changeGroundGlass())
 </script>
