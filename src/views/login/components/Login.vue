@@ -72,6 +72,7 @@ import token from "@/helpers/token.ts"
 import remember from "@/helpers/remember.ts"
 import userSetup from "@/helpers/user-setup.ts"
 import {initApp} from "@/app-init.ts"
+import {connect} from "@/utils/web-socket.ts"
 import {login} from "@/api/system/authentication/authentication.ts"
 import type {Rule} from "ant-design-vue/es/form"
 import {message} from "ant-design-vue"
@@ -172,6 +173,8 @@ const userLogin = async (captchaVerification: string) => {
         await router.push("/index");
       } else {
         await initApp()
+        // 登录即建立 websocket 连接（守卫只在用户信息为空的冷启动路径连接）
+        connect()
         userSetup.setData(checkItem)
         emit("startUserSetup", checkItem)
       }

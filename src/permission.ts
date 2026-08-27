@@ -19,6 +19,8 @@ router.beforeEach(async (to, from, next) => {
         try {
             // 判断是否已拉取用户信息
             if (!userStore.userInfo.id) {
+                // initApp 与 websocket 连接互不依赖，并行执行缩短首屏等待
+                const connectPromise = connect()
                 // 拉取登录用户数据，并初始化 store
                 await initApp();
                 // 检查登录后信息是否完善
@@ -28,7 +30,7 @@ router.beforeEach(async (to, from, next) => {
                     return
                 }
                 // 连接到websocket
-                await connect()
+                await connectPromise
                 // 判断用户是否拥有静态路由中指定的角色
                 if (hasRouteRole(to?.meta?.role as string[])) {
                     // 已登录状态下，请求登录页面自动跳转到首页

@@ -63,9 +63,11 @@ export const useSettingStore = defineStore('setting', {
          */
         async initBaseSetting() {
             try {
-                await this.fetchEnableGrayMode()
-                await this.fetchEnableSignUp()
-                await this.fetchEnableCaptcha()
+                await Promise.all([
+                    this.fetchEnableGrayMode(),
+                    this.fetchEnableSignUp(),
+                    this.fetchEnableCaptcha()
+                ])
             } catch (error) {
                 this.isServerConnected = false
             }

@@ -10,51 +10,31 @@ import {message} from "@/antd-adapter";
 import {type RouteLocationNormalizedLoaded} from "vue-router";
 
 /**
- * 初始化应用
+ * 初始化应用：用户信息 → 主题 → 动态路由 → 菜单 → viewTabs
  */
-export const initApp = () => {
+export const initApp = async (): Promise<void> => {
   const userStore = useUserStore()
   const permissionStore = usePermissionStore()
   const viewTabsStore = useViewTabsStore()
   const themeStore = useThemeStore()
   const dictStore = useDictStore()
 
-  return new Promise((resolve, reject) => {
-    userStore.initUserInfo().then((resp) => {
-      try {
-        const metaRouterList = resp.data?.routers || []
-        const staticRoutes = router.options.routes
-        // 初始化系统主题（首先初始化主题，因为后续的初始化需要用到主题数据）
-        themeStore.init(userStore.$state.userInfo.theme)
+  const resp = await userStore.initUserInfo()
+  const metaRouterList = resp.data?.routers || []
 
-        // 初始化动态路由
-        permissionStore.initDynamicRouter(metaRouterList)
-
-        // 初始化用户菜单数据
-        permissionStore.initMenu(metaRouterList, cloneDeep(staticRoutes) as any[])
-
-        // 初始化totalViewTabs数据
-        viewTabsStore.initTotalViewTabs(resp.data.viewTabs, cloneDeep(staticRoutes) as any[])
-
-        // 设置最近使用组件的缓存key值
-        viewTabsStore.setViewCacheKey(userStore.$state.username)
-
-        // 清空字典store
-        dictStore.clearDict()
-
-        // 清空组件keep-alive
-        viewTabsStore.clearComponentsKeepAlive()
-        console.log("初始化执行完成")
-        resolve(resp)
-      } catch (e) {
-        // 此处产生了异常应该由then中各个方法处理，这里只进行打印即可
-        console.error(e)
-        reject(e)
-      }
-    }).catch(e => {
-      reject(e)
-    })
-  })
+  // 主题先行：菜单生成（isSiderGroup）依赖主题状态
+  themeStore.init(userStore.$state.userInfo.theme)
+  permissionStore.initDynamicRouter(metaRouterList)
+  // siderMenuFilter 会原地过滤/标注传入的路由表，必须传副本防止污染真实路由表
+  permissionStore.initMenu(metaRouterList, cloneDeep(router.options.routes) as any[])
+  // getStaticItem 只读遍历，可直接使用真实路由表
+  viewTabsStore.initTotalViewTabs(resp.data?.viewTabs || [], router.options.routes)
+  // 设置最近使用组件的缓存key值
+  viewTabsStore.setViewCacheKey(userStore.$state.username)
+  // 清空字典store
+  dictStore.clearDict()
+  // 清空组件keep-alive
+  viewTabsStore.clearComponentsKeepAlive()
 }
 
 /**

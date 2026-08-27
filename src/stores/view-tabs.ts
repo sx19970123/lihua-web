@@ -41,7 +41,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
          * @param viewTabVOList
          * @param staticRoutes
          */
-        initTotalViewTabs(viewTabVOList: Array<StarViewType>, staticRoutes: any[]): void {
+        initTotalViewTabs(viewTabVOList: Array<StarViewType>, staticRoutes: readonly any[]): void {
             // 去除父级节点获取子路由组件
             const hasKeyRoutComponentList: Array<StarViewType> = []
             getStaticItem(staticRoutes,hasKeyRoutComponentList)
@@ -83,10 +83,23 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 tab = this.getTotalTabByKey(key);
             }
 
-            // 处理param传参
+            // totalViewTabs 中查不到（菜单与路由数据不一致），按未纳入 viewTab 管理处理，避免空引用
+            if (!tab) {
+                console.warn(`viewTabs 中不存在的路由：${key}`)
+                this.$state.activeKey = '';
+                return;
+            }
+
+            // 处理param传参：以父路由的 viewTab 为模板
             if (Object.keys(route?.params).length > 0) {
                 const matchedList = route.matched
-                tab = this.getTotalTabByKey(matchedList[matchedList.length - 1].path)
+                const parentTab = this.getTotalTabByKey(matchedList[matchedList.length - 1].path)
+                if (!parentTab) {
+                    console.warn(`viewTabs 中不存在的父路由：${matchedList[matchedList.length - 1].path}`)
+                    this.$state.activeKey = '';
+                    return;
+                }
+                tab = parentTab
                 tab.routerPathKey = route.path
             }
 
@@ -191,26 +204,36 @@ export const useViewTabsStore = defineStore('viewTabs',{
         },
         // 传入tab元素，与集合中的元素进行替换
         replaceByKey(tab: StarViewType) {
-            // 替换viewTabs
+            // 替换viewTabs（未打开的标签不在 viewTabs 中，无需替换）
             const index = this.$state.viewTabs.findIndex(t => t.routerPathKey === tab.routerPathKey)
-            this.$state.viewTabs.splice(index,1, tab)
-            // 替换totalViewTabs
+            if (index !== -1) {
+                this.$state.viewTabs.splice(index,1, tab)
+            }
+            // 替换totalViewTabs（不存在时追加，避免 splice(-1) 误伤末位元素）
             const totalIndex = this.$state.totalViewTabs.findIndex(t => t.routerPathKey === tab.routerPathKey)
-            this.$state.totalViewTabs.splice(totalIndex,1, tab)
+            if (totalIndex !== -1) {
+                this.$state.totalViewTabs.splice(totalIndex,1, tab)
+            } else {
+                this.$state.totalViewTabs.push(tab)
+            }
         },
         // 添加固定，固定到前排
         affix(tab: StarViewType) {
             const targetIndex = this.$state.viewTabs.filter(t => t.affix).length
             const viewTabs = this.$state.viewTabs
             const index = viewTabs.findIndex(t => t.routerPathKey === tab.routerPathKey)
-            viewTabs.splice(index,1)
+            if (index !== -1) {
+                viewTabs.splice(index,1)
+            }
             this.$state.viewTabs.splice(targetIndex,0,tab)
         },
         // 取消固定，移动到最后
         unAffix(tab: StarViewType) {
             const viewTabs = this.$state.viewTabs
             const index = viewTabs.findIndex(t => t.routerPathKey === tab.routerPathKey)
-            viewTabs.splice(index,1)
+            if (index !== -1) {
+                viewTabs.splice(index,1)
+            }
             viewTabs.splice(viewTabs.length,0,tab)
         },
         // 移动元素
@@ -259,7 +282,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
  * @param staticRoutes
  * @param arr
  */
-const getStaticItem = (staticRoutes: any[], arr: Array<StarViewType>): void => {
+const getStaticItem = (staticRoutes: readonly any[], arr: Array<StarViewType>): void => {
     if (staticRoutes) {
         staticRoutes.forEach(route => {
 
@@ -288,6 +311,11 @@ const getStaticItem = (staticRoutes: any[], arr: Array<StarViewType>): void => {
         });
     }
 }
+
+/**
+ * 最近使用列表上限，防止 localStorage 随访问页面种类数无限增长
+ */
+const RECENT_TABS_LIMIT = 50
 
 /**
  * 向 localStorage 中缓存
@@ -320,6 +348,10 @@ const handleAddTabCache = (tab: StarViewType) => {
             label: tab.label,
             path: tab.routerPathKey
         })
+        // 超出上限截断
+        if (hisArray.length > RECENT_TABS_LIMIT) {
+            hisArray.length = RECENT_TABS_LIMIT
+        }
         localStorage.setItem(viewTabStore.$state.tabCacheKey ,JSON.stringify(hisArray))
     }
 }
