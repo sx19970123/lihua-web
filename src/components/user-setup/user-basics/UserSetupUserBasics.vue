@@ -39,11 +39,10 @@
 
 <script setup lang="ts">
 import UserSetupBaseComponent from "@/components/user-setup/UserSetupBaseComponent.vue";
-import {type FormInstance, message} from 'ant-design-vue';
+import {type FormInstance, type Rule, message} from '@/antd-adapter';
 import {initDict} from "@/helpers/dict.ts";
 import {reactive, type Ref, ref, useTemplateRef} from "vue";
 import type {ProfileInfo} from "@/api/system/profile/type/sys-profile.ts";
-import type {Rule} from "ant-design-vue/es/form";
 import {saveBasics} from "@/api/system/profile/profile.ts";
 import {useUserStore} from "@/stores/user.ts";
 import {checkEmail, checkPhoneNumber} from "@/api/system/user/user.ts";
@@ -140,7 +139,7 @@ const handleNext = async (loading:Ref<boolean>) => {
       await userStore.initUserInfo()
       emits('next', loading.value)
     } else {
-      message.warn(resp.msg)
+      message.warning(resp.msg)
     }
   } finally {
     loading.value = false

@@ -19,7 +19,7 @@
             <transition name="lock-layout-fade" mode="out-in">
               <div class="date-time" v-if="!isCompactLockedLayout">
                 <a-typography-title :level="3"> {{nowDate}} {{nowWeek}}</a-typography-title>
-                <a-typography-title class="time"> {{nowTime}} </a-typography-title>
+                <a-typography-title :styles="{root: {fontSize: '100px', marginTop: 0}}"> {{nowTime}} </a-typography-title>
               </div>
             </transition>
 
@@ -112,7 +112,7 @@ import {
   screenLogout,
   screenUnlock
 } from "@/helpers/lock-screen.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {throttle} from 'lodash-es'
 import {disableOverflowY, enableOverflowY} from "@/utils/scrollbar.ts";
 
@@ -657,11 +657,6 @@ onUnmounted(() => {
 
 .date-time {
   margin-top: 64px;
-}
-
-.time {
-  font-size: 100px;
-  margin-top: 0 !important;
 }
 
 .user {

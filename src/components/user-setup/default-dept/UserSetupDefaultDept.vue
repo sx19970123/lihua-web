@@ -17,7 +17,7 @@
 import UserSetupBaseComponent from "@/components/user-setup/UserSetupBaseComponent.vue";
 import DefaultDept from "@/components/default-dept-select/index.vue"
 import type {Ref} from "vue";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {useUserStore} from "@/stores/user.ts";
 
 const userStore = useUserStore();
@@ -34,7 +34,7 @@ const handleNext = (loading:Ref<boolean>) => {
   if (userStore.$state.defaultDeptCode) {
     emits('next', loading.value)
   } else {
-    message.warn('请选择默认部门')
+    message.warning('请选择默认部门')
   }
 }
 

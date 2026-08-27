@@ -39,8 +39,7 @@
 <script setup lang="ts">
 import UserSetupBaseComponent from "@/components/user-setup/UserSetupBaseComponent.vue";
 import {reactive, type Ref, useTemplateRef} from "vue";
-import type {Rule} from "ant-design-vue/es/form";
-import {type FormInstance, message} from "ant-design-vue";
+import {type FormInstance, type Rule, message} from "@/antd-adapter";
 import PasswordInput from "@/components/password-input/index.vue";
 import {updatePassword} from "@/api/system/profile/profile.ts";
 

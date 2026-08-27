@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import {ref, useTemplateRef} from "vue";
-import type {CarouselRef} from "ant-design-vue/es/carousel";
+import type {CarouselRef} from "@/antd-adapter";
 import {useUserStore} from "@/stores/user.ts";
 import userSetup from "@/helpers/user-setup.ts"
 import router from "@/router";

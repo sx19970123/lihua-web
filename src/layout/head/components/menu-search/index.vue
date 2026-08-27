@@ -141,7 +141,7 @@ import SelectableCard from "@/components/selectable-card/index.vue";
 import type {RecentType, StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";
 import {traverseWithPath} from "@/utils/tree.ts";
 import {cloneDeep, debounce, throttle} from "lodash-es"
-import type {ItemType} from "ant-design-vue";
+import type {ItemType} from "@/antd-adapter";
 
 const viewTabsStore = useViewTabsStore();
 const permissionStore = usePermissionStore();
