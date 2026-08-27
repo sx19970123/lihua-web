@@ -3,7 +3,7 @@
       :items="menu ? menu : defaultMenu"
       :theme="siderTheme ? siderTheme : themeStore.siderTheme"
       :mode="siderMode"
-      :styles="{root: {borderInlineEnd: 'none', backgroundColor: 'var(--lihua-alpha-level-0)'}}"
+      :styles="{root: {borderInlineEnd: 'none', borderBottom: 'none', backgroundColor: 'var(--lihua-alpha-level-0)'}}"
       v-model:selected-keys="state.selectedKeys"
       v-model:open-keys="state.openKeys"
       @select="handleClickMenuItem"
