@@ -467,13 +467,18 @@ watch(() => route.path,() => {
   background: var(--ant-tabs-card-bg);
   border: var(--ant-line-width) var(--ant-line-type) var(--ant-color-border-secondary);
   color: var(--ant-tabs-item-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* 拖拽中的选中页签：active 背景与主色文字 */
 .ant-tabs-tab.view-tab-dragging.ant-tabs-tab-active {
   background: var(--ant-color-bg-container);
   color: var(--ant-tabs-item-selected-color);
+}
+
+/* 玻璃主题把选中页签底色置透（与轨道玻璃底融合，ground-glass.css 带 !important），
+   拖拽浮层悬于任意内容之上会透底：拖拽期间以不透明容器底色压回（同 !important 下提高特异性决胜） */
+.enable-glass .ant-tabs-tab.view-tab-dragging.ant-tabs-tab-active {
+  background: var(--ant-color-bg-container) !important;
 }
 
 /* 拖拽中的文本色钉住：不依赖 :active/:focus 伪类（换位重渲染会打断伪类导致掉色） */
