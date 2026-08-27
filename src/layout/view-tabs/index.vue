@@ -148,6 +148,11 @@ const initDrag = () => {
 
   /** 取消拖拽时回滚用的 key 序列快照（同时用于初始化 dragOrder） */
   let snapshotKeys: Array<string> = []
+
+  /** 换位判定上下文（dragMove 缓存）：源页签元素与其轨道，供换位后的追帧重评使用 */
+  let dragSourceEl: HTMLElement | undefined
+  let dragNavList: HTMLElement | undefined
+  let dragSourceKey = ''
   /** 拖拽期间冻结轨道滚轮：捕获阶段拦截，阻断 @v-c 的滚轮处理器（防内部 transformLeft 漂移） */
   let frozenWheelTarget: HTMLElement | undefined
   const freezeWheel = (event: Event) => {
@@ -168,36 +173,53 @@ const initDrag = () => {
     return copy
   }
 
-  /** 中心线迟滞换位：指针越过目标页签中心才换位；占位克隆（data-dnd-placeholder）矩形即被拖页签的槽位 */
+  /** 边缘换位：被拖元素同侧边缘越过紧邻页签的布局中心线才换位（盖过一半即让位），阈值随邻居宽度缩放；
+   *  边缘参考在轨道钳制下仍可达窄页签中心（中心参考下宽页签中心够不着窄页签，首尾换位死区）。
+   *  槽位中心取 offsetLeft/offsetWidth 布局值——不受 FLIP 让位动画 transform 影响：换位后邻居的
+   *  动画中途矩形恰好落进边缘规则的死区，读视觉矩形会形成换位⇄回换振荡（中段停手抖动的根因）。
+   *  每步至多换一格，换位后追帧重评至稳态——drag-move 只随指针移动触发，快速甩动后停住时
+   *  未追平的换位会滞留（滞后阻尼感）；占位克隆（data-dnd-placeholder）即被拖页签的槽位 */
+  const evaluateEdgeSwap = () => {
+    if (!dragOrder.value || !dragSourceEl || !dragNavList || !dragSourceKey) return
+    const ghostRect = dragSourceEl.getBoundingClientRect()
+    const listLeft = dragNavList.getBoundingClientRect().left
+    const slots: Array<{ key: string, center: number }> = []
+    for (const el of dragNavList.children) {
+      if (!(el instanceof HTMLElement)) continue
+      let key: string | undefined
+      if (el.hasAttribute('data-dnd-placeholder')) {
+        key = dragSourceKey
+      } else if (el !== dragSourceEl) {
+        key = el.getAttribute('data-node-key') ?? undefined
+      }
+      if (key) {
+        slots.push({key, center: listLeft + el.offsetLeft + el.offsetWidth / 2})
+      }
+    }
+    const srcIdx = slots.findIndex(slot => slot.key === dragSourceKey)
+    if (srcIdx < 0) return
+    const left = slots[srcIdx - 1]
+    const right = slots[srcIdx + 1]
+    if (left && ghostRect.left < left.center) {
+      dragOrder.value = arrayMove(dragOrder.value, srcIdx, srcIdx - 1)
+    } else if (right && ghostRect.right > right.center) {
+      dragOrder.value = arrayMove(dragOrder.value, srcIdx, srcIdx + 1)
+    } else {
+      return
+    }
+    requestAnimationFrame(evaluateEdgeSwap)
+  }
+
   const onDragMove = (event: DragMoveEvent) => {
-    const {source, position} = event.operation
+    const {source} = event.operation
     if (!source || !isSortable(source) || !dragOrder.value) return
     const sourceEl = source.element as HTMLElement | undefined
     const navList = sourceEl?.closest<HTMLElement>('.ant-tabs-nav-list')
     if (!sourceEl || !navList) return
-    const sourceKey = String(source.id)
-    const pointerX = position.current.x
-    const slots: Array<{ key: string, left: number, right: number, center: number }> = []
-    for (const el of navList.children) {
-      if (!(el instanceof HTMLElement)) continue
-      const rect = el.getBoundingClientRect()
-      if (el.hasAttribute('data-dnd-placeholder')) {
-        slots.push({key: sourceKey, left: rect.left, right: rect.right, center: (rect.left + rect.right) / 2})
-      } else if (el !== sourceEl) {
-        const key = el.getAttribute('data-node-key')
-        if (key) slots.push({key, left: rect.left, right: rect.right, center: (rect.left + rect.right) / 2})
-      }
-    }
-    const hovered = slots.find(slot => pointerX >= slot.left && pointerX <= slot.right)
-    if (!hovered || hovered.key === sourceKey) return
-    const srcIdx = slots.findIndex(slot => slot.key === sourceKey)
-    if (srcIdx < 0) return
-    let insIdx = slots.findIndex(slot => slot.key === hovered.key)
-    if (pointerX > hovered.center) insIdx += 1
-    if (insIdx > srcIdx) insIdx -= 1
-    if (insIdx !== srcIdx) {
-      dragOrder.value = arrayMove(dragOrder.value, srcIdx, insIdx)
-    }
+    dragSourceEl = sourceEl
+    dragNavList = navList
+    dragSourceKey = String(source.id)
+    evaluateEdgeSwap()
   }
 
   /** 拖拽期间轨道锁：MO 把 scrollToTab 的写入弹回快照并记录组件内部值；
