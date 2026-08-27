@@ -50,6 +50,8 @@
     .enable-glass.ant-dropdown-menu-submenu-popup {
         will-change: backdrop-filter;
         backdrop-filter: var(--lihua-backdrop-filter-md);
+        /* 弹层根节点带菜单主题类（如 -light），组件库会把主题底色画在根节点上，须强制透明由内层菜单承载玻璃底 */
+        background: transparent !important;
         border-radius: var(--lihua-radius-sm);
         overflow: hidden;
         box-shadow: var(--lihua-secondary-box-shadow);
@@ -57,5 +59,10 @@
             margin: 0;
             background-color: var(--lihua-backdrop-filter-on-color);
         }
+    }
+
+    /* 组件库下拉自带的实心箭头底色，毛玻璃下透出会是一块色斑 */
+    .enable-glass .ant-dropdown-arrow::before {
+        background: transparent !important;
     }
 }

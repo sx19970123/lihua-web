@@ -20,26 +20,26 @@
       </button>
       <template #popupRender>
         <a-menu @click="handleClickMenuTab">
-          <a-sub-menu class="menu-item-min-width" key="recent" popupClassName="enable-glass">
+          <!-- 菜单项必须是 a-sub-menu 的直接子节点：eventKey 只向插槽直接子级注入，
+               中间隔普通 div 会使内部项 eventKey 为 undefined，与初始 activeKey(undefined) 匹配后全员挂 active -->
+          <a-sub-menu class="menu-item-min-width" key="recent" popupClassName="enable-glass view-tab-popup-scroll">
             <template #title>
               <FieldTimeOutlined />
               最近使用
             </template>
-            <div class="scrollbar enable-glass" v-if="recentData.length > 0" style="max-height: 400px">
-              <a-menu-item v-for="item in recentData" :key="item.path">
-                <template #icon>
-                  <component :is="item.icon"/>
-                </template>
-                <a-flex :gap="40" align="space-between" justify="space-between" >
+            <a-menu-item v-for="item in recentData" :key="item.path">
+              <template #icon>
+                <component :is="item.icon"/>
+              </template>
+              <a-flex :gap="40" align="space-between" justify="space-between" >
+              <span>
+                {{item.label}}
+              </span>
                 <span>
-                  {{item.label}}
-                </span>
-                  <span>
-                  {{ handleTime(item.openTime) }}
-                </span>
-                </a-flex>
-              </a-menu-item>
-            </div>
+                {{ handleTime(item.openTime) }}
+              </span>
+              </a-flex>
+            </a-menu-item>
             <a-menu-item v-if="recentData.length > 0"  key="clear-recent" danger>
               <div style="text-align: center">
                 <ClearOutlined /> 清空最近使用
@@ -51,20 +51,18 @@
               </template>
             </a-empty>
           </a-sub-menu>
-          <a-sub-menu class="menu-item-min-width" key="star" popupClassName="enable-glass">
+          <a-sub-menu class="menu-item-min-width" key="star" popupClassName="enable-glass view-tab-popup-scroll">
             <template #title>
               <StarOutlined />
               收藏夹栏
             </template>
-            <div class="scrollbar" style="max-height: 400px" v-if="starData.length > 0">
-              <a-menu-item class="menu-item-min-width" v-for="item in starData" :key="item.routerPathKey">
-                <template #icon>
-                  <component :is="item.icon"/>
-                </template>
-                {{item.label}}
-              </a-menu-item>
-            </div>
-            <a-empty v-else>
+            <a-menu-item class="menu-item-min-width" v-for="item in starData" :key="item.routerPathKey">
+              <template #icon>
+                <component :is="item.icon"/>
+              </template>
+              {{item.label}}
+            </a-menu-item>
+            <a-empty v-if="!(starData?.length > 0)">
               <template #description>
                 <a-typography-text>暂无数据</a-typography-text>
               </template>
@@ -256,5 +254,15 @@ defineExpose({
 }
 .menu-item-min-width {
   min-width: 120px;
+}
+
+/* 列表滚动：菜单项需为 a-sub-menu 直接子节点（eventKey 只向插槽直接子级注入），
+   滚动容器只能落在弹层内层菜单上——竖排菜单自带 max-height(calc(100vh-…))+overflow-y:auto，
+   这里收紧为 400px 并改细滚动条；若另包滚动容器会与它叠出双滚动条 */
+.view-tab-popup-scroll .ant-dropdown-menu {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lihua-scrollbar-thumb-color);
 }
 </style>
