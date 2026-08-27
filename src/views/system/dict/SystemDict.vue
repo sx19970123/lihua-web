@@ -164,7 +164,7 @@
              :confirm-loading="modalActive.saveLoading"
              @ok="saveDictType">
       <template #title>
-        <div style="margin-bottom: var(--lihua-space-lg)" v-draggable>
+        <div style="margin-bottom: var(--lihua-space-lg)">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>

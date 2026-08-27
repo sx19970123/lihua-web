@@ -159,7 +159,7 @@
 
     <a-modal v-model:open="modalActive.open" @ok="savePost" :confirm-loading="modalActive.saveLoading">
       <template #title>
-        <div style="margin-bottom: var(--lihua-space-lg)" v-draggable>
+        <div style="margin-bottom: var(--lihua-space-lg)">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>

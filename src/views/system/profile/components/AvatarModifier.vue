@@ -13,7 +13,7 @@
     </a-row>
     <a-modal v-model:open="open" width="1000px" @cancel="close">
       <template #title>
-        <a-typography-title :level="4" v-draggable>头像编辑</a-typography-title>
+        <a-typography-title :level="4">头像编辑</a-typography-title>
       </template>
       <a-flex vertical align="center" :gap="24">
         <!--        avatarType 不是 image 时使用avatar预览-->

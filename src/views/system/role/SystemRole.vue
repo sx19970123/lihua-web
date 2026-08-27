@@ -146,7 +146,7 @@
 <!--    角色模态框-->
     <a-modal v-model:open="modalActive.open" :footer="null">
       <template #title>
-        <div style="margin-bottom: var(--lihua-space-lg)" v-draggable>
+        <div style="margin-bottom: var(--lihua-space-lg)">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>

@@ -9,8 +9,8 @@ import {initApp} from "@/app-init.ts";
 import {hasRouteRole} from "@/helpers/auth.ts";
 import {closeConnect, connect} from "@/utils/web-socket.ts";
 
-// 路由前置守卫
-router.beforeEach(async (to, from, next) => {
+// 路由前置守卫（返回值风格：true 放行 / 目标位置重定向）
+router.beforeEach(async (to, from) => {
     NProgress.start()
     const userStore = useUserStore()
     const themeStore = useThemeStore()
@@ -26,25 +26,18 @@ router.beforeEach(async (to, from, next) => {
                 // 检查登录后信息是否完善
                 const data = userSetup.getData()
                 if (data && data.length > 0) {
-                    to.name === "Login" ? next() : next("/login")
-                    return
+                    return to.name === "Login" ? true : "/login"
                 }
                 // 连接到websocket
                 await connectPromise
                 // 判断用户是否拥有静态路由中指定的角色
                 if (hasRouteRole(to?.meta?.role as string[])) {
                     // 已登录状态下，请求登录页面自动跳转到首页
-                    to.path === "/login" ? next('/index') : next({ ...to, replace: true })
-                } else {
-                    next("/403")
+                    return to.path === "/login" ? '/index' : { ...to, replace: true }
                 }
-            } else {
-                if (hasRouteRole(to?.meta?.role as string[])) {
-                    next();
-                } else {
-                    next("/403")
-                }
+                return "/403"
             }
+            return hasRouteRole(to?.meta?.role as string[]) ? true : "/403"
         } catch (error) {
             console.error(error)
             // 关闭websocket连接
@@ -52,7 +45,7 @@ router.beforeEach(async (to, from, next) => {
             // 清空用户信息
             userStore.clearUserInfo()
             // 重定向到登录页面
-            next({name: "Login"})
+            return {name: "Login"}
         }
     } else {
         // 清空登录后信息
@@ -62,13 +55,10 @@ router.beforeEach(async (to, from, next) => {
         // 关闭websocket连接
         closeConnect()
         if (to.meta && to.meta.allowAnonymous) {
-            next()
-        } else {
-            to.path !== "/login" ? next({name: "Login"}) : next()
+            return true
         }
+        return to.path !== "/login" ? {name: "Login"} : true
     }
-
-    NProgress.done();
 });
 
 // 路由后置守卫
