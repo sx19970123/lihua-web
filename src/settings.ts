@@ -1,6 +1,16 @@
 import {theme} from "antdv-next";
 
 /**
+ * 外观模式：light / dark 手动指定明暗，auto 跟随系统偏好
+ */
+export type ThemeMode = 'light' | 'dark' | 'auto'
+
+/**
+ * 启动时持久化的外观模式（配置态）；缺省跟随系统
+ */
+const themeMode: ThemeMode = localStorage.getItem("theme-mode") as ThemeMode ?? 'auto'
+
+/**
  * 系统信息配置
  */
 export default {
@@ -10,14 +20,16 @@ export default {
     version: "2.2.0",
 
     /**
-     * 暗色模式 true； 亮色模式 false
+     * 外观模式（配置态：用户意图）
      */
-    isDarkTheme: localStorage.getItem("data-theme") === 'dark',
+    themeMode,
 
     /**
-     * 跟随系统
+     * 当前明暗（实际态：auto 时由系统偏好推导，手动时等于配置）
      */
-    followSystemTheme: true,
+    isDarkTheme: themeMode === 'auto'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : themeMode === 'dark',
 
     /**
      * 布局类型 side-navigation / mix-navigation / top-navigation

@@ -2,7 +2,7 @@
   <a-flex class="login-background" justify="center" align="center">
     <a-flex align="center" :gap="208" v-if="!showUserSetup">
 <!--      主题切换开关-->
-      <theme-switch class="theme-switch"/>
+      <theme-switch class="theme-switch" translucent/>
 <!--        左侧标题-->
       <div class="title">
         <transition name="fade" mode="out-in">

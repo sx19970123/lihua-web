@@ -31,6 +31,9 @@ const themeStore = useThemeStore()
 const permissionStore = usePermissionStore()
 // 应用html-root主题颜色
 themeStore.changeDocumentElement(token.value.colorPrimary)
+// 全局主题引导：登录页不走 initApp 的主题初始化链，须在此做一次全量同步（算法+html属性），
+// 避免 store 状态、antd 算法、DOM 属性三者起始不一致
+themeStore.applyThemeMode()
 
 // 初始化系统配置
 const settingStore = useSettingStore()
@@ -70,10 +73,9 @@ const initTheme = () => {
 
   // 处理跟随系统主题
   const handleFollowSystemTheme = () => {
-    // 开启跟随系统后暗色模式由App.vue控制
-    if (themeStore.$state.isServerLoad && themeStore.followSystemTheme) {
-      themeStore.isDarkTheme = marchSystemTheme.matches
-      themeStore.changeDataDark()
+    // 自动档接管：系统偏好变化时重推导实际态；登录页同样生效，不受服务端主题加载状态限制
+    if (themeStore.themeMode === 'auto') {
+      themeStore.applyThemeMode()
       marchSystemTheme.addEventListener('change', handleFollowSystemTheme)
     } else {
       marchSystemTheme.removeEventListener('change', handleFollowSystemTheme)
@@ -82,10 +84,9 @@ const initTheme = () => {
 
   // 将主题同步到其他标签页
   const syncTabTheme = (event: StorageEvent) => {
-    // 同步亮色/暗色模式
-    if (event.key === 'data-theme') {
-      themeStore.isDarkTheme = event.newValue === 'dark'
-      themeStore.changeDataDark(true)
+    // 同步外观模式（配置态），实际态由各端自行推导
+    if (event.key === 'theme-mode' && event.newValue) {
+      themeStore.changeThemeMode(event.newValue as 'light' | 'dark' | 'auto', true)
     }
     // 同步其他主题
     if (event.key === 'theme' && event.newValue) {
@@ -107,8 +108,8 @@ watch(() => token.value.colorPrimary, () => {
   themeStore.changeDocumentElement(token.value.colorPrimary)
 })
 
-// 监听主题跟随系统
-watch(() => themeStore.followSystemTheme && themeStore.$state.isServerLoad, () => {
+// 监听自动档接管（系统偏好监听器的挂载/卸载）；档位持久化由 changeThemeMode 收口
+watch(() => themeStore.themeMode === 'auto', () => {
   handleFollowSystemTheme()
 })
 

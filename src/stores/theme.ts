@@ -1,18 +1,18 @@
 import {defineStore} from "pinia";
 import {theme} from "antdv-next";
-import settings from "@/settings";
+import settings, {type ThemeMode} from "@/settings";
 
 export const useThemeStore = defineStore('theme',{
     state() {
         /**
-         * 暗色模式
+         * 外观模式（配置态）：light / dark 手动指定，auto 跟随系统
          */
-        const isDarkTheme: boolean = settings.isDarkTheme
+        const themeMode: ThemeMode = settings.themeMode
 
         /**
-         * 跟随系统主题
+         * 当前明暗（实际态）：auto 时由系统偏好推导，手动时等于配置
          */
-        const followSystemTheme: boolean = settings.followSystemTheme
+        const isDarkTheme: boolean = settings.isDarkTheme
 
         /**
          * 布局类型 side-navigation / mix-navigation / top-navigation
@@ -108,8 +108,8 @@ export const useThemeStore = defineStore('theme',{
             componentSize,
             showViewTabs,
             showFooter,
+            themeMode,
             isDarkTheme,
-            followSystemTheme,
             colorPrimary,
             antColorPrimary,
             siderTheme,
@@ -129,7 +129,7 @@ export const useThemeStore = defineStore('theme',{
         // 初始化样式
         init(themeJson?: string) {
             this.initState(themeJson)
-            this.changeDataDark()
+            this.applyThemeMode()
             this.changeLayoutType()
             this.changeAffixHead()
             this.changeGroundGlass()
@@ -152,7 +152,6 @@ export const useThemeStore = defineStore('theme',{
                         }
                     }
                 }
-                this.$state.isDarkTheme = localStorage.getItem("data-theme") === 'dark'
             } catch (e) {
                 console.error('初始化主题失败，使用默认主题',e)
                 return;
@@ -163,9 +162,17 @@ export const useThemeStore = defineStore('theme',{
                 this.$state.layoutType = "side-navigation"
             }
         },
-        // 切换暗色模式，isSync：App.vue组件中用于同步标签页暗色模式
-        changeDataDark(isSync?: boolean) {
-            // 暗色模式下
+        // 切换外观模式（档位变更唯一入口）：写配置态并全量落地
+        changeThemeMode(mode: ThemeMode, isSync?: boolean) {
+            this.$state.themeMode = mode
+            this.applyThemeMode(isSync)
+        },
+        // 由配置态推导实际态并落地：auto 读系统偏好，手动档直取配置；
+        // 算法/导航色/html 属性/持久化都在此同步，不能依赖其他状态的间接联动
+        applyThemeMode(isSync?: boolean) {
+            this.$state.isDarkTheme = this.$state.themeMode === 'auto'
+                ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                : this.$state.themeMode === 'dark'
             if (this.$state.isDarkTheme) {
                 this.siderTheme = 'light'
                 this.$state.themeConfig.algorithm = theme.darkAlgorithm
@@ -175,8 +182,9 @@ export const useThemeStore = defineStore('theme',{
                 this.$state.themeConfig.algorithm = theme.defaultAlgorithm
             }
             this.changeSiderTheme()
+            document.documentElement.setAttribute("data-theme",this.$state.isDarkTheme ? 'dark' : 'light')
             if (isSync !== true) {
-                localStorage.setItem('data-theme',this.$state.isDarkTheme ? 'dark' : 'light')
+                localStorage.setItem('theme-mode',this.$state.themeMode)
             }
         },
         // 布局类型
@@ -250,8 +258,7 @@ export const useThemeStore = defineStore('theme',{
             this.$state.layoutType = settings.layoutType
             this.$state.componentSize = settings.componentSize
             this.$state.showViewTabs = settings.showViewTabs
-            this.$state.isDarkTheme = localStorage.getItem("data-theme") === "dark"
-            this.$state.followSystemTheme = settings.followSystemTheme
+            this.$state.themeMode = settings.themeMode
             this.$state.colorPrimary = settings.themeConfig.token.colorPrimary
             this.$state.siderTheme = settings.siderTheme
             this.$state.groundGlass = settings.groundGlass
@@ -262,7 +269,7 @@ export const useThemeStore = defineStore('theme',{
             this.$state.themeConfig = settings.themeConfig
             this.$state.siderGroup = settings.siderGroup
             this.$state.grayModel = settings.grayModel
-            this.changeDataDark()
+            this.applyThemeMode()
             this.changeGroundGlass()
             this.changeFooter()
         },
