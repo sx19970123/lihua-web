@@ -2,7 +2,7 @@
   <a-dropdown :trigger="['contextmenu']" :classes="{root: 'enable-glass'}">
     <!-- 触发区域的 class 必须挂在触发元素上：Dropdown 底层渲染 Fragment 根，组件上的 class 无法落到触发元素 -->
     <a-space class="view-tab-dropdown">
-      <component :is="tabPane.tab.icon" style="margin: 0"/>
+      <component :is="tabPane.tab.icon" class="m-0"/>
       {{ tabPane.tab.label }}
       <ReloadOutlined v-if="tabPane.tab.routerPathKey === viewTabsStore.$state.activeKey"
                       class="view-tab-icon"
@@ -17,7 +17,7 @@
     <template #popupRender>
       <a-menu @click="handleClickMenuTab">
         <a-menu-item key="newPage">
-          <ImportOutlined style="transform: rotate(180deg)"/>
+          <ImportOutlined class="rotate-180"/>
           新页打开
         </a-menu-item>
         <a-menu-item key="miniWindow" v-if="usableMiniWindow">

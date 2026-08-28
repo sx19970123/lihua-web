@@ -1,5 +1,5 @@
 <template>
-  <div style="padding-right: var(--ant-padding-xs)">
+  <div class="pr-ant-xs">
     <!--  恢复view-tabs缓存标签  -->
     <Transition name="down" mode="out-in">
       <button class="ant-tabs-nav-more" v-if="reversible" @click="reverse">
@@ -41,7 +41,7 @@
               </a-flex>
             </a-menu-item>
             <a-menu-item v-if="recentData.length > 0"  key="clear-recent" danger>
-              <div style="text-align: center">
+              <div class="text-center">
                 <ClearOutlined /> 清空最近使用
               </div>
             </a-menu-item>
