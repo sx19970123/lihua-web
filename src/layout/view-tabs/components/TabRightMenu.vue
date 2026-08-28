@@ -186,7 +186,7 @@ const showHideLayout = () => {
     localStorage.setItem("layout",'hide')
   }
   viewTabsStore.$state.showLayout = localStorage.getItem("layout") === 'show'
-  viewTabsStore.setShowLayoutAttribute()
+  viewTabsStore.setShowLayoutVariable()
 }
 
 /**

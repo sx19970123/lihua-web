@@ -61,7 +61,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
             // 默认显示数据
             this.$state.viewTabs = this.$state.totalViewTabs.filter(tab => tab.affix)
             // 更新显示隐藏layout
-            this.setShowLayoutAttribute()
+            this.setShowLayoutVariable()
         },
         // 根据路由信息加载viewTag
         init(route: RouteLocationNormalizedLoaded) {
@@ -270,9 +270,9 @@ export const useViewTabsStore = defineStore('viewTabs',{
             // 生成一个随机的 UUID
             this.$state.contentComponentKey = uuidv4();
         },
-        // 修改显示layout后更新html节点layout
-        setShowLayoutAttribute () {
-            document.documentElement.setAttribute("layout", 'hide' === localStorage.getItem("layout")  ? 'hide' : 'show')
+        // 修改显示layout后同步内容区头部高度变量（由 iframe/监控页的高度公式消费）
+        setShowLayoutVariable () {
+            document.documentElement.style.setProperty('--layout-display-height', 'hide' === localStorage.getItem("layout")  ? '0px' : 'var(--lihua-layout-height)')
         }
     }
 })

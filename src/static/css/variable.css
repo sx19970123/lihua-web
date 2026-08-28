@@ -47,6 +47,11 @@
     /* ===============================页脚=============================== */
     --footer-height: 24px;
 
+    /* ====================内容区高度状态（store 切换时直写覆盖）=================== */
+    --footer-display-height: var(--footer-height);
+    --tab-display-height: 54px;
+    --layout-display-height: var(--lihua-layout-height);
+
     /* ==============================滚动条============================== */
     --lihua-scrollbar-thumb-color: rgb(227,227,227) transparent;
     --lihua-sider-scrollbar-thumb-color: rgb(66,66,66) transparent;
@@ -146,12 +151,7 @@
     --lihua-alpha-level-6: rgba(0,0,0,0.88);
 
     /* ==============================不同状态颜色============================== */
-    --lihua-success-color: #49aa19;
-    --lihua-warning-color: #d89614;
-    --lihua-danger-color: #dc4446;
-}
-
-[sider-dark = 'dark'] {
-    /* ==============================滚动条============================== */
-    --lihua-sider-scrollbar-thumb-color: rgb(66,66,66) transparent;
+    --lihua-success-color: #52c41a;
+    --lihua-warning-color: #faad14;
+    --lihua-danger-color: #ff4d4f;
 }

@@ -10,14 +10,14 @@
         <color-select :dataSource="colorList" v-model:color="themeStore.colorPrimary" @click="themeStore.changeColorPrimary()"/>
       </a-form-item>
       <a-form-item label="导航颜色" v-if="!themeStore.isDarkTheme">
-        <nav-color-select v-model="themeStore.siderTheme" @click="themeStore.changeSiderTheme"/>
+        <nav-color-select v-model="themeStore.siderTheme"/>
       </a-form-item>
       <a-divider/>
 
       <!-- 布局设置 -->
       <a-typography-title :level="5">布局设置</a-typography-title>
       <a-form-item label="导航类型" v-if="!themeStore.isSmallWindow">
-        <nav-select v-model="themeStore.layoutType" @click="themeStore.changeLayoutType"/>
+        <nav-select v-model="themeStore.layoutType"/>
       </a-form-item>
       <a-form-item label="导航宽度" v-if="themeStore.layoutType !== 'top-navigation' || themeStore.isSmallWindow">
         <a-slider v-model:value="themeStore.siderWith" @change="themeStore.changeSiderWidth" dots :max="400" :min="80" :step="20" style="width: 230px"></a-slider>
@@ -109,7 +109,6 @@ const handleSaveTheme = async () => {
 
 // Switch 的 change 事件先于 v-model 写回触发，回调内读状态是旧值，统一改为 watch 驱动
 watch(() => themeStore.siderGroup, () => permissionStore.reloadMenu())
-watch(() => themeStore.affixHead, () => themeStore.changeAffixHead())
 watch(() => themeStore.showViewTabs, () => themeStore.changeShowViewTabs())
 watch(() => themeStore.showFooter, () => themeStore.changeFooter())
 watch(() => themeStore.groundGlass, () => themeStore.changeGroundGlass())

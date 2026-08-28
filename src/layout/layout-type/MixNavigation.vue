@@ -13,14 +13,16 @@
       >
         <Logo class="logo" :show-title="!permissionStore.collapsed"/>
         <!-- 侧边栏-->
-        <div class="sider sider-scrollbar">
+        <div class="sider sider-scrollbar"
+             :class="{ 'sider-scrollbar-dark': themeStore.siderTheme === 'dark' }">
           <Side sider-mode="inline" :menu="subMenu" ref="sideRef"/>
         </div>
       </a-layout-sider>
     </transition>
     <!--   右侧head和content   -->
     <a-layout>
-      <a-layout-header class="side-navigation-header background-glass">
+      <a-layout-header class="side-navigation-header background-glass"
+                       :class="{ 'affix-header': themeStore.affixHead }">
         <transition :name="themeStore.routeTransition" mode="out-in">
           <a-flex class="side-navigation-header-inner"
                   :style="{'padding-left': !showSider ? 'var(--lihua-layout-head-space)' : 0}"
@@ -134,6 +136,11 @@ const showSider = computed(() => {
   line-height: var(--lihua-layout-height);
 }
 
+.affix-header {
+  position: sticky;
+  top: 0;
+}
+
 .side-navigation-header-inner {
   box-shadow: var(--lihua-layout-box-shadow);
   padding-right: var(--lihua-layout-head-space);
@@ -153,14 +160,5 @@ const showSider = computed(() => {
   top: 0;
   z-index: 4;
   box-shadow: var(--lihua-layout-box-shadow);
-}
-</style>
-
-<style lang="scss">
-[head-affix = enable] {
-  .side-navigation-header {
-    position: sticky;
-    top: 0;
-  }
 }
 </style>

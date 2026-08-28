@@ -66,41 +66,15 @@ onUnmounted(() =>  sessionStorage.removeItem('isRefreshed' + src.value))
   border: none;
 }
 
-/* 根据layout和view-tabs是否显示进行高度计算 */
 /*
- var(--lihua-layout-height)：顶部导航｜head高度
+ 头部/多标签/页脚的显示高度由 store 切换时直写的 display 变量提供（variable.css 内置默认值）：
+ var(--layout-display-height)：头部高度
+ var(--tab-display-height)：view-tabs高度
  var(--lihua-space-base)：上下外边距高度
- 54px：view-tabs高度
  3px：微调偏移量
+ var(--footer-display-height)：页脚高度
  */
-
-:root {
-  --tab-height: 54px;
-  --border-width: 3px;
-}
-
-[footer='show'] {
-  --footer-display-height: var(--footer-height);
-}
-[footer='hide'] {
-  --footer-display-height: 0px;
-}
-
-[view-tabs='show'] {
-  --tab-display-height: var(--tab-height);
-}
-[view-tabs='hide'] {
-  --tab-display-height: 0px;
-}
-
-[layout='show'] {
-  --layout-display-height: var(--lihua-layout-height);
-}
-[layout='hide'] {
-  --layout-display-height: 0px;
-}
-
 .lihua-iframe {
-  height: calc(100vh - var(--layout-display-height) - var(--tab-display-height) - var(--lihua-space-base) - var(--lihua-space-base) - var(--border-width) - var(--footer-display-height));
+  height: calc(100vh - var(--layout-display-height) - var(--tab-display-height) - var(--lihua-space-base) - var(--lihua-space-base) - 3px - var(--footer-display-height));
 }
 </style>

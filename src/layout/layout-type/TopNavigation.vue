@@ -1,6 +1,8 @@
 <template>
   <a-layout class="layout">
-    <div class="top-navigation-header background-glass">
+    <div class="top-navigation-header background-glass"
+         :class="{ 'affix-header': themeStore.affixHead,
+                   'dark-header': themeStore.siderTheme === 'dark' && !themeStore.isSmallWindow }">
       <transition :name="themeStore.routeTransition" mode="out-in">
         <a-layout-header class="top-navigation-layout-header"
                          :class="{'top-navigation-header-transparent': themeStore.siderTheme !== 'dark'}"
@@ -48,6 +50,10 @@ const props = defineProps<{showLayout: boolean }>()
   position: relative;
   z-index: 10;
 }
+.affix-header {
+  position: sticky;
+  top: 0;
+}
 .top-navigation-layout-header {
   position: relative;
   z-index: 10;
@@ -68,14 +74,5 @@ const props = defineProps<{showLayout: boolean }>()
 
 .sider {
   min-width: 0;
-}
-</style>
-
-<style>
-[head-affix = enable] {
-  .top-navigation-header {
-    position: sticky;
-    top: 0;
-  }
 }
 </style>

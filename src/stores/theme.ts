@@ -130,8 +130,6 @@ export const useThemeStore = defineStore('theme',{
         init(themeJson?: string) {
             this.initState(themeJson)
             this.applyThemeMode()
-            this.changeLayoutType()
-            this.changeAffixHead()
             this.changeGroundGlass()
             this.changeShowViewTabs()
             this.changeFooter()
@@ -181,34 +179,18 @@ export const useThemeStore = defineStore('theme',{
             else {
                 this.$state.themeConfig.algorithm = theme.defaultAlgorithm
             }
-            this.changeSiderTheme()
             document.documentElement.setAttribute("data-theme",this.$state.isDarkTheme ? 'dark' : 'light')
             if (isSync !== true) {
                 localStorage.setItem('theme-mode',this.$state.themeMode)
             }
         },
-        // 布局类型
-        changeLayoutType() {
-            // 修改页面标识
-            document.documentElement.setAttribute("layout-type", this.$state.layoutType)
-        },
-        // 显示多窗口页面
+        // 显示多窗口页面（高度变量由 iframe/监控页的内容区高度公式消费）
         changeShowViewTabs() {
-            const viewTabs = this.$state.showViewTabs
-            if (viewTabs) {
-                document.documentElement.setAttribute("view-tabs", "show")
-            } else {
-                document.documentElement.setAttribute("view-tabs", "hide")
-            }
+            document.documentElement.style.setProperty('--tab-display-height', this.$state.showViewTabs ? '54px' : '0px')
         },
-        // 显示页脚
+        // 显示页脚（高度变量由 iframe/监控页的内容区高度公式消费）
         changeFooter() {
-            const showFooter = this.$state.showFooter
-            if (showFooter) {
-                document.documentElement.setAttribute("footer", "show")
-            } else {
-                document.documentElement.setAttribute("footer", "hide")
-            }
+            document.documentElement.style.setProperty('--footer-display-height', this.$state.showFooter ? 'var(--footer-height)' : '0px')
         },
         // 修改导航宽度时同时修改原始值
         changeSiderWidth() {
@@ -218,28 +200,12 @@ export const useThemeStore = defineStore('theme',{
         changeColorPrimary() {
             this.themeConfig.token.colorPrimary = this.$state.colorPrimary
         },
-        // 修改侧边栏颜色
-        changeSiderTheme() {
-            if (this.$state.siderTheme === 'dark') {
-                document.documentElement.setAttribute("sider-dark", "dark")
-            } else {
-                document.documentElement.removeAttribute("sider-dark")
-            }
-        },
         // html节点添加glass属性
         changeGroundGlass() {
             if (this.$state.groundGlass) {
                 document.documentElement.setAttribute("ground-glass",'enable')
             } else {
                 document.documentElement.removeAttribute("ground-glass")
-            }
-        },
-        // 修改固定头部
-        changeAffixHead() {
-            if (this.$state.affixHead) {
-                document.documentElement.setAttribute("head-affix",'enable')
-            } else {
-                document.documentElement.setAttribute("head-affix", "disable")
             }
         },
         // 修改html标签，标记当前颜色模式

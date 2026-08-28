@@ -83,7 +83,6 @@ watch(() =>[themeStore.isSmallWindow, themeStore.layoutType], () => {
 const handleResize = () => {
   const isSmallWindow = document.body.offsetWidth < settings.menuToggleWidth
   themeStore.$state.isSmallWindow = isSmallWindow
-  document.documentElement.setAttribute("is-small-window", String(isSmallWindow))
 }
 
 // 函数防抖

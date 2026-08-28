@@ -253,14 +253,8 @@ onMounted(() => {
 }
 </style>
 <style>
-/* 根据是否开启多任务栏，设定不同的content高度 */
-[view-tabs=show][layout=show] .cache-monitor-max-content-height {
-  max-height: calc(100vh - (var(--lihua-layout-height) + 54px  + 156px));
-}
-[view-tabs=hide][layout=show] .cache-monitor-max-content-height {
-  max-height: calc(100vh - (var(--lihua-layout-height) + 156px));
-}
-[view-tabs=show][layout=hide] .cache-monitor-max-content-height {
-  max-height: calc(100vh - (54px + 156px));
+/* 头部与多任务栏的显示高度由 store 直写的 --layout-display-height/--tab-display-height 提供（variable.css 内置默认值） */
+.cache-monitor-max-content-height {
+  max-height: calc(100vh - (var(--layout-display-height) + var(--tab-display-height) + 156px));
 }
 </style>

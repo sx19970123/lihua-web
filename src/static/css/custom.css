@@ -4,11 +4,9 @@
     scrollbar-width: thin !important;
     scrollbar-color: var(--lihua-scrollbar-thumb-color);
 }
-/* 暗色导航滚动条 */
-[sider-dark = 'dark'] {
-    .sider-scrollbar {
-        scrollbar-color: var(--lihua-sider-scrollbar-thumb-color);
-    }
+/* 暗色导航滚动条（sider-scrollbar-dark 类由各布局组件的 sider 容器绑定） */
+.sider-scrollbar-dark {
+    scrollbar-color: var(--lihua-sider-scrollbar-thumb-color);
 }
 
 /**
@@ -37,16 +35,6 @@
  */
 .question-icon {
     margin-left: var(--lihua-space-xs) !important;
-}
-
-/**
-    顶部导航模式下，使用该css可使内容居中
- */
-[layout-type='top-navigation'] {
-    .top-navigation-center {
-        max-width: 1400px;
-        margin: auto
-    }
 }
 
 /**

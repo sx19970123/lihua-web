@@ -14,14 +14,16 @@
         >
           <Logo class="logo" :show-title="!permissionStore.collapsed"/>
           <!-- 侧边栏-->
-          <div class="sider sider-scrollbar">
+          <div class="sider sider-scrollbar"
+               :class="{ 'sider-scrollbar-dark': themeStore.siderTheme === 'dark' }">
             <Side sider-mode="inline" class="small-sider-content" @route-change="closeSide"/>
           </div>
         </a-layout-sider>
       </transition>
       <!--   右侧head和content   -->
       <a-layout>
-        <a-layout-header class="drawer-navigation-header background-glass">
+        <a-layout-header class="drawer-navigation-header background-glass"
+                         :class="{ 'affix-header': themeStore.affixHead }">
           <transition :name="themeStore.routeTransition" mode="out-in">
             <!--    菜单收缩-->
             <a-flex class="drawer-navigation-head" justify="space-between" v-show="props.showLayout">
@@ -87,6 +89,10 @@ closeSide()
   backdrop-filter: var(--lihua-backdrop-filter-lg);
   line-height: var(--lihua-layout-height);
 }
+.affix-header {
+  position: sticky;
+  top: 0;
+}
 .drawer-navigation-head {
   box-shadow: var(--lihua-layout-box-shadow);
   padding-left: var(--lihua-space-base);
@@ -108,12 +114,6 @@ closeSide()
 </style>
 
 <style lang="scss">
-[head-affix = enable] {
-  .drawer-navigation-header {
-    position: sticky;
-    top: 0;
-  }
-}
 .ant-layout-sider-zero-width-trigger::after {
   border-radius: 0  var(--lihua-radius-xs) var(--lihua-radius-xs) 0;
 }

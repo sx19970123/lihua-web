@@ -40,9 +40,9 @@
 
 /**
    顶部head样式变化
-   暗色导航、非小窗口、顶部导航和混合导航，图标颜色变化
+   暗色头部（顶部导航 + 暗色导航 + 非小窗口，dark-header 类由 TopNavigation 绑定），图标颜色变化
  */
-[sider-dark = 'dark'][is-small-window = 'false'][layout-type = 'top-navigation'] {
+.dark-header {
     .icon-default-color {
         color: rgba(255, 255, 255, 0.65);
     }
