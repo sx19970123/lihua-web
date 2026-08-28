@@ -1,5 +1,8 @@
 <template>
-  <a-config-provider :theme="themeStore.themeConfig" :locale="local" :component-size="themeStore.componentSize">
+  <a-config-provider :theme="themeStore.themeConfig" :locale="local" :component-size="themeStore.componentSize"
+                     :modal="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
+                     :drawer="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
+                     :image="{preview: {mask: glassMaskConfig, styles: {popup: {mask: glassMaskStyle}}}}">
 <!--    浏览器兼容提示-->
     <a-alert type="warning" closable banner v-if="showOldBrowserAlert()">
       <template #message>
@@ -24,7 +27,7 @@ import {useThemeStore} from "@/stores/theme"
 import {usePermissionStore} from "@/stores/permission.ts";
 import {useSettingStore} from "@/stores/setting.ts";
 import zhCN from 'antdv-next/locale/zh_CN';
-import {onMounted, onUnmounted, ref, useTemplateRef, watch} from "vue";
+import {onMounted, onUnmounted, ref, useTemplateRef, watch, computed} from "vue";
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';
 import {theme} from "antdv-next";
@@ -47,6 +50,13 @@ const settingStore = useSettingStore()
 // 配置中文
 const local = ref(zhCN)
 dayjs.locale(zhCN.locale)
+
+// 弹层 mask 毛玻璃统一走组件库原生 mask.blur，跟随高级材质开关（仅影响其后新打开的弹层）
+const glassMaskConfig = computed(() => ({blur: themeStore.groundGlass}))
+// mask 模糊强度统一取本体系 sm 档（组件库内置 blur(4px) 偏弱），以内联样式覆盖
+const glassMaskStyle = computed(() => themeStore.groundGlass
+    ? {backdropFilter: 'var(--lihua-backdrop-filter-sm)'}
+    : {})
 
 // 当浏览器版本过低时，显示浏览器兼容性提示
 const showOldBrowserAlert = () => {

@@ -646,6 +646,7 @@ onUnmounted(() => {
   box-shadow: var(--lihua-secondary-box-shadow);
 }
 
+/* 锁屏固定毛玻璃：有意不随高级材质开关（ground-glass）变化 */
 .lihua-lock-mask {
   will-change: backdrop-filter;
   backdrop-filter: var(--lihua-backdrop-filter-sm);

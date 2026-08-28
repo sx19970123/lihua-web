@@ -71,7 +71,6 @@ const props = defineProps<{showLayout: boolean}>()
   z-index: 3;
   height: auto;
   padding: 0;
-  backdrop-filter: var(--lihua-backdrop-filter-lg);
   line-height: var(--lihua-layout-height);
 }
 .affix-header {
