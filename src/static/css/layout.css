@@ -29,6 +29,16 @@
 }
 
 /**
+   搜索标签基础样式
+   Tag 默认 filled 变体自带填充底色且边框透明，恢复 outlined 提示样式；
+   暗色头部的白色半透明覆盖见下方条件块
+ */
+.title-search-tag {
+    background-color: transparent !important;
+    border-color: var(--lihua-border-color) !important;
+}
+
+/**
    顶部head样式变化
    暗色导航、非小窗口、顶部导航和混合导航，图标颜色变化
  */
