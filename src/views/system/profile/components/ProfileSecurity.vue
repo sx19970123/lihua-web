@@ -2,12 +2,12 @@
   <a-card>
     <a-form :colon="false" layout="vertical" :model="password" :rules="rules" @finish="handleFinish">
       <a-form-item label="旧密码" name="oldPassword">
-        <a-input-password class="form-item-width"
+        <a-input-password class="w-[270px]"
                           placeholder="请输入旧密码"
                           v-model:value="password.oldPassword"/>
       </a-form-item>
       <a-form-item label="新密码" name="newPassword">
-        <password-input class="form-item-width"
+        <password-input class="w-[270px]"
                         v-model:value="password.newPassword"
                         placeholder="请输入新密码"
                         :size="90"
@@ -16,7 +16,7 @@
       </a-form-item>
 
       <a-form-item label="确认密码" name="confirmPassword" >
-        <a-input-password class="form-item-width"
+        <a-input-password class="w-[270px]"
                           placeholder="请再次输入新密码"
                           v-model:value="password.confirmPassword"/>
       </a-form-item>
@@ -93,8 +93,3 @@ const handleFinish = async (data: passwordType) => {
 }
 
 </script>
-<style scoped>
-.form-item-width {
-  width: 270px;
-}
-</style>

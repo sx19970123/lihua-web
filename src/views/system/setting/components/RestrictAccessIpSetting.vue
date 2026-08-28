@@ -18,7 +18,7 @@
       </a-form-item>
       <transition :name="themeStore.routeTransition" mode="out-in">
         <div v-if="settingForm.enable">
-          <div class="scrollbar" style="max-height: 400px; display: inline-block">
+          <div class="scrollbar inline-block max-h-[400px]">
             <a-form-item
                 :label="index === 0 ? 'ip地址' : ''"
                 :key="index"
@@ -34,8 +34,8 @@
               trigger: ['change', 'blur'],
             }]"
             >
-              <a-input class="form-item-width" placeholder="请输入ip地址" v-model:value="settingForm.ipList[index]" allow-clear/>
-              <a-button style="margin-left: var(--ant-margin-xs); margin-right: var(--ant-margin-xs)"
+              <a-input class="w-[270px]" placeholder="请输入ip地址" v-model:value="settingForm.ipList[index]" allow-clear/>
+              <a-button class="mx-ant-xs"
                         danger
                         v-if="settingForm?.ipList.length > 1"
                         @click="handleRemoveIpItem(index)"
@@ -46,7 +46,7 @@
               </a-button>
             </a-form-item>
             <a-form-item>
-              <a-button type="dashed" class="form-item-width" @click="handleAddIpItem">
+              <a-button type="dashed" class="w-[270px]" @click="handleAddIpItem">
                 <template #icon>
                   <PlusOutlined />
                 </template>
@@ -162,9 +162,3 @@ const handleChangeSwitch = async (checked: boolean | string | number) => {
 // 页面加载完成后调用
 onMounted(() => init())
 </script>
-
-<style scoped>
-.form-item-width {
-  width: 270px;
-}
-</style>

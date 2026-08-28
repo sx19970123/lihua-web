@@ -267,10 +267,10 @@
                 :loading="postLoading"
                 vertical
             >
-              <template #content="{item, isSelected, color}">
+              <template #content="{item, isSelected}">
                 <a-flex align="center" justify="space-between">
                   <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}</a-typography-title>
-                  <a-tag v-if="isSelected" :color="color">默认</a-tag>
+                  <a-tag v-if="isSelected" variant="solid" :style="{backgroundColor: 'var(--ant-color-primary)'}">默认</a-tag>
                 </a-flex>
                 <div style="margin-top: var(--ant-margin)">
                   <div v-if="item?.postList && item?.postList.length > 0">

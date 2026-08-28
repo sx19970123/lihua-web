@@ -1,9 +1,22 @@
-import {theme} from "antdv-next";
+import {theme, type ThemeConfig} from "antdv-next";
+
+/**
+ * 应用主题配置：token 恒有值且 colorPrimary / borderRadius 必填（运行时由 settings/store 保证），
+ * 其余 token 按需覆盖
+ */
+export type AppThemeConfig = Omit<ThemeConfig, 'token'> & {
+    token: { colorPrimary: string, borderRadius: number } & NonNullable<ThemeConfig['token']>
+}
 
 /**
  * 外观模式：light / dark 手动指定明暗，auto 跟随系统偏好
  */
 export type ThemeMode = 'light' | 'dark' | 'auto'
+
+/**
+ * 点击效果：none 无 / wave 波纹（组件库默认）/ inset 扩散 / shake 抖动 / happy 快乐工作（@antdv-next/happy-work-theme 官方包）
+ */
+export type ClickEffect = 'none' | 'wave' | 'inset' | 'shake' | 'happy'
 
 /**
  * 启动时持久化的外观模式（配置态）；缺省跟随系统
@@ -130,6 +143,22 @@ export default {
     routeTransition: 'zoom',
 
     /**
+     * 点击效果 none / wave / inset / shake / happy（wave 为组件库默认波纹）
+     */
+    clickEffect: 'wave' as ClickEffect,
+
+    /**
+     * 点击效果可选项
+     */
+    clickEffectOptions: [
+        {value: 'none', label: '无'},
+        {value: 'wave', label: '波纹'},
+        {value: 'shake', label: '抖动'},
+        {value: 'inset', label: '扩散'},
+        {value: 'happy', label: '快乐工作'}
+    ],
+
+    /**
      * 灰色模式
      */
     grayModel: false,
@@ -139,10 +168,11 @@ export default {
      */
     themeConfig: {
         token: {
-            colorPrimary: 'rgb(22, 119, 255)'
+            colorPrimary: 'rgb(22, 119, 255)',
+            borderRadius: 6
         },
         algorithm: theme.defaultAlgorithm
-    },
+    } as AppThemeConfig,
 
     /**
      * 触发菜单变化宽度

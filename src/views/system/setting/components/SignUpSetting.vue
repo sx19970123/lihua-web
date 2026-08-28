@@ -17,7 +17,7 @@
           <a-flex :gap="16">
             <a-card>
               <a-typography-title :level="5">角色</a-typography-title>
-              <a-form-item class="form-item-width" name="roleIds">
+              <a-form-item class="w-[270px]" name="roleIds">
                 <a-select
                     v-model:value="settingForm.roleIds"
                     placeholder="请选择用户角色"
@@ -29,7 +29,7 @@
             </a-card>
             <a-card>
               <a-typography-title :level="5">部门</a-typography-title>
-              <a-form-item class="form-item-width">
+              <a-form-item class="w-[270px]">
                 <easy-tree-select :tree-data="sysDeptList"
                                   defaultExpandAll
                                   v-model="settingForm.deptIds"
@@ -40,7 +40,7 @@
             </a-card>
             <a-card v-if="settingForm.deptIds && settingForm.deptIds.length > 0">
               <a-typography-title :level="5">岗位</a-typography-title>
-              <a-form-item class="form-item-width" >
+              <a-form-item class="w-[270px]" >
                 <selectable-card
                     :data-source="sysPostList"
                     empty-description="请选择部门"
@@ -50,10 +50,10 @@
                     :loading="postLoading"
                     vertical
                 >
-                  <template #content="{item, isSelected, color}">
+                  <template #content="{item, isSelected}">
                     <a-flex align="center" justify="space-between">
                       <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}</a-typography-title>
-                      <a-tag v-if="isSelected" :color="color">默认</a-tag>
+                      <a-tag v-if="isSelected" variant="solid" :style="{backgroundColor: 'var(--ant-color-primary)'}">默认</a-tag>
                     </a-flex>
                     <div style="margin-top: var(--ant-margin);">
                       <div v-if="item?.postList && item?.postList.length > 0">
@@ -391,9 +391,3 @@ onMounted(async () => {
   await init()
 })
 </script>
-
-<style scoped>
-.form-item-width {
-  width: 260px;
-}
-</style>

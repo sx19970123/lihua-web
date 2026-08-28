@@ -116,7 +116,3 @@ const handleFinish = async () => {
 
 onMounted(() => init())
 </script>
-
-<style scoped>
-
-</style>

@@ -159,15 +159,14 @@ export const useUserStore = defineStore('user', {
             // 更新默认部门后更新部门下岗位
             state.defaultDeptPosts = state.posts.filter(post => post.deptCode === state.defaultDeptCode)
         },
-        // 保存主题修改
+        // 保存主题修改（本地缓存已由 theme store 变更即写，此处只负责同步服务端；成功静默，失败由调用方提示）
         saveTheme(themeJson: string) {
             return new Promise((resolve, reject) => {
                 if (themeJson !== this.userInfo.theme) {
-                    localStorage.setItem('theme', themeJson)
                     saveTheme(themeJson).then(resp => {
                         if (resp.code === 200) {
                             this.userInfo.theme = themeJson
-                            message.success("主题已保存")
+                            localStorage.removeItem('theme-unsynced')
                             resolve(resp)
                         } else {
                             reject(resp.msg)
@@ -176,7 +175,8 @@ export const useUserStore = defineStore('user', {
                         reject(error.msg)
                     })
                 } else {
-                    message.success("主题已保存")
+                    // 与服务端已知内容一致（无实际改动），清除可能残留的待传标记
+                    localStorage.removeItem('theme-unsynced')
                     resolve("主题已保存")
                 }
             })

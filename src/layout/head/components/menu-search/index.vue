@@ -20,7 +20,7 @@
     </div>
 
 <!--    菜单搜索dialog-->
-    <a-modal v-model:open="open" :closable="false" :z-index="99999">
+    <a-modal v-model:open="open" :closable="false" :z-index="99999" :focus-trigger-after-close="false">
 <!--      我的收藏-->
       <a-typography-text strong v-if="starDataList.length > 0">我的收藏</a-typography-text>
       <a-flex :gap="8" wrap="wrap" class="menu-group">

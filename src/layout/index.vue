@@ -72,6 +72,12 @@ const {headContainer, contentContainer, loadTeleportContainer} = initTeleport()
 
 // 组件切换时重新加载菜单，刷新分组导航
 watch(() =>[themeStore.isSmallWindow, themeStore.layoutType], () => {
+  // 离开小窗模式时恢复侧栏展开态与宽度：小窗抽屉自动关闭会把 collapsed 置 true、siderWith 折到 80，
+  // 而 Sider 重新挂载时只读不写 collapsed、breakpoint 也只在挂载期间跨界才触发，不复位会以收起态渲染
+  if (!themeStore.isSmallWindow) {
+    permissionStore.collapsed = false
+    themeStore.unfoldSiderWidth()
+  }
   if (themeStore.siderGroup) {
     permissionStore.reloadMenu()
   }

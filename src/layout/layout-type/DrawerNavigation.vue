@@ -67,10 +67,12 @@ const themeStore = useThemeStore()
 const permissionStore = usePermissionStore()
 const props = defineProps<{showLayout: boolean}>()
 
-// 菜单栏宽度大于当前屏幕宽度时，减少60像素，保证可正常关闭
+// 抽屉展开宽度取用户配置的导航宽度（originSiderWith）：
+// siderWith 会被折叠机制压到 80，直接用它抽屉只能展开 80px 窄条；
+// 宽度大于当前屏幕宽度时，减少60像素，保证可正常关闭
 const siderWidth = computed(() => {
   const innerWidth = window.innerWidth
-  return themeStore.siderWith > innerWidth - 60 ? innerWidth - 60 : themeStore.siderWith
+  return themeStore.originSiderWith > innerWidth - 60 ? innerWidth - 60 : themeStore.originSiderWith
 })
 
 // 关闭菜单

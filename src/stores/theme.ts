@@ -1,6 +1,19 @@
 import {defineStore} from "pinia";
 import {theme} from "antdv-next";
-import settings, {type ThemeMode} from "@/settings";
+import settings, {type ClickEffect, type ThemeMode} from "@/settings";
+
+/**
+ * 主题持久化序列化：剔除运行时字段（窗口尺寸随缩放变化、服务端加载标记随会话变化，均非用户配置），
+ * 本地缓存写入、服务端保存、启动比对校准三方共用同一形态，保证字符串可直接比较
+ */
+export const serializeThemeState = (state: object): string => {
+    return JSON.stringify(state, (key, value) => key === 'isSmallWindow' || key === 'isServerLoad' ? undefined : value)
+}
+
+// 变更即写本地缓存的订阅（幂等挂接）；init 重放期间抑制，避免服务端校准被误判为新改动
+let persistSubscribed = false
+let suppressPersist = false
+let lastPersisted = ''
 
 export const useThemeStore = defineStore('theme',{
     state() {
@@ -40,6 +53,11 @@ export const useThemeStore = defineStore('theme',{
          * 通过ant提供的theme的主要颜色，针对暗色模式进行了颜色调整
          */
         const antColorPrimary: string = settings.themeConfig.token.colorPrimary
+
+        /**
+         * 界面圆角（同步进 themeConfig.token 生效，派生圆角 token 自动跟随）
+         */
+        const borderRadius: number = settings.themeConfig.token.borderRadius
 
         /**
          * 磨砂玻璃效果
@@ -87,6 +105,11 @@ export const useThemeStore = defineStore('theme',{
         const routeTransition: string = settings.routeTransition
 
         /**
+         * 点击效果 none / wave / inset / shake / happy
+         */
+        const clickEffect: ClickEffect = settings.clickEffect
+
+        /**
          * 灰色模式
          */
         const grayModel: boolean = settings.grayModel
@@ -94,7 +117,9 @@ export const useThemeStore = defineStore('theme',{
         /**
          * ant 主题配置
          */
-        const themeConfig = settings.themeConfig
+        // 独立拷贝：state 与 settings 模块共享同一 themeConfig 引用的话，
+        // token 上的任何修改（主题色/圆角）都会污染默认值，导致重置失效
+        const themeConfig = { ...settings.themeConfig, token: { ...settings.themeConfig.token } }
 
         /**
          * 是否从服务端加载完毕
@@ -112,6 +137,7 @@ export const useThemeStore = defineStore('theme',{
             isDarkTheme,
             colorPrimary,
             antColorPrimary,
+            borderRadius,
             siderTheme,
             groundGlass,
             affixHead,
@@ -120,20 +146,49 @@ export const useThemeStore = defineStore('theme',{
             siderWith,
             originSiderWith,
             routeTransition,
+            clickEffect,
             grayModel,
             themeConfig,
             isServerLoad
         }
     },
     actions: {
+        // 挂接"变更即写本地缓存"订阅（幂等）：任何状态变更立即落 localStorage 并标记待同步，不发请求
+        subscribePersist() {
+            if (persistSubscribed) return
+            persistSubscribed = true
+            this.$subscribe(() => {
+                if (suppressPersist) return
+                const json = serializeThemeState(this.$state)
+                if (json === lastPersisted) return
+                localStorage.setItem('theme', json)
+                localStorage.setItem('theme-unsynced', '1')
+                lastPersisted = json
+            })
+        },
         // 初始化样式
         init(themeJson?: string) {
-            this.initState(themeJson)
-            this.applyThemeMode()
-            this.changeGroundGlass()
-            this.changeShowViewTabs()
-            this.changeFooter()
-            this.$state.isServerLoad = true
+            suppressPersist = true
+            try {
+                this.initState(themeJson)
+                // 旧版主题 JSON 的圆角只存于 token 内，回读后同步到顶层字段，保持字段与 token 一致
+                this.$state.borderRadius = this.$state.themeConfig.token.borderRadius ?? settings.themeConfig.token.borderRadius
+                this.applyThemeMode()
+                this.changeGroundGlass()
+                this.changeShowViewTabs()
+                this.changeFooter()
+                this.$state.isServerLoad = true
+            } finally {
+                lastPersisted = serializeThemeState(this.$state)
+                suppressPersist = false
+            }
+            this.subscribePersist()
+        },
+        // 服务端校准后回写本地缓存（内容已同步，不置待传标记）
+        syncLocalCache() {
+            const json = serializeThemeState(this.$state)
+            lastPersisted = json
+            localStorage.setItem('theme', json)
         },
         // 通过json数据初始化state
         initState(themeJson?: string) {
@@ -203,6 +258,10 @@ export const useThemeStore = defineStore('theme',{
             this.themeConfig.token.colorPrimary = this.$state.colorPrimary
             this.changeDocumentElement(this.$state.colorPrimary)
         },
+        // 修改界面圆角：同步进主题 token，ConfigProvider 响应式生效
+        changeBorderRadius() {
+            this.$state.themeConfig.token.borderRadius = this.$state.borderRadius
+        },
         // html节点添加glass属性
         changeGroundGlass() {
             if (this.$state.groundGlass) {
@@ -222,24 +281,26 @@ export const useThemeStore = defineStore('theme',{
         getColorPrimary(): string {
             return this.$state.antColorPrimary || document.documentElement.style.getPropertyValue("--colorPrimary")
         },
-        // 主题重置
+        // 主题重置（grayModel 为管理员级全局配置（哀悼等场景全站置灰），不随用户主题重置）
         resetState() {
             this.$state.layoutType = settings.layoutType
             this.$state.componentSize = settings.componentSize
             this.$state.showViewTabs = settings.showViewTabs
             this.$state.themeMode = settings.themeMode
             this.$state.colorPrimary = settings.themeConfig.token.colorPrimary
+            this.$state.borderRadius = settings.themeConfig.token.borderRadius
             this.$state.siderTheme = settings.siderTheme
             this.$state.groundGlass = settings.groundGlass
             this.$state.affixHead = settings.affixHead
             this.$state.siderWith = settings.siderWith
             this.$state.originSiderWith = settings.originSiderWith
             this.$state.routeTransition = settings.routeTransition
-            this.$state.themeConfig = settings.themeConfig
+            this.$state.clickEffect = settings.clickEffect
+            this.$state.themeConfig = { ...settings.themeConfig, token: { ...settings.themeConfig.token } }
             this.$state.siderGroup = settings.siderGroup
-            this.$state.grayModel = settings.grayModel
             this.applyThemeMode()
             this.changeGroundGlass()
+            this.changeShowViewTabs()
             this.changeFooter()
         },
         // 折叠侧边栏

@@ -1,7 +1,7 @@
 <template>
   <a-card>
     <a-form layout="vertical" :model="settingForm" :rules="rules" @finish="handleFinish">
-      <a-form-item class="form-item-width" label="默认密码" name="defaultPassword">
+      <a-form-item class="w-[270px]" label="默认密码" name="defaultPassword">
         <template #tooltip>
           <a-tooltip>
             <template #title>
@@ -10,7 +10,7 @@
             <QuestionCircleOutlined class="question-icon"/>
           </a-tooltip>
         </template>
-        <password-input class="form-item-width" v-model:value="settingForm.defaultPassword" placeholder="请输入默认密码" :size="90"/>
+        <password-input class="w-[270px]" v-model:value="settingForm.defaultPassword" placeholder="请输入默认密码" :size="90"/>
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit" :loading="submitLoading">提 交</a-button>
@@ -77,9 +77,3 @@ const handleFinish = async () => {
 // 页面加载完成后调用
 onMounted(() => init())
 </script>
-
-<style scoped>
-.form-item-width {
-  width: 270px;
-}
-</style>

@@ -18,3 +18,17 @@
 .ant-tag {
     margin-inline-end: 8px;
 }
+
+/**
+    tooltip 气泡最小宽度：箭头尺寸随圆角 token 增大，气泡过窄时（如滑杆值气泡）箭头与目标错位；
+    内文居中（短文本气泡如滑杆值左对齐观感差；vnext 文本在 -container 上且默认 start，
+    cssinjs 注入晚于静态样式，须提升特异性 + important）
+ */
+.ant-tooltip {
+    min-width: 48px;
+}
+
+.ant-tooltip .ant-tooltip-container {
+    text-align: center !important;
+}
+

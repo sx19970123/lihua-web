@@ -2,19 +2,31 @@
   <div>
     <a-row :gutter="8">
       <a-col :xxl="{span: 4}" :xl="{span: 5}" :lg="{span: 6}" :md="{span: 6}" :sm="{span: 6}" :xs="{span: 6}">
-        <a-card style="height: 100%" :body-style="{padding: '22px'}">
+        <a-card class="h-full" :body-style="{padding: '22px'}">
           <a-menu v-model:selectedKeys="selectedKeys" @click="handleChangeUserMenu" style="border: 0;width: 100%" :inlineCollapsed="themeStore.isSmallWindow">
-            <a-menu-item key="Basic"> <UserOutlined /> <span>个人资料</span></a-menu-item>
-            <a-menu-item key="Security"> <SafetyCertificateOutlined /> <span>登录密码</span></a-menu-item>
-            <a-menu-item key="LockScreen"> <LockOutlined /> <span>锁屏设置</span></a-menu-item>
+            <a-menu-item key="Basic">
+              <template #icon><UserOutlined /></template>
+              <span>个人资料</span>
+            </a-menu-item>
+            <a-menu-item key="Security">
+              <template #icon><SafetyCertificateOutlined /></template>
+              <span>登录密码</span>
+            </a-menu-item>
+            <a-menu-item key="LockScreen">
+              <template #icon><LockOutlined /></template>
+              <span>锁屏设置</span>
+            </a-menu-item>
             <a-menu-divider/>
-            <a-menu-item key="Individuation"> <SkinOutlined /> <span>样式布局</span></a-menu-item>
+            <a-menu-item key="Individuation">
+              <template #icon><SkinOutlined /></template>
+              <span>样式布局</span>
+            </a-menu-item>
           </a-menu>
         </a-card>
       </a-col>
       <a-col :xxl="{span: 20}" :xl="{span: 19}" :lg="{span: 18}" :md="{span: 18}" :sm="{span: 18}" :xs="{span: 18}">
         <transition :name="themeStore.routeTransition" mode="out-in">
-          <component class="scrollbar" :is="activeComponent" style="height: 100%"/>
+          <component class="h-full scrollbar" :is="activeComponent"/>
         </transition>
       </a-col>
     </a-row>

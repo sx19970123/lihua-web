@@ -10,7 +10,7 @@
         <color-select :dataSource="colorList" v-model:color="themeStore.colorPrimary" @click="themeStore.changeColorPrimary()"/>
       </a-form-item>
       <a-form-item label="导航颜色" v-if="!themeStore.isDarkTheme">
-        <nav-color-select v-model="themeStore.siderTheme"/>
+        <color-select :dataSource="navColors" v-model:value="themeStore.siderTheme"/>
       </a-form-item>
       <a-divider/>
 
@@ -20,14 +20,7 @@
         <nav-select v-model="themeStore.layoutType"/>
       </a-form-item>
       <a-form-item label="导航宽度" v-if="themeStore.layoutType !== 'top-navigation' || themeStore.isSmallWindow">
-        <a-slider v-model:value="themeStore.siderWith" @change="themeStore.changeSiderWidth" dots :max="400" :min="80" :step="20" style="width: 230px"></a-slider>
-      </a-form-item>
-      <a-form-item label="布局尺寸">
-        <a-radio-group v-model:value="themeStore.componentSize">
-          <a-radio value="small">更小</a-radio>
-          <a-radio value="default">适中（推荐）</a-radio>
-          <a-radio value="large">更大</a-radio>
-        </a-radio-group>
+        <a-slider class="w-[230px]" v-model:value="themeStore.siderWith" @change="themeStore.changeSiderWidth" dots :max="400" :min="80" :step="20"></a-slider>
       </a-form-item>
       <a-form-item label="分组导航" v-if="themeStore.layoutType !== 'top-navigation' || themeStore.isSmallWindow">
         <a-switch v-model:checked="themeStore.siderGroup"/>
@@ -48,17 +41,26 @@
       <a-form-item label="高级材质">
         <a-switch v-model:checked="themeStore.groundGlass"/>
       </a-form-item>
+      <a-form-item label="组件尺寸">
+        <a-radio-group v-model:value="themeStore.componentSize">
+          <a-radio value="small">更小</a-radio>
+          <a-radio value="default">适中（推荐）</a-radio>
+          <a-radio value="large">更大</a-radio>
+        </a-radio-group>
+      </a-form-item>
+      <a-form-item label="界面圆角">
+        <a-slider class="w-[230px]" v-model:value="themeStore.borderRadius" :min="2" :max="16" dots/>
+      </a-form-item>
+      <a-form-item label="点击反馈">
+        <a-select style="width: 200px" v-model:value="themeStore.clickEffect" :options="clickEffectList"/>
+      </a-form-item>
       <a-form-item label="切换动画">
-        <a-select style="width: 200px" v-model:value="themeStore.routeTransition">
-          <a-select-option value="none">无</a-select-option>
-          <a-select-option value="zoom">变焦</a-select-option>
-          <a-select-option value="fade">淡入淡出</a-select-option>
-          <a-select-option value="breathe">呼吸</a-select-option>
-          <a-select-option value="top">上升</a-select-option>
-          <a-select-option value="down">切换</a-select-option>
-          <a-select-option value="switch">交换</a-select-option>
-          <a-select-option value="trick">整活</a-select-option>
-        </a-select>
+        <a-select style="width: 200px" v-model:value="themeStore.routeTransition" :options="transitionOptions"/>
+      </a-form-item>
+      <a-form-item>
+        <a-popconfirm title="恢复默认主题？" @confirm="themeStore.resetState()">
+          <a-button>恢复默认</a-button>
+        </a-popconfirm>
       </a-form-item>
     </a-form>
   </a-card>
@@ -68,13 +70,12 @@
 import HeadThemeSwitch from "@/components/light-dark-switch/index.vue";
 import ColorSelect from "@/components/color-select/index.vue"
 import NavSelect from "@/components/nav-type-select/index.vue"
-import NavColorSelect from "@/components/nav-color-select/index.vue"
 import settings from "@/settings";
 import {useUserStore} from "@/stores/user";
-import {useThemeStore} from "@/stores/theme";
+import {serializeThemeState, useThemeStore} from "@/stores/theme";
 import {usePermissionStore} from "@/stores/permission.ts";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
-import {onUnmounted, ref, watch} from "vue";
+import {computed, onUnmounted, ref, watch} from "vue";
 import {ResponseError} from "@/api/global/type.ts";
 import {message} from "@/antd-adapter";
 
@@ -84,31 +85,38 @@ const permissionStore = usePermissionStore()
 const viewTabsStore = useViewTabsStore()
 // 主题颜色
 const colorList = ref<Array<{name: string,color: string}>>(settings.colorOptions)
-const submitLoading = ref<boolean>(false)
+// 点击效果选项
+const clickEffectList = settings.clickEffectOptions
+// 导航颜色：亮色块勾用主题色（白色勾在白色块上不可见）；暗色块底色取自有 sider 深色变量
+const navColors = computed(() => [
+  { name: '亮色', color: '#ffffff', key: 'light', checkColor: themeStore.colorPrimary },
+  { name: '暗色', color: 'var(--lihua-sider-dark-color)', key: 'dark' }
+])
+const transitionOptions = [
+  { value: 'none', label: '无' },
+  { value: 'zoom', label: '变焦' },
+  { value: 'fade', label: '淡入淡出' },
+  { value: 'breathe', label: '呼吸' },
+  { value: 'top', label: '上升' },
+  { value: 'down', label: '切换' },
+  { value: 'switch', label: '交换' },
+  { value: 'trick', label: '整活' }
+]
 const isMiniWindow = ref<boolean>(window.location.href.includes("miniWindow=true"))
-// 卸载组件时触发，保存用户修改的内容
+// 卸载组件时触发，同步主题到服务端（本地缓存已由 store 变更即写；内容无变化时 saveTheme 内部去重不发请求）
 onUnmounted(()=> {
-  handleSaveTheme()
+  userStore.saveTheme(serializeThemeState(themeStore.$state)).catch((e) => {
+    if (e instanceof ResponseError) {
+      message.error(e.msg)
+    } else {
+      console.log(e)
+    }
+  })
 })
-
-// 处理保存主题
-const handleSaveTheme = async () => {
-  submitLoading.value = true
-  try {
-    await userStore.saveTheme(JSON.stringify(themeStore.$state))
-  } catch (e) {
-     if (e instanceof ResponseError) {
-       message.error(e.msg)
-     } else {
-       console.log(e)
-     }
-  } finally {
-    submitLoading.value = false
-  }
-}
 
 // Switch 的 change 事件先于 v-model 写回触发，回调内读状态是旧值，统一改为 watch 驱动
 watch(() => themeStore.siderGroup, () => permissionStore.reloadMenu())
+watch(() => themeStore.borderRadius, () => themeStore.changeBorderRadius())
 watch(() => themeStore.showViewTabs, () => themeStore.changeShowViewTabs())
 watch(() => themeStore.showFooter, () => themeStore.changeFooter())
 watch(() => themeStore.groundGlass, () => themeStore.changeGroundGlass())

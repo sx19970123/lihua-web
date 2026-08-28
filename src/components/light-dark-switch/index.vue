@@ -1,5 +1,5 @@
 <template>
-  <div style="padding-right: var(--ant-padding)">
+  <div class="pr-ant-base">
     <a-segmented :value="themeStore.themeMode" shape="round" :options="themeOptions"
                  :class="{'translucent-segmented': props.translucent}"
                  @change="(mode: string | number) => themeStore.changeThemeMode(mode as ThemeMode)"/>

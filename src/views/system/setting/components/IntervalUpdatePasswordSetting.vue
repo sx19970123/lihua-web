@@ -122,9 +122,3 @@ const handleFinish = async () => {
 
 onMounted(() => init())
 </script>
-
-<style scoped>
-.form-item-width {
-  width: 270px;
-}
-</style>

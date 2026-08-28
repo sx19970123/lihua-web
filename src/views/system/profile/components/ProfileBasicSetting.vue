@@ -9,9 +9,9 @@
   >
     <a-flex gap="small" wrap="wrap">
       <!--      个人中心卡片-->
-      <a-card class="info-card" style="flex: 1">
+      <a-card class="flex-1 min-w-[300px]">
         <a-typography-title :level="5">个人信息</a-typography-title>
-        <div style="max-width: 400px;margin: auto">
+        <div class="max-w-[400px] mx-auto">
           <a-form-item>
             <avatar-modifier v-model="profileInfo.avatar" @change="(value: string) => handleFinish({avatar: value})"/>
           </a-form-item>
@@ -42,22 +42,22 @@
           </a-form-item>
         </div>
       </a-card>
-      <a-flex vertical gap="small" style="flex: 1.68;">
+      <a-flex vertical gap="small" class="flex-[1.68]">
         <!--      部门和岗位卡片-->
-        <a-card class="info-card">
+        <a-card class="flex-1 min-w-[300px]">
           <a-typography-title :level="5">部门岗位</a-typography-title>
           <selectable-card :dataSource="deptList"
                            itemKey="id"
                            v-model="defaultDeptId"
                            @change="handleChangeDefaultDept"
           >
-          <template #content="{item, color}">
+          <template #content="{item}">
             <a-flex vertical gap="small">
               <a-flex gap="small">
                 <a-typography-text strong>
                   {{item.name}}
                 </a-typography-text>
-                <a-tag :color="color" v-show="item.code === userStore.defaultDept.code">默认部门</a-tag>
+                <a-tag variant="solid" :style="{backgroundColor: 'var(--ant-color-primary)'}" v-show="item.code === userStore.defaultDept.code">默认部门</a-tag>
               </a-flex>
               <a-typography-text type="secondary">
                 {{item.code}}
@@ -75,10 +75,10 @@
           </selectable-card>
         </a-card>
         <!--      部门和岗位卡片-->
-        <a-card class="info-card">
+        <a-card class="flex-1 min-w-[300px]">
           <a-typography-title :level="5">我的角色</a-typography-title>
           <a-form-item>
-            <a-tag v-for="roleName in userStore.roles.map(item => item.name)" :color="themeStore.getColorPrimary()">{{roleName}}</a-tag>
+            <a-tag v-for="roleName in userStore.roles.map(item => item.name)" variant="solid" :style="{backgroundColor: 'var(--ant-color-primary)'}">{{roleName}}</a-tag>
           </a-form-item>
         </a-card>
       </a-flex>
@@ -97,7 +97,6 @@ import type {ProfileInfo} from "@/api/system/profile/type/sys-profile.ts";
 import {saveBasics, setDefaultDept} from "@/api/system/profile/profile.ts";
 import {initDict} from "@/helpers/dict.ts"
 import {ResponseError} from "@/api/global/type.ts";
-import {useThemeStore} from "@/stores/theme.ts";
 import DynamicBorderInput from "@/components/dynamic-border-input/index.vue"
 import DynamicBorderSelect from "@/components/dynamic-border-select/index.vue"
 import SelectableCard from "@/components/selectable-card/index.vue"
@@ -106,7 +105,6 @@ import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 
 const userStore = useUserStore()
 const {user_gender} = initDict('user_gender')
-const themeStore = useThemeStore()
 
 const formRef = useTemplateRef<FormInstance>("formRef")
 
@@ -250,9 +248,3 @@ watch(() => userStore.defaultDept.id, (value) => {
   defaultDeptId.value = value
 })
 </script>
-<style scoped>
-.info-card {
-  flex: 1;
-  min-width: 300px
-}
-</style>

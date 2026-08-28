@@ -1,44 +1,45 @@
 <template>
   <a-row :gutter="8">
     <a-col :xxl="{span: 4}" :xl="{span: 5}" :lg="{span: 6}" :md="{span: 6}" :sm="{span: 6}" :xs="{span: 6}">
-      <a-card class="container-height">
+      <a-card class="h-full">
         <a-menu
             class="menu"
+            style="border: 0;width: 100%"
             v-model:selected-keys="selectKeys"
             :inlineCollapsed="themeStore.isSmallWindow"
             @click="handleChangeSetting"
         >
           <a-menu-item-group title="账号">
             <a-menu-item key="DefaultPasswordSetting">
-              <KeyOutlined />
+              <template #icon><KeyOutlined /></template>
               <span>系统默认密码</span>
             </a-menu-item>
             <a-menu-item key="IntervalUpdatePassword">
-              <FieldTimeOutlined />
+              <template #icon><FieldTimeOutlined /></template>
               <span>定期修改密码</span>
             </a-menu-item>
             <a-menu-item key="SameAccountLoginSetting">
-              <LoginOutlined />
+              <template #icon><LoginOutlined /></template>
               <span>同账号登录限制</span>
             </a-menu-item>
           </a-menu-item-group>
           <a-menu-item-group title="登录">
             <a-menu-item key="SignInSetting">
-              <IdcardOutlined />
+              <template #icon><IdcardOutlined /></template>
               <span>自助注册</span>
             </a-menu-item>
             <a-menu-item key="CaptchaSetting">
-              <RobotOutlined />
+              <template #icon><RobotOutlined /></template>
               <span>验证码</span>
             </a-menu-item>
           </a-menu-item-group>
           <a-menu-item-group title="其他">
             <a-menu-item key="RestrictAccessIpSetting">
-              <GatewayOutlined />
+              <template #icon><GatewayOutlined /></template>
               <span>限制访问IP</span>
             </a-menu-item>
             <a-menu-item key="GrayModelSetting">
-              <BgColorsOutlined />
+              <template #icon><BgColorsOutlined /></template>
               <span>灰色模式</span>
             </a-menu-item>
           </a-menu-item-group>
@@ -47,7 +48,7 @@
     </a-col>
     <a-col :xxl="{span: 20}" :xl="{span: 19}" :lg="{span: 18}" :md="{span: 18}" :sm="{span: 18}" :xs="{span: 18}">
       <transition :name="themeStore.routeTransition" mode="out-in">
-        <component class="container-height scrollbar" :is="activeComponent"/>
+        <component class="h-full scrollbar" :is="activeComponent"/>
       </transition>
     </a-col>
   </a-row>
@@ -106,12 +107,3 @@ const handleChangeSetting = ({key}: {key: string}) => {
   activeComponent.value = target.com
 }
 </script>
-<style scoped>
-.container-height {
-  height: 100%;
-}
-.menu {
-  border: 0 !important;
-  width: 100% !important;
-}
-</style>

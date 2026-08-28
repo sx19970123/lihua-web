@@ -1,25 +1,25 @@
 <template>
   <a-card>
     <a-form :colon="false" :model="formData" :rules="rules" layout="vertical" @finish="handleSaveLockInfo">
-      <a-form-item class="form-item-width" label="自动锁屏" name="defaultPassword">
+      <a-form-item class="w-[270px]" label="自动锁屏" name="defaultPassword">
         <template #tooltip>
           <a-tooltip>
             <template #title>
               一段时间未操作将自动锁屏
             </template>
-            <QuestionCircleOutlined style="margin-left: var(--ant-margin-xxs)"/>
+            <QuestionCircleOutlined class="ml-ant-xxs"/>
           </a-tooltip>
         </template>
         <a-switch v-model:checked="formData.autoLock"></a-switch>
       </a-form-item>
       <a-form-item label="时长（分钟）" v-if="formData.autoLock">
-        <a-input-number v-model:value="formData.timeout" :min="1" :precision="0" class="form-item-width" placeholder="请输入自动锁屏时长"/>
+        <a-input-number v-model:value="formData.timeout" :min="1" :precision="0" class="w-[270px]" placeholder="请输入自动锁屏时长"/>
       </a-form-item>
       <a-form-item label="锁屏密码" name="password">
-        <a-input-password v-model:value="formData.password" class="form-item-width" placeholder="请输入锁屏密码"/>
+        <a-input-password v-model:value="formData.password" class="w-[270px]" placeholder="请输入锁屏密码"/>
       </a-form-item>
       <a-form-item label="确认密码" name="confirmPassword" >
-        <a-input-password v-model:value="formData.confirmPassword" class="form-item-width" placeholder="请再次输入密码"/>
+        <a-input-password v-model:value="formData.confirmPassword" class="w-[270px]" placeholder="请再次输入密码"/>
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit">提 交</a-button>
@@ -113,9 +113,3 @@ onMounted(() => {
 })
 
 </script>
-
-<style scoped>
-.form-item-width {
-  width: 270px;
-}
-</style>

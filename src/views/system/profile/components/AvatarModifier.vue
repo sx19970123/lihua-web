@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-row align="center" style="height: 64px">
-      <sys-avatar class="modify"
+    <a-row align="center" class="h-16">
+      <sys-avatar class="modify relative inline-block"
                   :size="64"
                   :type="props.modelValue.type"
                   :value="props.modelValue.value"
@@ -24,13 +24,13 @@
             <component v-if="avatarIcon" :is="avatarIcon"/>
           </template>
           <template v-if="avatarType === 'text'">
-            <span style="font-size: 60px">
+            <span class="text-[60px]">
               {{ avatarText }}
             </span>
           </template>
         </a-avatar>
         <!--        avatarType 是 image 时使用cropper返回的html预览-->
-        <div class="avatar-preview" v-else v-html="avatarImg.html"/>
+        <div class="h-[150px] w-[150px] overflow-hidden rounded-full shadow-ant-ter" v-else v-html="avatarImg.html"/>
         <a-radio-group v-model:value="avatarType">
           <a-radio value="image">图片</a-radio>
           <a-radio value="icon">图标</a-radio>
@@ -44,7 +44,7 @@
         <!--        图标选取-->
         <icon-select v-if="avatarType === 'icon'" v-model="avatarIcon" :size="iconSize"/>
         <!--        文本编辑-->
-        <a-input v-if="avatarType === 'text'" v-model:value="avatarText" style="max-width: 260px;" size="large" placeholder="请输入头像文本"/>
+        <a-input v-if="avatarType === 'text'" v-model:value="avatarText" class="max-w-[260px]" size="large" placeholder="请输入头像文本"/>
         <!--        头像编辑-->
         <image-cropper v-if="avatarType === 'image'"
                        :key="imageCropperWight"
@@ -320,11 +320,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.modify {
-  position: relative;
-  display: inline-block; /* 确保容器大小适应内容 */
-}
-
+/* 悬停出现的"编辑头像"遮罩浮层：伪元素 + content + 过渡，工具类表达不了；
+   遮罩为固定深色蒙层（不随主题），其上文字与背景取固定值 */
 .modify::after {
   content: "编辑头像";
   font-size: var(--ant-font-size-sm);
@@ -348,13 +345,5 @@ onUnmounted(() => {
 
 .modify:hover::after {
   opacity: 1;
-}
-
-.avatar-preview {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  box-shadow: var(--ant-box-shadow-tertiary);
-  overflow: hidden;
 }
 </style>

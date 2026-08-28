@@ -1,5 +1,7 @@
 <template>
-  <a-config-provider :theme="themeStore.themeConfig" :locale="local" :component-size="themeStore.componentSize"
+  <HappyProvider :enabled="themeStore.clickEffect === 'happy'" v-slot="{ wave: happyWave }">
+    <a-config-provider :theme="themeStore.themeConfig" :locale="local" :component-size="themeStore.componentSize"
+                     :wave="happyWave ?? waveConfig"
                      :modal="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
                      :drawer="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
                      :image="{preview: {mask: glassMaskConfig, styles: {popup: {mask: glassMaskStyle}}}}">
@@ -19,6 +21,7 @@
       <router-view/>
     </a-app>
   </a-config-provider>
+  </HappyProvider>
 </template>
 
 <script setup lang="ts">
@@ -26,6 +29,8 @@ import {getBrowserMajorVersion, getBrowserType} from "@/utils/browser.ts"
 import {useThemeStore} from "@/stores/theme"
 import {usePermissionStore} from "@/stores/permission.ts";
 import {useSettingStore} from "@/stores/setting.ts";
+import {clickEffectWaveConfig} from "@/helpers/wave-effects";
+import {HappyProvider} from "@antdv-next/happy-work-theme";
 import zhCN from 'antdv-next/locale/zh_CN';
 import {onMounted, onUnmounted, ref, useTemplateRef, watch, computed} from "vue";
 import 'dayjs/locale/zh-cn';
@@ -40,6 +45,8 @@ const appApiRef = useTemplateRef<AppApi>("appApiRef")
 // 避免 store 状态、antd 算法、DOM 属性三者起始不一致；主题色同步由 store 内部完成
 // （不可用根级 useToken 取色：App.vue 在自身渲染的 ConfigProvider 之外，只会拿到库默认 token）
 themeStore.applyThemeMode()
+// 登录页等 init 前的主题变更同样即时进本地缓存（置待传标记，登录后由校准逻辑补传服务端）
+themeStore.subscribePersist()
 
 // 初始化系统配置
 const settingStore = useSettingStore()
@@ -54,6 +61,12 @@ const glassMaskConfig = computed(() => ({blur: themeStore.groundGlass}))
 const glassMaskStyle = computed(() => themeStore.groundGlass
     ? {backdropFilter: 'var(--lihua-backdrop-filter-sm)'}
     : {})
+
+// 点击效果映射；快乐工作档由 HappyProvider 作用域插槽提供官方配置（模板中优先取插槽值），此处回落空配置
+const waveConfig = computed(() => {
+  if (themeStore.clickEffect === 'happy') return {}
+  return clickEffectWaveConfig[themeStore.clickEffect] ?? {}
+})
 
 // 当浏览器版本过低时，显示浏览器兼容性提示
 const showOldBrowserAlert = () => {
