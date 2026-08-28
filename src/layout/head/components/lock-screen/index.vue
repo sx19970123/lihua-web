@@ -631,7 +631,7 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   z-index: 2147483646;
-  background: var(--lihua-alpha-level-0);
+  background: var(--lihua-alpha-0);
 }
 
 .lock {
@@ -642,8 +642,8 @@ onUnmounted(() => {
   left: 0;
   z-index: 2147483647;
   background: var(--lihua-backdrop-filter-on-color);
-  border-radius: var(--lihua-radius-sm);
-  box-shadow: var(--lihua-secondary-box-shadow);
+  border-radius: var(--ant-border-radius-lg);
+  box-shadow: var(--ant-box-shadow-secondary);
 }
 
 /* 锁屏固定毛玻璃：有意不随高级材质开关（ground-glass）变化 */
@@ -681,7 +681,7 @@ onUnmounted(() => {
 
 .tips {
   position: absolute;
-  bottom: var(--lihua-space-base);
+  bottom: 16px;
   width: 100vw
 }
 

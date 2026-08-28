@@ -97,18 +97,18 @@ const handleGoLogin = async () => {
 .user-setup-carousel {
   width: 600px;
   border: none;
-  border-radius: var(--lihua-radius-sm);
+  border-radius: var(--ant-border-radius-lg);
 }
 
 @media screen and (max-width: 600px) {
   .user-setup-carousel {
-    width: calc(100vw - var(--lihua-space-xl));
+    width: calc(100vw - 32px);
     margin: auto;
   }
 }
 
 :deep(.slick-list) {
-  border-radius: var(--lihua-radius-sm);
+  border-radius: var(--ant-border-radius-lg);
 }
 
 .next-leave-active {

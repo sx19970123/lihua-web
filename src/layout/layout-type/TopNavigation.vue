@@ -59,7 +59,7 @@ const props = defineProps<{showLayout: boolean }>()
   padding: 0;
   height: var(--lihua-layout-height);
   line-height: var(--lihua-layout-height);
-  box-shadow: var(--lihua-layout-box-shadow);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 /* 浅色导航压掉 Layout.Header 默认深色底、让外层容器的玻璃底透出；
    深色导航保留默认底——菜单根背景为透明、文字是深色主题浅色字，需要深色底衬托 */

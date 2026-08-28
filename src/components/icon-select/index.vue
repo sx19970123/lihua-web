@@ -357,7 +357,7 @@ onUnmounted(() => {
 
 .icon-group {
   padding: var(--icon-padding);
-  border-radius: var(--lihua-radius-sm);
+  border-radius: var(--ant-border-radius-lg);
   width: var(--icon-width);
   height: var(--icon-height);
   transition: all 0.2s ease;

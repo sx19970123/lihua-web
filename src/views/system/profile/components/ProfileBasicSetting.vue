@@ -5,7 +5,7 @@
       :model="profileInfo"
       :rules="userRoles"
       :colon="false"
-      :label-col="{ style: { marginTop: 'var(--lihua-space-xs)' } }"
+      :label-col="{ style: { marginTop: 'var(--ant-margin-xxs)' } }"
   >
     <a-flex gap="small" wrap="wrap">
       <!--      个人中心卡片-->

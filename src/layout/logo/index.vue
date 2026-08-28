@@ -10,7 +10,7 @@
       <!--    系统名称-->
       <!--margin: 0 保证与头像同轴线；样式走 styles 语义 prop（scoped 样式无法穿透组件深层渲染链）-->
       <a-typography-title :level="4" ellipsis v-if="showTitle"
-                          :styles="{root: {margin: 0, overflow: 'hidden', color: darkSiderColor ? 'var(--lihua-alpha-level-5)' : undefined}}">
+                          :styles="{root: {margin: 0, overflow: 'hidden', color: darkSiderColor ? 'var(--lihua-alpha-5)' : undefined}}">
         Lihua Admin
       </a-typography-title>
     </a-flex>

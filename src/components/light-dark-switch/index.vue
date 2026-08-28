@@ -1,5 +1,5 @@
 <template>
-  <div style="padding-right: var(--lihua-space-base)">
+  <div style="padding-right: var(--ant-padding)">
     <a-segmented :value="themeStore.themeMode" shape="round" :options="themeOptions"
                  :class="{'translucent-segmented': props.translucent}"
                  @change="(mode: string | number) => themeStore.changeThemeMode(mode as ThemeMode)"/>
@@ -31,13 +31,13 @@ const themeOptions = [
    稳定后 thumb 隐藏改由 .ant-segmented-item-selected 承载（vc-segmented 以 !thumbShow 切换），
    两层必须同色才无跳变，取比轨道高一档的半透明白区分层级 */
 :deep(.translucent-segmented.ant-segmented) {
-  background: var(--lihua-alpha-level-4);
+  background: var(--lihua-alpha-4);
   backdrop-filter: var(--lihua-backdrop-filter-sm);
 }
 
 :deep(.translucent-segmented.ant-segmented .ant-segmented-thumb),
 :deep(.translucent-segmented.ant-segmented .ant-segmented-item-selected) {
-  background: var(--lihua-alpha-level-6);
+  background: var(--lihua-alpha-6);
 }
 
 /* 半透明底上组件库默认的淡色图标与实色 hover 底都会糊掉/突兀，显式压深图标、hover 改半透明；
@@ -47,6 +47,6 @@ const themeOptions = [
 }
 
 :deep(.translucent-segmented.ant-segmented .ant-segmented-item:not(.ant-segmented-item-selected):hover) {
-  background: var(--lihua-alpha-level-2);
+  background: var(--lihua-alpha-2);
 }
 </style>

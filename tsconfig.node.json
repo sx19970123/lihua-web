@@ -2,6 +2,7 @@
   "extends": "@tsconfig/node18/tsconfig.json",
   "include": [
     "vite.config.ts",
+    "uno.config.ts",
     "plugins/**/*.ts"
   ],
   "compilerOptions": {

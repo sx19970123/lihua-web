@@ -35,7 +35,7 @@
             }]"
             >
               <a-input class="form-item-width" placeholder="请输入ip地址" v-model:value="settingForm.ipList[index]" allow-clear/>
-              <a-button style="margin-left: var(--lihua-space-sm); margin-right: var(--lihua-space-sm)"
+              <a-button style="margin-left: var(--ant-margin-xs); margin-right: var(--ant-margin-xs)"
                         danger
                         v-if="settingForm?.ipList.length > 1"
                         @click="handleRemoveIpItem(index)"

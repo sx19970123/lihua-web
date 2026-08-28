@@ -11,7 +11,7 @@
               @mouseleave="handleMouseOut"
               @change="handleValueChange"
     >
-      <template #suffixIcon><EditOutlined class="input-prefix-icon-color" style="font-size: var(--lihua-font-size-base);"/></template>
+      <template #suffixIcon><EditOutlined class="input-prefix-icon-color" style="font-size: var(--ant-font-size-lg);"/></template>
     </a-select>
   </div>
 </template>

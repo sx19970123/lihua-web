@@ -93,28 +93,28 @@ closeSide()
   top: 0;
 }
 .drawer-navigation-head {
-  box-shadow: var(--lihua-layout-box-shadow);
-  padding-left: var(--lihua-space-base);
+  box-shadow: var(--ant-box-shadow-tertiary);
+  padding-left: var(--ant-padding);
   padding-right: var(--lihua-layout-head-space);
 }
 .sider {
   height: calc(100vh - var(--lihua-layout-height));
 }
 .logo {
-  padding: var(--lihua-space-sm) var(--lihua-space-base)
+  padding: var(--ant-padding-xs) var(--ant-padding)
 }
 .drawer-navigation-sider {
   position: fixed;
   height: 100vh;
   top: 0;
   z-index: 101;
-  box-shadow: var(--lihua-layout-box-shadow);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 </style>
 
 <style lang="scss">
 .ant-layout-sider-zero-width-trigger::after {
-  border-radius: 0  var(--lihua-radius-xs) var(--lihua-radius-xs) 0;
+  border-radius: 0  var(--ant-border-radius-sm) var(--ant-border-radius-sm) 0;
 }
 </style>
 

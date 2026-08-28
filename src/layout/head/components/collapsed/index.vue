@@ -28,6 +28,6 @@ const handleCloseCollapsed = () => {
 </script>
 <style scoped>
 .menu-fold-icon {
-  font-size: var(--lihua-font-size-xl)
+  font-size: var(--ant-font-size-xl)
 }
 </style>

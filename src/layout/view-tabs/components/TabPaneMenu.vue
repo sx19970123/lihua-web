@@ -299,12 +299,12 @@ const handleUnAffix = (tab: StarViewType) => {
 <style lang="scss">
 /* 下拉菜单触发面积增大，与原卡片保持一致 */
 .view-tab-dropdown {
-  padding: 6px var(--lihua-space-base);
+  padding: 6px var(--ant-padding);
 }
 
 /* tabs图标 */
 .view-tab-icon {
   margin: 0 !important;
-  font-size: var(--lihua-font-size-xs)
+  font-size: var(--ant-font-size-sm)
 }
 </style>

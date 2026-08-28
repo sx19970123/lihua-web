@@ -294,9 +294,9 @@ watch(() => props.dataSource, () => {
 </script>
 <style scoped>
 .select-card {
-  border-radius: var(--lihua-radius-sm);
-  padding: var(--lihua-space-base);
-  border: 1px solid var(--lihua-border-color);
+  border-radius: var(--ant-border-radius-lg);
+  padding: var(--ant-padding);
+  border: 1px solid var(--ant-color-border);
   margin-right: 3px;
 }
 .select-card:hover {

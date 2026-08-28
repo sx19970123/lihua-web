@@ -96,7 +96,7 @@
                   <DeleteOutlined />
                 </template>
                 删 除
-                <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--lihua-space-xs)"> {{selectedIds.length}} 项</span>
+                <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
               </a-button>
             </a-popconfirm>
             <a-dropdown>
@@ -195,11 +195,11 @@
 
     <a-modal v-model:open="modalActive.open">
       <template #title>
-        <div style="margin-bottom: var(--lihua-space-lg)">
+        <div style="margin-bottom: var(--ant-margin-lg)">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>
-      <a-segmented v-model:value="segmented" :options="segmentedOption" style="margin-bottom: var(--lihua-space-base)" @change="changeSegmented"/>
+      <a-segmented v-model:value="segmented" :options="segmentedOption" style="margin-bottom: var(--ant-margin)" @change="changeSegmented"/>
       <a-form ref="formRef" :rules="userRules" :model="sysUserDTO" :label-col="{span: 4}" :colon="false">
 <!--        显示基本信息-->
         <div v-show="segmented === 'basic'">
@@ -272,7 +272,7 @@
                   <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}</a-typography-title>
                   <a-tag v-if="isSelected" :color="color">默认</a-tag>
                 </a-flex>
-                <div style="margin-top: var(--lihua-space-base)">
+                <div style="margin-top: var(--ant-margin)">
                   <div v-if="item?.postList && item?.postList.length > 0">
                     <a-checkable-tag v-for="post in item?.postList"
                                      @change="(checked: boolean) => handleSelectPostId(post.id, checked)"
@@ -311,7 +311,7 @@
 <!--    重置密码-->
      <a-modal v-model:open="showResetPassword" width="400px">
        <template #title>
-         <div style="margin-bottom: var(--lihua-space-lg)">
+         <div style="margin-bottom: var(--ant-margin-lg)">
            <a-typography-title :level="4">重置{{targetUserInfo.nickname ? targetUserInfo.nickname + '的' : ''}}密码</a-typography-title>
          </div>
        </template>
@@ -322,7 +322,7 @@
                            placeholder="请输入密码"
                            :size="116"/>
          </a-form-item>
-         <div style="margin-top: var(--lihua-space-sm);">
+         <div style="margin-top: var(--ant-margin-xs);">
            <a-checkbox v-model:checked="useDefaultPassword" @change="handleChangeUseDefaultPassword">使用默认密码</a-checkbox>
          </div>
        </a-form>

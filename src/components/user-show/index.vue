@@ -55,16 +55,16 @@ try {
 
 <style scoped>
 .lihua-user-select {
-  border: 1px solid var(--lihua-border-color);
+  border: 1px solid var(--ant-color-border);
   border-radius: 20px;
   padding: 2px;
   display: inline-block;
-  margin: var(--lihua-space-xs);
-  box-shadow: var(--lihua-layout-box-shadow);
+  margin: var(--ant-margin-xxs);
+  box-shadow: var(--ant-box-shadow-tertiary);
   user-select: none;
 }
 .nickname {
-  padding-right: var(--lihua-space-sm);
+  padding-right: var(--ant-padding-xs);
   white-space: nowrap;
 }
 </style>

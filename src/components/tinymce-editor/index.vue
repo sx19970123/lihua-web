@@ -279,7 +279,7 @@ watch(() => modelValue, () => {
 }
 /* 覆盖dialog阴影*/
 .tox .tox-dialog {
-  box-shadow: var(--lihua-box-shadow)!important;
+  box-shadow: var(--ant-box-shadow-tertiary)!important;
 }
 /* 覆盖源码预览，高度撑满容器*/
 .tox .tox-textarea-wrap {

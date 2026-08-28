@@ -1,6 +1,6 @@
 <template>
   <a-spin :spinning="spinning">
-    <div style="margin: var(--lihua-space-xl)">
+    <div style="margin: var(--ant-margin-xl)">
       <a-flex vertical :gap="32" align="center">
         <a-flex vertical align="center">
           <!--    标题-->

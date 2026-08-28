@@ -327,7 +327,7 @@ onUnmounted(() => {
 
 .modify::after {
   content: "编辑头像";
-  font-size: var(--lihua-font-size-xs);
+  font-size: var(--ant-font-size-sm);
   position: absolute;
   display: flex;
   align-items: center;
@@ -354,7 +354,7 @@ onUnmounted(() => {
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  box-shadow: var(--lihua-box-shadow);
+  box-shadow: var(--ant-box-shadow-tertiary);
   overflow: hidden;
 }
 </style>

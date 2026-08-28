@@ -13,6 +13,8 @@ import AntdvNext from 'antdv-next';
 import * as Icons from "@antdv-next/icons";
 // antdv-next 全局 reset
 import 'antdv-next/dist/reset.css';
+// unocss 原子类（值跟随 antdv-next 运行时注入的 --ant-* token 变量）
+import 'virtual:uno.css';
 import "@/static/css/index.css"
 
 

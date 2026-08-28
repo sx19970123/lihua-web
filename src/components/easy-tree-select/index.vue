@@ -1,6 +1,6 @@
 <template>
-  <div class="unselectable" style="border-radius: var(--lihua-radius-sm)">
-    <div v-if="showToolbar" style="margin-bottom: var(--lihua-space-xs)">
+  <div class="unselectable" style="border-radius: var(--ant-border-radius-lg)">
+    <div v-if="showToolbar" style="margin-bottom: var(--ant-margin-xxs)">
       <a-checkable-tag v-if="multiple" v-model:checked="treeSetting.checked" @change="handleCheckedAll">全选/全不选</a-checkable-tag>
       <a-checkable-tag v-if="multiple" v-model:checked="treeSetting.checkStrictly" @click="handleCheckStrictly">父子关联</a-checkable-tag>
       <a-checkable-tag v-model:checked="treeSetting.expand" @change="handleExpandAll">展开/折叠</a-checkable-tag>
@@ -19,7 +19,7 @@
                 @check="handleSelect"
                 @select="handleSelect"
                 @expand="handleExpand"
-                style="padding: var(--lihua-space-xs)"
+                style="padding: var(--ant-padding-xxs)"
                 ref="treeRef"
         >
           <template #titleRender="item" v-if="hasTitleSlot">
@@ -36,7 +36,7 @@
         </a-tree>
       </div>
       <div v-else>
-        <a-empty style="margin-top: var(--lihua-space-sm)"/>
+        <a-empty style="margin-top: var(--ant-margin-xs)"/>
       </div>
     </a-card>
   </div>
@@ -72,7 +72,7 @@ const {treeData, fieldNames = {
   children: 'children',
   title: 'label',
   key: 'id'
-}, defaultExpandAll = false, checkStrictly = false, multiple = true, showToolbar = true, showSearch = true, searchPlaceholder = "请输入关键词", bodyStyle = {padding: 'var(--lihua-space-sm)',borderRadius: 'var(--lihua-radius-sm)'}, maxHeight, bordered = true, modelValue} = defineProps<{
+}, defaultExpandAll = false, checkStrictly = false, multiple = true, showToolbar = true, showSearch = true, searchPlaceholder = "请输入关键词", bodyStyle = {padding: 'var(--ant-padding-xs)',borderRadius: 'var(--ant-border-radius-lg)'}, maxHeight, bordered = true, modelValue} = defineProps<{
   // 树形结构数据
   treeData: Array<any>,
   // 树形结构别名
@@ -319,6 +319,6 @@ onMounted(() => handleCheckedKey())
 <style scoped>
 .keyword-input {
   height: 28px;
-  margin-bottom: var(--lihua-space-sm)
+  margin-bottom: var(--ant-margin-xs)
 }
 </style>

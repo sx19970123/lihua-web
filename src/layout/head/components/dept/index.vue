@@ -6,7 +6,7 @@
       </a-button>
     </a-tooltip>
     <template #popupRender>
-      <a-card size="small" class="default-dept-card" :styles="{root: {'box-shadow': 'var(--lihua-box-shadow)'}}">
+      <a-card size="small" class="default-dept-card" :styles="{root: {'box-shadow': 'var(--ant-box-shadow-tertiary)'}}">
         <default-dept @dept-select="handleDeptSelect"/>
       </a-card>
     </template>

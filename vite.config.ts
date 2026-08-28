@@ -2,6 +2,7 @@ import {fileURLToPath, URL} from 'node:url'
 import {defineConfig, loadEnv} from 'vite'
 import type {UserConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
+import UnoCSS from '@unocss/vite'
 import svgLoader from 'vite-svg-loader'
 import replaceAttrFill from "./plugins/svgo-plugin.ts"
 
@@ -50,6 +51,7 @@ export default defineConfig(({ mode }): UserConfig => {
       chunkSizeWarningLimit: 2000,
     },
     plugins: [
+      UnoCSS(),
       vue(),
       // 将svg转为vue组件
       svgLoader({

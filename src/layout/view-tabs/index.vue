@@ -5,7 +5,7 @@
     <a-tabs ref="tabsRef"
             :activeKey="activeKey"
             class="unselectable tab-none-padding enable-glass"
-            style="padding: var(--lihua-space-sm) var(--lihua-space-sm) 0;"
+            style="padding: var(--ant-padding-xs) var(--ant-padding-xs) 0;"
             type="card"
             size="small"
             hide-add
@@ -459,7 +459,7 @@ watch(() => route.path,() => {
 </script>
 <style>
 .ant-tabs-nav {
-  margin-bottom: var(--lihua-space-sm) !important;
+  margin-bottom: var(--ant-margin-xs) !important;
 }
 
 /* 拖拽中的页签：Feedback popover 化会剥离外观，按组件 token 恢复 */

@@ -7,7 +7,7 @@
             <SearchOutlined class="icon-default-color"/>
           </template>
           <template #suffix>
-            <a-tag class="title-search-tag" style="margin-right: var(--lihua-space-xs)">{{osType() === 'MacOS' ? '⌘' : 'ctrl'}}</a-tag>
+            <a-tag class="title-search-tag" style="margin-right: var(--ant-margin-xxs)">{{osType() === 'MacOS' ? '⌘' : 'ctrl'}}</a-tag>
             <a-tag class="title-search-tag" style="margin-right: 0">k</a-tag>
           </template>
         </a-input>
@@ -55,7 +55,7 @@
       <a-typography-text strong>全部菜单</a-typography-text>
       <selectable-card
           v-if="open"
-          :card-style="{marginTop: 'var(--lihua-space-xs)', marginBottom: 'var(--lihua-space-xs)'}"
+          :card-style="{marginTop: 'var(--ant-margin-xxs)', marginBottom: 'var(--ant-margin-xxs)'}"
           v-model="pathKey"
           :gap="4"
           :data-source="menuList"
@@ -415,8 +415,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .title-search-input {
   width: 135px;
-  margin-right: var(--lihua-space-sm);
-  background-color: var(--lihua-alpha-level-0) !important;
+  margin-right: var(--ant-margin-xs);
+  background-color: var(--lihua-alpha-0) !important;
 }
 .title-search-input:hover {
   cursor: pointer !important;
@@ -425,14 +425,14 @@ onBeforeUnmount(() => {
   margin-right: 2px;
 }
 .menu-group {
-  margin: var(--lihua-space-sm) 0;
+  margin: var(--ant-margin-xs) 0;
 }
 .menu-icon {
-  font-size: var(--lihua-font-size-lg)
+  font-size: 18px
 }
 :deep(.title-search-input input) {
   cursor: pointer;
-  background-color: var(--lihua-alpha-level-0) !important;
+  background-color: var(--lihua-alpha-0) !important;
 }
 
 </style>

@@ -8,7 +8,7 @@
   <dict-tag dict-data-value="2-2-1" :dict-data-option="test_tree" full-tree-node root-tree-node-prefix="~"/>
 
   <a-typography-text strong>树形字典结构</a-typography-text>
-  <a-tree style="padding: var(--lihua-space-base)"
+  <a-tree style="padding: var(--ant-padding)"
           v-if="test_tree.length"
           :tree-data="test_tree"
           :field-names="{children:'children', title:'label'}"

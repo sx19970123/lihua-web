@@ -55,7 +55,7 @@
                       <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}</a-typography-title>
                       <a-tag v-if="isSelected" :color="color">默认</a-tag>
                     </a-flex>
-                    <div style="margin-top: var(--lihua-space-base);">
+                    <div style="margin-top: var(--ant-margin);">
                       <div v-if="item?.postList && item?.postList.length > 0">
                         <a-checkable-tag v-for="post in item?.postList"
                                          @change="(checked: boolean) => handleSelectPostId(post.id, checked)"
@@ -74,7 +74,7 @@
               </a-form-item>
             </a-card>
           </a-flex>
-          <a-form-item style="margin-top: var(--lihua-space-lg)">
+          <a-form-item style="margin-top: var(--ant-margin-lg)">
             <a-button type="primary" html-type="submit" @click="handleSubmit" :loading="submitLoading">提 交</a-button>
           </a-form-item>
         </div>

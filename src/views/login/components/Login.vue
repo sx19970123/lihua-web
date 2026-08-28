@@ -213,7 +213,7 @@ onMounted(() => {
 
 <style scoped>
 .login-title {
-  margin-top: var(--lihua-space-lg);
+  margin-top: var(--ant-margin-lg);
   margin-bottom: 56px;
 }
 

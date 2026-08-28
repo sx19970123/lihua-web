@@ -76,7 +76,7 @@
                  <DeleteOutlined />
                </template>
                删 除
-               <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--lihua-space-xs)"> {{selectedIds.length}} 项</span>
+               <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
              </a-button>
            </a-popconfirm>
 
@@ -165,7 +165,7 @@
     <!--模态框-->
    <a-modal v-model:open="modalActive.open" @ok="saveDept" :confirm-loading="modalActive.saveLoading">
      <template #title>
-       <div style="margin-bottom: var(--lihua-space-lg)">
+       <div style="margin-bottom: var(--ant-margin-lg)">
          <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
        </div>
      </template>

@@ -5,7 +5,7 @@
 
 /* content */
 .layout-content {
-    padding: var(--lihua-space-base);
+    padding: var(--ant-padding);
     overflow-x: hidden;
 }
 
@@ -35,7 +35,7 @@
  */
 .title-search-tag {
     background-color: transparent !important;
-    border-color: var(--lihua-border-color) !important;
+    border-color: var(--ant-color-border) !important;
 }
 
 /**
@@ -59,17 +59,17 @@
 
     /* placeholder 颜色 */
     .title-search-input input::placeholder {
-        color: var(--lihua-alpha-level-4) !important;
+        color: var(--lihua-alpha-4) !important;
     }
 
     /* 输入框边框颜色 */
     .title-search-input {
-        border-color: var(--lihua-alpha-level-5) !important;
+        border-color: var(--lihua-alpha-5) !important;
     }
 
     /* 标签样式 */
     .title-search-tag {
-        border-color: var(--lihua-alpha-level-5) !important;
-        color: var(--lihua-alpha-level-5) !important;
+        border-color: var(--lihua-alpha-5) !important;
+        color: var(--lihua-alpha-5) !important;
     }
 }

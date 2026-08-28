@@ -6,7 +6,7 @@
       </a-button>
     </a-tooltip>
     <template #popupRender>
-      <a-menu class="user-card" :styles="{root: {width: '220px', boxShadow: 'var(--lihua-box-shadow)'}}" @click="handleClickMenu">
+      <a-menu class="user-card" :styles="{root: {width: '220px', boxShadow: 'var(--ant-box-shadow-tertiary)'}}" @click="handleClickMenu">
         <a-menu-item key="user-overview">
           <a-flex align="center" :gap="12">
             <user-avatar :size="48" :value="userStore.avatar.value" :background-color="userStore.avatar.backgroundColor" :type="userStore.avatar.type" :url="userStore.avatar.url"/>
@@ -16,7 +16,7 @@
                 <a-typography-text ellipsis :copyable="{ tooltip: false }" :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.userId }}</a-typography-text>
               </a-tooltip>
             </a-flex>
-            <RightOutlined class="input-prefix-icon-color" style="position: absolute; right: var(--lihua-space-sm)"/>
+            <RightOutlined class="input-prefix-icon-color" style="position: absolute; right: 8px"/>
           </a-flex>
         </a-menu-item>
         <a-menu-divider/>

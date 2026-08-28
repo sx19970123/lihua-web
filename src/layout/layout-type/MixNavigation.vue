@@ -141,7 +141,7 @@ const showSider = computed(() => {
 }
 
 .side-navigation-header-inner {
-  box-shadow: var(--lihua-layout-box-shadow);
+  box-shadow: var(--ant-box-shadow-tertiary);
   padding-right: var(--lihua-layout-head-space);
 }
 .sider {
@@ -151,13 +151,13 @@ const showSider = computed(() => {
   min-width: 0;
 }
 .logo {
-  padding: var(--lihua-space-sm) var(--lihua-space-base)
+  padding: var(--ant-padding-xs) var(--ant-padding)
 }
 .side-navigation-sider {
   position: sticky;
   height: 100vh;
   top: 0;
   z-index: 4;
-  box-shadow: var(--lihua-layout-box-shadow);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 </style>

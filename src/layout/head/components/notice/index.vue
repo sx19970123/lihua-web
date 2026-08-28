@@ -6,7 +6,7 @@
                 @openChange="handleChangeNoticeList"
     >
     <template #popupRender>
-      <a-card size="small" class="notice-card" :styles="{root: {'box-shadow': 'var(--lihua-box-shadow)'}}">
+      <a-card size="small" class="notice-card" :styles="{root: {'box-shadow': 'var(--ant-box-shadow-tertiary)'}}">
         <a-tabs :centered="true" :items="noticeTabs" @change="handleChangeTabs"/>
         <!--通知列表（a-list 已被 vnext 移除，改用 a-listy；列表项布局自行排版；查询中由 a-spin 遮罩）-->
         <a-flex vertical>
@@ -313,7 +313,7 @@ onUnmounted(() => {
   max-height: 500px;
 }
 .notice-empty {
-  margin-block: var(--lihua-space-base);
+  margin-block: var(--ant-margin);
 }
 .more-btn {
   width: 100%;

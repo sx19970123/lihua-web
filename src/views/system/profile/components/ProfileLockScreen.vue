@@ -7,7 +7,7 @@
             <template #title>
               一段时间未操作将自动锁屏
             </template>
-            <QuestionCircleOutlined style="margin-left: var(--lihua-space-xs)"/>
+            <QuestionCircleOutlined style="margin-left: var(--ant-margin-xxs)"/>
           </a-tooltip>
         </template>
         <a-switch v-model:checked="formData.autoLock"></a-switch>

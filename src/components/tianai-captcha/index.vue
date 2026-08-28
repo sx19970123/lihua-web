@@ -151,41 +151,41 @@ const replaceLoadingElement = () => {
 <style lang="less">
 /* 验证码外部容器样式 */
 #tianai-captcha-parent {
-  box-shadow: var(--lihua-box-shadow) !important;
-  border-radius: var(--lihua-radius-sm) !important;
+  box-shadow: var(--ant-box-shadow-tertiary) !important;
+  border-radius: var(--ant-border-radius-lg) !important;
   width: 332px !important;
   height: 326px !important;
-  padding: var(--lihua-space-base) !important;
+  padding: var(--ant-padding) !important;
 }
 /* 背景图片样式 */
 #tianai-captcha-parent #tianai-captcha-bg-img {
-  border-radius: var(--lihua-radius-sm) !important;
+  border-radius: var(--ant-border-radius-lg) !important;
 }
 /* 滑动提示文字样式 */
 #tianai-captcha-slider-move-track-font {
   color: rgba(0, 0, 0, 0.88) !important;
-  font-size: var(--lihua-space-base) !important;
+  font-size: var(--ant-font-size-lg) !important;
   font-weight: 500 !important;
 }
 /* 点击提示文字样式 */
 #tianai-captcha.tianai-captcha-word-click .click-tip #tianai-captcha-click-track-font {
   color: rgba(0, 0, 0, 0.88) !important;
-  font-size: var(--lihua-font-size-xl) !important;
+  font-size: var(--ant-font-size-xl) !important;
   font-weight: 500 !important;
 }
 
 /* 滑块滑过样式 */
 #tianai-captcha-parent #tianai-captcha-slider-move-track-mask {
   height: 34px !important;
-  border-radius: var(--lihua-radius-xs) 0 0 var(--lihua-radius-xs) !important;
+  border-radius: var(--ant-border-radius-sm) 0 0 var(--ant-border-radius-sm) !important;
 }
 /* 底部操作栏样式 */
 #tianai-captcha-parent .slider-bottom {
-  padding-top: var(--lihua-space-sm) !important;
+  padding-top: var(--ant-padding-xs) !important;
 }
 /* 验证成功样式 */
 #tianai-captcha .content .tianai-captcha-tips.tianai-captcha-tips-success {
-  background-color: var(--lihua-success-color) !important;
+  background-color: var(--ant-color-success) !important;
 }
 
 /* 点选样式 */
@@ -213,7 +213,7 @@ const replaceLoadingElement = () => {
 }
 /* 验证失败样式 */
 #tianai-captcha .content .tianai-captcha-tips.tianai-captcha-tips-error {
-  background-color: var(--lihua-danger-color) !important;
+  background-color: var(--ant-color-error) !important;
 }
 /* 拼接类型验证统一圆角 */
 #tianai-captcha.tianai-captcha-concat .tianai-captcha-slider-concat-bg-img {
@@ -230,7 +230,7 @@ const replaceLoadingElement = () => {
   left: 50%;
   transform: translate(-50%, -50%);
   color: rgba(0, 0, 0, 0.65);
-  font-size: var(--lihua-font-size-sm);
+  font-size: var(--ant-font-size);
 }
 
 [data-theme = 'dark'] {

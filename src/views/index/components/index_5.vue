@@ -37,7 +37,7 @@
             <a-typography-text type="secondary">开发</a-typography-text>
           </a-typography-text>
           <br/>
-          <div class="scrollbar dark-overlay" style="height: 484px;margin-top: var(--lihua-space-base)">
+          <div class="scrollbar dark-overlay" style="height: 484px;margin-top: var(--ant-margin-xs)">
             <a-typography-title :level="5">
               技术概览
             </a-typography-title>

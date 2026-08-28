@@ -20,8 +20,8 @@
     /* 选项卡选中项目虚化，背景颜色设置为透明 */
     .enable-glass {
         .ant-tabs-tab-active {
-            background: var(--lihua-alpha-level-0) !important;
-            border-bottom-color: var(--lihua-alpha-level-0) !important;
+            background: var(--lihua-alpha-0) !important;
+            border-bottom-color: var(--lihua-alpha-0) !important;
         }
     }
 
@@ -29,9 +29,9 @@
     .enable-glass.ant-dropdown {
         will-change: backdrop-filter;
         backdrop-filter: var(--lihua-backdrop-filter-md);
-        border-radius: var(--lihua-radius-sm);
+        border-radius: var(--ant-border-radius-lg);
         overflow: hidden;
-        box-shadow: var(--lihua-box-shadow);
+        box-shadow: var(--ant-box-shadow-tertiary);
         .ant-dropdown-menu {
             background-color: var(--lihua-backdrop-filter-on-color);
         }
@@ -43,9 +43,9 @@
         backdrop-filter: var(--lihua-backdrop-filter-md);
         /* 弹层根节点带菜单主题类（如 -light），组件库会把主题底色画在根节点上，须强制透明由内层菜单承载玻璃底 */
         background: transparent !important;
-        border-radius: var(--lihua-radius-sm);
+        border-radius: var(--ant-border-radius-lg);
         overflow: hidden;
-        box-shadow: var(--lihua-secondary-box-shadow);
+        box-shadow: var(--ant-box-shadow-secondary);
         .ant-dropdown-menu {
             margin: 0;
             background-color: var(--lihua-backdrop-filter-on-color);

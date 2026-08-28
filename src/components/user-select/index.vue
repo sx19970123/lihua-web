@@ -11,7 +11,7 @@
                      @change="handleChangeKeyword"
                      class="dept-keyword-input">
               <template #suffix>
-                <SearchOutlined :style="{color: 'rgba(--lihua-alpha-level-4)'}"/>
+                <SearchOutlined/>
               </template>
             </a-input>
             <a-divider class="divider"/>
@@ -34,7 +34,7 @@
                   <span v-else>{{ name }}</span>
                 </template>
               </a-tree>
-              <a-empty v-else style="margin-top: var(--lihua-space-sm)" :description="props.emptyDescription"/>
+              <a-empty v-else style="margin-top: var(--ant-margin-xs)" :description="props.emptyDescription"/>
             </div>
           </a-spin>
         </a-col>
@@ -376,8 +376,8 @@ onMounted(() => {
 
 <style scoped>
 .user-show-title {
-  margin-left: var(--lihua-space-base);
-  margin-top: var(--lihua-space-sm)
+  margin-left: var(--ant-margin);
+  margin-top: var(--ant-margin-xs)
 }
 .user-show-group {
   padding-left: 12px
@@ -394,7 +394,7 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   z-index: 1;
-  border-radius: var(--lihua-radius-lg);
+  border-radius: 24px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -412,13 +412,13 @@ onMounted(() => {
 
 .dept-keyword-input {
   height: 28px;
-  margin-top: var(--lihua-space-xs);
+  margin-top: var(--ant-margin-xxs);
   margin-right: 10px;
-  width: calc(100% - var(--lihua-space-base))
+  width: calc(100% - 16px)
 }
 
 .divider {
-  margin-bottom: var(--lihua-space-sm);
+  margin-bottom: var(--ant-margin-xs);
   margin-top: 6px
 }
 

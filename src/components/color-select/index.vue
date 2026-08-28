@@ -40,17 +40,17 @@ const selectedColor = ({color, name, key}: ColorSelectItem) => {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  height: var(--lihua-space-lg);
-  width: var(--lihua-space-lg);
-  border-radius: var(--lihua-radius-sm);
+  height: 24px;
+  width: 24px;
+  border-radius: var(--ant-border-radius-lg);
   cursor: pointer;
-  margin-right: var(--lihua-space-sm);
-  box-shadow: var(--lihua-box-shadow);
+  margin-right: var(--ant-margin-xs);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 
 .color-selected {
   color: #ffffff;
   font-weight: 700;
-  font-size: var(--lihua-font-size-sm);
+  font-size: var(--ant-font-size);
 }
 </style>

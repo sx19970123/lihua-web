@@ -19,7 +19,7 @@
 <!--      右侧表单-->
       <div class="form">
         <transition name="card" mode="out-in" v-show="showCard">
-          <a-card class="login-card">
+          <a-card class="login-card px-ant-base">
             <transition name="form" mode="out-in" v-show="showCard">
               <!-- 用户登录/注册等卡片内表单在这儿通过组件形式切换 -->
               <component :is="activeComponent" @change-component="handleChangeComponent" @start-user-setup="startUserSetup"/>
@@ -185,9 +185,7 @@ onMounted(() => {
 /* 登录卡片 */
 .login-card {
   max-width: 380px;
-  padding-left: var(--lihua-space-base);
-  padding-right: var(--lihua-space-base);
-  border-radius: var(--lihua-radius-lg);
+  border-radius: 24px;
 }
 
 /* 表单 */
@@ -198,7 +196,7 @@ onMounted(() => {
 /* 视口宽度小于378时，卡片取96视口宽度 居中 */
 @media screen and (max-width: 378px) {
   .login-card {
-    width: calc(100vw - var(--lihua-space-xl));
+    width: calc(100vw - 32px);
     margin: auto;
   }
 }
@@ -206,8 +204,8 @@ onMounted(() => {
 /* 暗色模式切换开关 */
 .theme-switch {
   position: absolute;
-  top: var(--lihua-space-base);
-  right: var(--lihua-space-lg);
+  top: 16px;
+  right: 24px;
 }
 
 .card-enter-active {

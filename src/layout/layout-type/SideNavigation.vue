@@ -78,22 +78,22 @@ const props = defineProps<{showLayout: boolean}>()
   top: 0;
 }
 .side-navigation-head {
-  box-shadow: var(--lihua-layout-box-shadow);
-  padding-left: var(--lihua-space-base);
+  box-shadow: var(--ant-box-shadow-tertiary);
+  padding-left: var(--ant-padding);
   padding-right: var(--lihua-layout-head-space);
 }
 .sider {
   height: calc(100vh - var(--lihua-layout-height));
 }
 .logo {
-  padding: var(--lihua-space-sm) var(--lihua-space-base)
+  padding: var(--ant-padding-xs) var(--ant-padding)
 }
 .side-navigation-sider {
   position: sticky;
   height: 100vh;
   top: 0;
   z-index: 4;
-  box-shadow: var(--lihua-layout-box-shadow);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 </style>
 

@@ -48,63 +48,63 @@ const handleClockNavType = (key: string) => {
   bottom: 6px;
   right: 6px;
   font-weight: 700;
-  font-size: var(--lihua-font-size-sm);
+  font-size: var(--ant-font-size);
 }
 
 .nav-select-content {
   position: relative;
   width: 53px;
   height: 43px;
-  background: var(--lihua-background-color-level-1);
-  border-radius: var(--lihua-radius-sm);
+  background: var(--ant-color-bg-layout);
+  border-radius: var(--ant-border-radius-lg);
   cursor: pointer;
-  box-shadow: var(--lihua-box-shadow);
+  box-shadow: var(--ant-box-shadow-tertiary);
 }
 
 .nav-select-sub-top {
   width: 70%;
   height: 30%;
-  background: var(--lihua-background-color-level-2);
+  background: var(--ant-color-bg-container);
   float: right;
-  border-top-right-radius: var(--lihua-radius-sm);
+  border-top-right-radius: var(--ant-border-radius-lg);
 }
 
 .nav-select-menu-left {
   width: 30%;
   height: 100%;
   background: var(--lihua-sider-dark-color);
-  border-top-left-radius: var(--lihua-radius-sm);
-  border-bottom-left-radius: var(--lihua-radius-sm);
+  border-top-left-radius: var(--ant-border-radius-lg);
+  border-bottom-left-radius: var(--ant-border-radius-lg);
 }
 
 .nav-select-menu-sub-left {
   width: 30%;
   height: 70%;
   background: var(--lihua-sider-dark-color);
-  border-bottom-left-radius: var(--lihua-radius-sm);
+  border-bottom-left-radius: var(--ant-border-radius-lg);
 }
 
 .nav-select-top {
   width: 100%;
   height: 30%;
-  background: var(--lihua-background-color-level-2);
-  border-top-left-radius: var(--lihua-radius-sm);
-  border-top-right-radius: var(--lihua-radius-sm);
+  background: var(--ant-color-bg-container);
+  border-top-left-radius: var(--ant-border-radius-lg);
+  border-top-right-radius: var(--ant-border-radius-lg);
 }
 
 .nav-select-menu-top {
   width: 100%;
   height: 30%;
   background: var(--lihua-sider-dark-color);
-  border-top-left-radius: var(--lihua-radius-sm);
-  border-top-right-radius: var(--lihua-radius-sm);
+  border-top-left-radius: var(--ant-border-radius-lg);
+  border-top-right-radius: var(--ant-border-radius-lg);
 }
 
 [data-theme = 'dark'] {
   .nav-select-menu-left,
   .nav-select-menu-sub-left,
   .nav-select-menu-top {
-    background: var(--lihua-background-color-level-3);
+    background: var(--ant-color-bg-elevated);
   }
 }
 </style>
