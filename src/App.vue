@@ -30,18 +30,15 @@ import zhCN from 'antdv-next/locale/zh_CN';
 import {onMounted, onUnmounted, ref, useTemplateRef, watch, computed} from "vue";
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';
-import {theme} from "antdv-next";
 import {bindAppApi, type AppApi} from "@/antd-adapter";
 
-const { token } = theme.useToken()
 const themeStore = useThemeStore()
 const permissionStore = usePermissionStore()
 // <a-app> 暴露的 message/notification/modal 上下文内实例，挂载后供静态方法出口转发
 const appApiRef = useTemplateRef<AppApi>("appApiRef")
-// 应用html-root主题颜色
-themeStore.changeDocumentElement(token.value.colorPrimary)
-// 全局主题引导：登录页不走 initApp 的主题初始化链，须在此做一次全量同步（算法+html属性），
-// 避免 store 状态、antd 算法、DOM 属性三者起始不一致
+// 全局主题引导：登录页不走 initApp 的主题初始化链，须在此做一次全量同步（算法+html属性+主题色），
+// 避免 store 状态、antd 算法、DOM 属性三者起始不一致；主题色同步由 store 内部完成
+// （不可用根级 useToken 取色：App.vue 在自身渲染的 ConfigProvider 之外，只会拿到库默认 token）
 themeStore.applyThemeMode()
 
 // 初始化系统配置
@@ -118,11 +115,6 @@ const initTheme = () => {
 
 }
 const {handleFollowSystemTheme, syncTabTheme} = initTheme()
-
-// 监听token.value.colorPrimary修改html-root中主题颜色
-watch(() => token.value.colorPrimary, () => {
-  themeStore.changeDocumentElement(token.value.colorPrimary)
-})
 
 // 监听自动档接管（系统偏好监听器的挂载/卸载）；档位持久化由 changeThemeMode 收口
 watch(() => themeStore.themeMode === 'auto', () => {

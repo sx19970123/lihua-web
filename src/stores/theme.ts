@@ -179,7 +179,9 @@ export const useThemeStore = defineStore('theme',{
             else {
                 this.$state.themeConfig.algorithm = theme.defaultAlgorithm
             }
-            document.documentElement.setAttribute("data-theme",this.$state.isDarkTheme ? 'dark' : 'light')
+            // 主题色同源落地：--colorPrimary 供纯 CSS 消费，antColorPrimary state 供模板/JS 响应式消费；
+            // data-theme 属性也由此调用统一设置
+            this.changeDocumentElement(this.$state.themeConfig.token.colorPrimary)
             if (isSync !== true) {
                 localStorage.setItem('theme-mode',this.$state.themeMode)
             }
@@ -199,6 +201,7 @@ export const useThemeStore = defineStore('theme',{
         // 切换主要颜色
         changeColorPrimary() {
             this.themeConfig.token.colorPrimary = this.$state.colorPrimary
+            this.changeDocumentElement(this.$state.colorPrimary)
         },
         // html节点添加glass属性
         changeGroundGlass() {
@@ -212,12 +215,12 @@ export const useThemeStore = defineStore('theme',{
         changeDocumentElement(colorPrimary: string) {
             document.documentElement.setAttribute("data-theme",this.$state.isDarkTheme ? 'dark' : 'light')
             document.documentElement.style.setProperty("--colorPrimary", colorPrimary)
+            // 同步 store state：--colorPrimary 供纯 CSS 消费，state 供模板/JS 响应式消费，两者同源于 useToken
+            this.$state.antColorPrimary = colorPrimary
         },
         // 获取当前主要颜色
-        getColorPrimary() {
-            const color = document.documentElement.style.getPropertyValue("--colorPrimary")
-            this.$state.antColorPrimary = color
-            return color
+        getColorPrimary(): string {
+            return this.$state.antColorPrimary || document.documentElement.style.getPropertyValue("--colorPrimary")
         },
         // 主题重置
         resetState() {
