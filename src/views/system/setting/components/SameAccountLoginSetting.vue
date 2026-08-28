@@ -67,12 +67,14 @@ const setting = ref<SysSetting>({
 
 
 // 处理改变switch开关
-const handleChangeSwitch = async () => {
+// antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
+const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
     await init()
     message.error("用户权限不足")
     return
   }
+  settingForm.value.enable = !!checked
 
   // 为 ture 则返回，关闭时才发送请求
   if (settingForm.value.enable) {

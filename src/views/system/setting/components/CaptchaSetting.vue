@@ -52,12 +52,14 @@ const setting = ref<SysSetting>({
 })
 
 // 处理保存设置
-const handleChangeSwitch = async () => {
+// antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
+const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
     await init()
     message.error("用户权限不足")
     return
   }
+  settingForm.value.enable = !!checked
 
   setting.value.json = JSON.stringify(settingForm.value)
   const resp = await save(setting.value)

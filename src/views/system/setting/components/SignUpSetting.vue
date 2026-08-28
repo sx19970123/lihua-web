@@ -334,12 +334,14 @@ const initPostData = () => {
 const {sysPostList, postLoading, loadPost ,handleSelectPostId} = initPostData()
 
 // 处理开关switch
-const handleChangeSwitch = async () => {
+// antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
+const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
     await init()
     message.error("用户权限不足")
     return
   }
+  settingForm.value.enable = !!checked
 
   if (!settingForm.value.enable) {
     await handleSubmit()

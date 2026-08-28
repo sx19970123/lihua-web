@@ -60,6 +60,15 @@ const init = async () => {
         closeTime.value = dayjs(settingForm.value.closeTime)
       } else {
         closeTime.value = undefined
+        // 关闭时间已过但配置仍为开启时，回写关闭状态，使数据库与面板显示一致
+        if (data.enable && isAdmin()) {
+          settingForm.value = {enable: false, closeTime: undefined}
+          setting.value.json = JSON.stringify(settingForm.value)
+          const resp = await save(setting.value)
+          if (resp.code === 200) {
+            themeStore.enableGrayModel(false)
+          }
+        }
       }
     } else {
       settingForm.value = data
@@ -90,12 +99,14 @@ const setting = ref<SysSetting>({
 })
 
 // 处理开关switch
-const handleChangeSwitch = async () => {
+// antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
+const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
     await init()
     message.error("用户权限不足")
     return
   }
+  settingForm.value.enable = !!checked
   if (!settingForm.value.enable) {
     settingForm.value.closeTime = undefined
     closeTime.value = undefined
