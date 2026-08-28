@@ -1,8 +1,8 @@
 <template>
-  <a-flex class="login-background" justify="center" align="center">
+  <a-flex class="login-background relative w-full h-screen overflow-hidden" justify="center" align="center">
     <a-flex align="center" :gap="208" v-if="!showUserSetup">
 <!--      主题切换开关-->
-      <theme-switch class="theme-switch" translucent/>
+      <theme-switch class="absolute top-4 right-6" translucent/>
 <!--        左侧标题-->
       <div class="title">
         <transition name="fade" mode="out-in">
@@ -17,9 +17,9 @@
         </transition>
       </div>
 <!--      右侧表单-->
-      <div class="form">
+      <div class="w-[378px]">
         <transition name="card" mode="out-in" v-show="showCard">
-          <a-card class="login-card px-ant-base">
+          <a-card class="login-card max-w-[380px] px-ant-base">
             <transition name="form" mode="out-in" v-show="showCard">
               <!-- 用户登录/注册等卡片内表单在这儿通过组件形式切换 -->
               <component :is="activeComponent" @change-component="handleChangeComponent" @start-user-setup="startUserSetup"/>
@@ -151,12 +151,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 登录背景 */
+/* 登录背景（渐变动画；布局声明已迁工具类） */
 .login-background {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
   background-image:linear-gradient(-135deg,#C2FFD8 10%,#465EFB 100%);
   background-size: 200% 200%;
   animation: gradientAnimation 30s ease infinite;
@@ -182,15 +178,9 @@ onMounted(() => {
   }
 }
 
-/* 登录卡片 */
+/* 登录卡片（max-width 已迁工具类；border-radius 需压过 .ant-card 默认圆角故留 scoped） */
 .login-card {
-  max-width: 380px;
   border-radius: 24px;
-}
-
-/* 表单 */
-.form {
-  width: 378px;
 }
 
 /* 视口宽度小于378时，卡片取96视口宽度 居中 */
@@ -199,13 +189,6 @@ onMounted(() => {
     width: calc(100vw - 32px);
     margin: auto;
   }
-}
-
-/* 暗色模式切换开关 */
-.theme-switch {
-  position: absolute;
-  top: 16px;
-  right: 24px;
 }
 
 .card-enter-active {

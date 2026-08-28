@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="login-title">
+    <div class="mt-ant-lg mb-[56px]">
       <a-typography-title :level="2">欢迎登录狸花猫</a-typography-title>
       <a-typography-text v-if="!settingStore.isServerConnected" type="danger">无法连接服务器</a-typography-text>
       <!--                    根据配置显示注册-->
@@ -44,9 +44,8 @@
       <a-form-item>
         <a-button html-type="submit"
                   type="primary"
-                  class="login-form-item"
-                  :loading="loginLoading"
-                  style="width: 100%">登录
+                  class="login-form-item w-full"
+                  :loading="loginLoading">登录
         </a-button>
       </a-form-item>
     </a-form>
@@ -212,11 +211,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.login-title {
-  margin-top: var(--ant-margin-lg);
-  margin-bottom: 56px;
-}
-
+/* .ant-btn 根级 cssinjs 声明 height，工具类必被反杀，故保留 scoped */
 .login-form-item {
   height: 48px
 }

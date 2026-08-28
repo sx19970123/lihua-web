@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="register-title">
+    <div class="mt-ant-lg mb-[56px]">
       <a-typography-title :level="2">欢迎注册狸花猫</a-typography-title>
       <a-typography-text>已有账号？</a-typography-text>
       <a-typography-link @click="handleChangeComponent('login')">前往登录
@@ -46,9 +46,8 @@
       <a-form-item>
         <a-button html-type="submit"
                   type="primary"
-                  class="register-form-item"
-                  :loading="registerLoading"
-                  style="width: 100%">注册
+                  class="register-form-item w-full"
+                  :loading="registerLoading">注册
         </a-button>
       </a-form-item>
     </a-form>
@@ -179,12 +178,8 @@ const handleRegister = async (captchaVerification: string) => {
 </script>
 
 <style scoped>
+/* .ant-btn 根级 cssinjs 声明 height，工具类必被反杀，故保留 scoped */
 .register-form-item {
   height: 48px;
-}
-
-.register-title {
-  margin-top: var(--ant-margin-lg);
-  margin-bottom: 56px;
 }
 </style>
