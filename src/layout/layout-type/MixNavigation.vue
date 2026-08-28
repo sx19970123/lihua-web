@@ -3,7 +3,7 @@
     <!--   左侧导航   -->
     <transition :name="themeStore.routeTransition" mode="out-in" v-if="showSider">
       <a-layout-sider :class="themeStore.siderTheme === 'light' ? 'background-glass' : ''"
-                      class="side-navigation-sider"
+                      class="side-navigation-sider top-0 h-screen z-4 shadow-ant-ter"
                       v-show="props.showLayout"
                       :theme="themeStore.siderTheme"
                       :width="themeStore.siderWith"
@@ -11,9 +11,9 @@
                       collapsible
                       breakpoint="xl"
       >
-        <Logo class="logo" :show-title="!permissionStore.collapsed"/>
+        <Logo class="py-ant-xs px-ant-base" :show-title="!permissionStore.collapsed"/>
         <!-- 侧边栏-->
-        <div class="sider sider-scrollbar"
+        <div class="h-[calc(100vh-var(--lihua-layout-height))] sider-scrollbar"
              :class="{ 'sider-scrollbar-dark': themeStore.siderTheme === 'dark' }">
           <Side sider-mode="inline" :menu="subMenu" ref="sideRef"/>
         </div>
@@ -21,17 +21,17 @@
     </transition>
     <!--   右侧head和content   -->
     <a-layout>
-      <a-layout-header class="side-navigation-header background-glass"
-                       :class="{ 'affix-header': themeStore.affixHead }">
+      <a-layout-header class="side-navigation-header background-glass z-3"
+                       :class="{ 'sticky top-0': themeStore.affixHead }">
         <transition :name="themeStore.routeTransition" mode="out-in">
-          <a-flex class="side-navigation-header-inner"
+          <a-flex class="side-navigation-header-inner shadow-ant-ter"
                   :style="{'padding-left': !showSider ? 'var(--lihua-layout-head-space)' : 0}"
                   align="center"
                   gap="middle"
                   v-show="props.showLayout">
             <Logo :auto-color="false" v-if="!showSider"/>
             <!--顶部导航占用剩余空间-->
-            <a-flex class="top-sider" :flex="1">
+            <a-flex class="min-w-0" :flex="1">
               <Side is-mix-top
                     class="header-menu-fill"
                     :menu="topMenu"
@@ -128,36 +128,20 @@ const showSider = computed(() => {
 </script>
 
 <style scoped>
+/* height/padding/line-height 需压过 .ant-layout-header 根级 cssinjs 声明，故留 scoped（z-index 已迁工具类） */
 .side-navigation-header {
-  z-index: 3;
   height: auto;
   padding: 0;
   line-height: var(--lihua-layout-height);
 }
 
-.affix-header {
-  position: sticky;
-  top: 0;
-}
-
+/* padding 需压过 .ant-flex 根级显式 padding:0，故留 scoped（box-shadow 已迁工具类） */
 .side-navigation-header-inner {
-  box-shadow: var(--ant-box-shadow-tertiary);
   padding-right: var(--lihua-layout-head-space);
 }
-.sider {
-  height: calc(100vh - var(--lihua-layout-height));
-}
-.top-sider {
-  min-width: 0;
-}
-.logo {
-  padding: var(--ant-padding-xs) var(--ant-padding)
-}
+
+/* position 需压过 .ant-layout-sider 根级 position:relative，故留 scoped（top/height/z-index/box-shadow 已迁工具类） */
 .side-navigation-sider {
   position: sticky;
-  height: 100vh;
-  top: 0;
-  z-index: 4;
-  box-shadow: var(--ant-box-shadow-tertiary);
 }
 </style>

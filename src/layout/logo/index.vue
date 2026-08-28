@@ -1,5 +1,5 @@
 <template>
-  <div class="title-content unselectable" @click="goHome" :style="{maxWidth: maxWidth + 'px'}">
+  <div class="title-content unselectable cursor-pointer" @click="goHome" :style="{maxWidth: maxWidth + 'px'}">
     <a-flex gap="middle" align="center" justify="center">
       <!--      系统logo-->
       <a-avatar class="logo" :style="{backgroundColor: themeStore.getColorPrimary()}">
@@ -47,12 +47,9 @@ const darkSiderColor = computed(() => {
 </script>
 
 <style scoped>
-.title-content {
-  cursor: pointer;
-
-  .logo {
-    min-width: 32px;
-  }
+/* 后代选择器（头像最小宽度）无法用工具类表达，保留 */
+.title-content .logo {
+  min-width: 32px;
 }
 
 </style>

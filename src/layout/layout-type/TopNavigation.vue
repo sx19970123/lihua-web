@@ -1,17 +1,17 @@
 <template>
   <a-layout class="layout">
-    <div class="top-navigation-header background-glass"
-         :class="{ 'affix-header': themeStore.affixHead,
+    <div class="background-glass relative z-10"
+         :class="{ 'sticky top-0': themeStore.affixHead,
                    'dark-header': themeStore.siderTheme === 'dark' && !themeStore.isSmallWindow }">
       <transition :name="themeStore.routeTransition" mode="out-in">
-        <a-layout-header class="top-navigation-layout-header"
+        <a-layout-header class="top-navigation-layout-header relative z-10 shadow-ant-ter"
                          :class="{'top-navigation-header-transparent': themeStore.siderTheme !== 'dark'}"
                          v-show="props.showLayout">
           <a-flex class="top-navigation-head-inner" align="center" gap="middle">
             <!--logo-->
             <Logo/>
             <!--导航（顶部导航占用剩余空间）-->
-            <a-flex class="sider" :flex="1">
+            <a-flex class="min-w-0" :flex="1">
               <Side class="header-menu-fill" sider-mode="horizontal"/>
             </a-flex>
             <!--页头-->
@@ -45,21 +45,11 @@ const props = defineProps<{showLayout: boolean }>()
 </script>
 
 <style scoped>
-.top-navigation-header {
-  position: relative;
-  z-index: 10;
-}
-.affix-header {
-  position: sticky;
-  top: 0;
-}
+/* padding/height/line-height 需压过 .ant-layout-header 根级 cssinjs 声明，故留 scoped（position/z-index/box-shadow 已迁工具类） */
 .top-navigation-layout-header {
-  position: relative;
-  z-index: 10;
   padding: 0;
   height: var(--lihua-layout-height);
   line-height: var(--lihua-layout-height);
-  box-shadow: var(--ant-box-shadow-tertiary);
 }
 /* 浅色导航压掉 Layout.Header 默认深色底、让外层容器的玻璃底透出；
    深色导航保留默认底——菜单根背景为透明、文字是深色主题浅色字，需要深色底衬托 */
@@ -67,11 +57,8 @@ const props = defineProps<{showLayout: boolean }>()
   background: transparent;
 }
 
+/* padding 需压过 .ant-flex 根级显式 padding:0，故留 scoped */
 .top-navigation-head-inner {
   padding: 0 var(--lihua-layout-head-space);
-}
-
-.sider {
-  min-width: 0;
 }
 </style>

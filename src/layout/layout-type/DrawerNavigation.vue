@@ -3,7 +3,7 @@
     <a-layout class="layout">
       <!--   左侧导航   -->
       <transition :name="themeStore.routeTransition" mode="out-in">
-        <a-layout-sider class="drawer-navigation-sider"
+        <a-layout-sider class="drawer-navigation-sider top-0 h-screen z-[101] shadow-ant-ter"
                         v-show="props.showLayout"
                         :theme="themeStore.siderTheme"
                         :trigger="permissionStore.collapsed ? null : '×'"
@@ -12,9 +12,9 @@
                         :collapsedWidth="0"
                         collapsible
         >
-          <Logo class="logo" :show-title="!permissionStore.collapsed"/>
-          <!-- 侧边栏-->
-          <div class="sider sider-scrollbar"
+          <Logo class="py-ant-xs px-ant-base" :show-title="!permissionStore.collapsed"/>
+          <!--  侧边栏-->
+          <div class="h-[calc(100vh-var(--lihua-layout-height))] sider-scrollbar"
                :class="{ 'sider-scrollbar-dark': themeStore.siderTheme === 'dark' }">
             <Side sider-mode="inline" class="small-sider-content" @route-change="closeSide"/>
           </div>
@@ -22,11 +22,11 @@
       </transition>
       <!--   右侧head和content   -->
       <a-layout>
-        <a-layout-header class="drawer-navigation-header background-glass"
-                         :class="{ 'affix-header': themeStore.affixHead }">
+        <a-layout-header class="drawer-navigation-header background-glass z-3"
+                         :class="{ 'sticky top-0': themeStore.affixHead }">
           <transition :name="themeStore.routeTransition" mode="out-in">
             <!--    菜单收缩-->
-            <a-flex class="drawer-navigation-head" justify="space-between" v-show="props.showLayout">
+            <a-flex class="drawer-navigation-head shadow-ant-ter" justify="space-between" v-show="props.showLayout">
               <a-flex align="center" :gap="16">
                 <!--菜单开关-->
                 <HeadCollapsed/>
@@ -84,33 +84,22 @@ closeSide()
 </script>
 
 <style scoped>
+/* height/padding/line-height 需压过 .ant-layout-header 根级 cssinjs 声明，故留 scoped（z-index 已迁工具类） */
 .drawer-navigation-header {
-  z-index: 3;
   height: auto;
   padding: 0;
   line-height: var(--lihua-layout-height);
 }
-.affix-header {
-  position: sticky;
-  top: 0;
-}
+
+/* padding 需压过 .ant-flex 根级显式 padding:0，故留 scoped（box-shadow 已迁工具类） */
 .drawer-navigation-head {
-  box-shadow: var(--ant-box-shadow-tertiary);
   padding-left: var(--ant-padding);
   padding-right: var(--lihua-layout-head-space);
 }
-.sider {
-  height: calc(100vh - var(--lihua-layout-height));
-}
-.logo {
-  padding: var(--ant-padding-xs) var(--ant-padding)
-}
+
+/* position 需压过 .ant-layout-sider 根级 position:relative，故留 scoped（top/height/z-index/box-shadow 已迁工具类） */
 .drawer-navigation-sider {
   position: fixed;
-  height: 100vh;
-  top: 0;
-  z-index: 101;
-  box-shadow: var(--ant-box-shadow-tertiary);
 }
 </style>
 
