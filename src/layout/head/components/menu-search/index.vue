@@ -70,7 +70,7 @@
 <!--          被选中的元素-->
           <a-flex justify="space-between" v-show="isSelected">
             <a-space size="middle">
-              <component :is="item.icon" class="menu-icon" :style="{color}"/>
+              <component :is="item.icon" class="text-[18px]" :style="{color}"/>
               <a-flex vertical>
                 <a-typography-text :style="{color}">{{item.label}}</a-typography-text>
                 <a-typography-text :style="{color}">{{item.key}}</a-typography-text>
@@ -80,7 +80,7 @@
           </a-flex>
 <!--          未被选中的元素，关键词检索时需要高亮显示命中的关键词-->
           <a-space size="middle" v-show="!isSelected">
-            <component :is="item.icon" class="menu-icon"/>
+            <component :is="item.icon" class="text-[18px]"/>
             <a-flex vertical>
 <!--              标签匹配-->
               <div v-if="keyword && item.label.includes(keyword)">
@@ -119,7 +119,7 @@
             <a-tag class="bottom-tag-tips"><EnterOutlined /></a-tag> 进入
           </div>
           <div>
-            <a-tag class="bottom-tag-tips"><SwapOutlined style="transform: rotate(90deg)"/></a-tag> 切换
+            <a-tag class="bottom-tag-tips"><SwapOutlined class="rotate-90"/></a-tag> 切换
           </div>
           <div>
             <a-tag class="bottom-tag-tips">ESC</a-tag> 关闭
@@ -413,6 +413,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 整组保留：width/border-radius 需压过 .ant-input 根级 cssinjs 声明、hover 为特异性控制、
+   :deep 穿透内部 input、类名被全局 layout.css .dark-header 后代选择器引用 */
 .title-search-input {
   width: 135px;
   margin-right: var(--ant-margin-xs);
@@ -421,14 +423,13 @@ onBeforeUnmount(() => {
 .title-search-input:hover {
   cursor: pointer !important;
 }
+/* margin 需压过 .ant-tag 根级 resetComponent margin:0，故留 scoped */
 .bottom-tag-tips {
   margin-right: 2px;
 }
+/* margin 需压过 .ant-flex 根级显式 margin:0，故留 scoped */
 .menu-group {
   margin: var(--ant-margin-xs) 0;
-}
-.menu-icon {
-  font-size: 18px
 }
 :deep(.title-search-input input) {
   cursor: pointer;

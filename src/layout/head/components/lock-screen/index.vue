@@ -13,11 +13,11 @@
     <Teleport v-if="openLock" to="body">
       <div class="unselectable">
         <!--  锁屏页面  -->
-        <div class="lock lihua-lock-mask" ref="lockMaskRef" :style="{ transform: `translateY(calc(${startLocation} + ${offsetY + breatheOffsetY}px))`}">
-          <div class="content">
+        <div class="lihua-lock-mask fixed top-0 left-0 h-screen w-screen z-[2147483647] bg-[var(--lihua-backdrop-filter-on-color)] rounded-ant-lg shadow-ant-secondary" ref="lockMaskRef" :style="{ transform: `translateY(calc(${startLocation} + ${offsetY + breatheOffsetY}px))`}">
+          <div class="text-center">
             <!-- 日期时间 -->
             <transition name="lock-layout-fade" mode="out-in">
-              <div class="date-time" v-if="!isCompactLockedLayout">
+              <div class="mt-[64px]" v-if="!isCompactLockedLayout">
                 <a-typography-title :level="3"> {{nowDate}} {{nowWeek}}</a-typography-title>
                 <a-typography-title :styles="{root: {fontSize: '100px', marginTop: 0}}"> {{nowTime}} </a-typography-title>
               </div>
@@ -29,7 +29,7 @@
                   vertical
                   gap="8"
                   :key="isCompactLockedLayout"
-                  class="user"
+                  class="absolute bottom-[64px] w-screen"
                   :class="{ 'user-compact': isCompactLockedLayout }"
                   align="center"
                   v-if="status === 'locked'"
@@ -71,7 +71,7 @@
             </transition>
 
             <!-- 提示 -->
-            <div class="tips">
+            <div class="absolute bottom-4 w-screen">
               <a-typography-text type="secondary">
                 <transition name="fast-fade" mode="out-in">
                   <div v-if="status === 'reset'">
@@ -91,7 +91,7 @@
         </div>
 
         <!--  锁屏下隐藏背景，点击时退出锁屏  -->
-        <div class="lock-background" @click="unlock"/>
+        <div class="fixed top-0 left-0 h-screen w-screen z-[2147483646] bg-[var(--lihua-alpha-0)]" @click="unlock"/>
       </div>
     </Teleport>
   </div>
@@ -624,48 +624,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.lock-background {
-  height: 100vh;
-  width: 100vw;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 2147483646;
-  background: var(--lihua-alpha-0);
-}
-
-.lock {
-  height: 100vh;
-  width: 100vw;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 2147483647;
-  background: var(--lihua-backdrop-filter-on-color);
-  border-radius: var(--ant-border-radius-lg);
-  box-shadow: var(--ant-box-shadow-secondary);
-}
-
 /* 锁屏固定毛玻璃：有意不随高级材质开关（ground-glass）变化 */
 .lihua-lock-mask {
   will-change: backdrop-filter;
   backdrop-filter: var(--lihua-backdrop-filter-sm);
 }
 
-.content {
-  text-align: center
-}
-
-.date-time {
-  margin-top: 64px;
-}
-
-.user {
-  position: absolute;
-  bottom: 64px;
-  width: 100vw;
-}
-
+/* 紧凑布局对基础定位/宽度的条件覆盖：scoped (0,2,0) 压过模板工具类 (0,1,0)，覆盖机制依赖此特异性 */
 .user-compact {
   top: 50%;
   left: 50%;
@@ -674,15 +639,10 @@ onUnmounted(() => {
   transform: translate(-50%, -50%);
 }
 
+/* width/border-radius 需压过 .ant-input(-affix-wrapper) 根级 cssinjs 声明，故留 scoped */
 .pwd {
   width: 200px;
   border-radius: 50px
-}
-
-.tips {
-  position: absolute;
-  bottom: 16px;
-  width: 100vw
 }
 
 @keyframes shake {

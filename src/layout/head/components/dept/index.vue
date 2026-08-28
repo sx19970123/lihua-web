@@ -1,12 +1,12 @@
 <template>
   <a-dropdown v-model:open="open" :trigger="['contextmenu', 'click']">
     <a-tooltip title="默认部门" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
-      <a-button type="text" class="btn">
+      <a-button type="text" class="btn max-w-[130px]">
         <a-typography-text ellipsis class="text-default-color" :type="userStore.defaultDeptName ? '' : 'secondary'">{{ userStore.defaultDeptName ? userStore.defaultDeptName : '设置默认部门' }}</a-typography-text>
       </a-button>
     </a-tooltip>
     <template #popupRender>
-      <a-card size="small" class="default-dept-card" :styles="{root: {'box-shadow': 'var(--ant-box-shadow-tertiary)'}}">
+      <a-card size="small" class="max-h-[500px]" :styles="{root: {'box-shadow': 'var(--ant-box-shadow-tertiary)'}}">
         <default-dept @dept-select="handleDeptSelect"/>
       </a-card>
     </template>
@@ -32,11 +32,8 @@ const handleDeptSelect = (resp: ResponseType<SysDept>) => {
 </script>
 
 <style scoped>
-.default-dept-card {
-  max-height: 500px;
-}
+/* padding 需压过 .ant-btn 根级 cssinjs 声明，故留 scoped（max-width 已迁工具类） */
 .btn {
-  max-width: 130px;
   padding: 4px 8px 4px 8px
 }
 </style>

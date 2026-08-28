@@ -16,7 +16,7 @@
                 <a-typography-text ellipsis :copyable="{ tooltip: false }" :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.userId }}</a-typography-text>
               </a-tooltip>
             </a-flex>
-            <RightOutlined class="input-prefix-icon-color" style="position: absolute; right: 8px"/>
+            <RightOutlined class="input-prefix-icon-color absolute right-2"/>
           </a-flex>
         </a-menu-item>
         <a-menu-divider/>

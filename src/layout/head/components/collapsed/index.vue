@@ -2,10 +2,10 @@
   <div class="menu-fold anticon">
     <menu-unfold-outlined
         v-if="permissionStore.collapsed"
-        class="menu-fold-icon"
+        class="text-ant-xl"
         @click="handleOpenCollapsed"
     />
-    <menu-fold-outlined class="menu-fold-icon" v-else @click="handleCloseCollapsed" />
+    <menu-fold-outlined class="text-ant-xl" v-else @click="handleCloseCollapsed" />
   </div>
 </template>
 <script setup lang="ts">
@@ -26,8 +26,3 @@ const handleCloseCollapsed = () => {
 }
 
 </script>
-<style scoped>
-.menu-fold-icon {
-  font-size: var(--ant-font-size-xl)
-}
-</style>

@@ -6,14 +6,14 @@
                 @openChange="handleChangeNoticeList"
     >
     <template #popupRender>
-      <a-card size="small" class="notice-card" :styles="{root: {'box-shadow': 'var(--ant-box-shadow-tertiary)'}}">
+      <a-card size="small" class="w-[340px] max-h-[500px]" :styles="{root: {'box-shadow': 'var(--ant-box-shadow-tertiary)'}}">
         <a-tabs :centered="true" :items="noticeTabs" @change="handleChangeTabs"/>
         <!--通知列表（a-list 已被 vnext 移除，改用 a-listy；列表项布局自行排版；查询中由 a-spin 遮罩）-->
         <a-flex vertical>
           <a-spin :spinning="loading">
             <a-listy v-if="userNoticeList.length > 0" :items="userNoticeList" :row-key="(item: SysUserNoticeVO) => item.noticeId" :height="400" :styles="{item: {borderBottom: 'none'}}" class="notice-list scrollbar">
               <template #itemRender="item">
-                <a-flex :gap="16" align="center" :style="{cursor: 'pointer'}"
+                <a-flex :gap="16" align="center" class="cursor-pointer"
                         @click="readNoticeDetail(item.readFlag, item.noticeId)">
                   <!--                      图标-->
                   <a-badge :dot="item.readFlag === '0'">
@@ -49,12 +49,12 @@
               </template>
             </a-listy>
             <!--                      空状态占位（查询中由外层 a-spin 遮罩；列表清空重查时只显示转圈）-->
-            <a-empty v-else-if="!loading" description="暂无通知" class="notice-empty"/>
+            <a-empty v-else-if="!loading" description="暂无通知" class="my-ant-base"/>
           </a-spin>
         </a-flex>
         <!--                      加载更多-->
         <a-flex v-if="userNoticeList.length > 0" align="center" justify="center">
-          <a-button type="text" class="more-btn" @click="queryMore" :disabled="total === userNoticeList.length">
+          <a-button type="text" class="w-full" @click="queryMore" :disabled="total === userNoticeList.length">
             {{total === userNoticeList.length ? '没有更多' : '加载更多'}}
           </a-button>
         </a-flex>
@@ -307,15 +307,3 @@ onUnmounted(() => {
   removeEventListener("WS_NOTICE")
 })
 </script>
-<style scoped>
-.notice-card {
-  width: 340px;
-  max-height: 500px;
-}
-.notice-empty {
-  margin-block: var(--ant-margin);
-}
-.more-btn {
-  width: 100%;
-}
-</style>
