@@ -280,7 +280,7 @@
 import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {onUnmounted, ref} from "vue";
 import type {SysAttachment, SysAttachmentDTO, SysAttachmentVO} from "@/api/system/attachment/type/sys-attachment.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {deleteData, forceDeleteData, getDownloadURL, queryById, queryPage} from "@/api/system/attachment/attachment.ts";
 import dayjs from "dayjs";
 import {initDict} from "@/helpers/dict.ts";

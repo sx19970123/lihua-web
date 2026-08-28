@@ -83,7 +83,8 @@
 </template>
 
 <script setup lang="ts">
-import {message, Modal, Upload, type UploadFile} from "ant-design-vue";
+import {Upload, type UploadFile} from "ant-design-vue";
+import {message, Modal} from "@/antd-adapter";
 import {createVNode, ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import token from "@/helpers/token.ts";

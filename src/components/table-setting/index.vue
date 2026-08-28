@@ -74,7 +74,7 @@ import {type DraggableEvent, VueDraggable} from 'vue-draggable-plus'
 import {useThemeStore} from "@/stores/theme.ts";
 import {useRouter} from "vue-router";
 import {cloneDeep, debounce} from "lodash-es"
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 
 const themeStore = useThemeStore();
 const router = useRouter();
@@ -362,12 +362,12 @@ const initChangeFixedDrag = () => {
       // 元素落在左固定元素中
       if (leftFixedLastIndex != -1 && leftFixedLastIndex > newIndex) {
         moveTableSettingItemToAfter(newIndex, leftFixedLastIndex - 1)
-        message.warn("无法移动至固定元素左边")
+        message.warning("无法移动至固定元素左边")
       }
       // 元素落在右固定元素中
       if (rightFixedFirstIndex != -1 && newIndex > rightFixedFirstIndex) {
         moveTableSettingItemToBefore(newIndex, rightFixedFirstIndex + 1)
-        message.warn("无法移动至固定元素右边")
+        message.warning("无法移动至固定元素右边")
       }
     }
 
@@ -376,7 +376,7 @@ const initChangeFixedDrag = () => {
       const leftFixedLastIndex = findTargetIndex(ts => ts.leftFixed === 1 && ts !== dragItem, true);
       if (newIndex - 1 > leftFixedLastIndex) {
         moveTableSettingItemToAfter(newIndex, leftFixedLastIndex)
-        message.warn("左固定元素无法移动至右边")
+        message.warning("左固定元素无法移动至右边")
       }
     }
 
@@ -386,12 +386,12 @@ const initChangeFixedDrag = () => {
       // 只有自己被右固定的情况
       if (rightFixedFirstIndex === -1) {
         moveTableSettingItemToBefore(newIndex, tss.length)
-        message.warn("右固定元素无法移动至左边")
+        message.warning("右固定元素无法移动至左边")
       }
       // 右固定元素跑外面的情况
       if (rightFixedFirstIndex - 1 > newIndex) {
         moveTableSettingItemToBefore(newIndex, rightFixedFirstIndex)
-        message.warn("右固定元素无法移动至左边")
+        message.warning("右固定元素无法移动至左边")
       }
     }
   }

@@ -71,7 +71,7 @@ import ImageCropper from "@/components/image-cropper/index.vue"
 import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
 import SysAvatar from "@/components/user-avatar/index.vue"
 import {useUserStore} from "@/stores/user";
-import {message, Modal} from 'ant-design-vue';
+import {message, Modal} from "@/antd-adapter";
 import settings from "@/settings";
 import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
 import {cloneDeep, debounce} from 'lodash-es'
@@ -261,13 +261,13 @@ const handleOk = async () => {
       open.value = false;
     } else {
       if (avatarType.value === 'image') {
-        message.warn("请上传头像")
+        message.warning("请上传头像")
       } else if (avatarType.value === 'text') {
-        message.warn("请编辑文本")
+        message.warning("请编辑文本")
       } else if (avatarType.value === 'icon') {
-        message.warn("请选择图标")
+        message.warning("请选择图标")
       } else {
-        message.warn("请将头像编辑完整")
+        message.warning("请将头像编辑完整")
       }
 
     }

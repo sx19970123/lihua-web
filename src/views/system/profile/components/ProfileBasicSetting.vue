@@ -91,7 +91,8 @@ import {nextTick, reactive, ref, useTemplateRef, watch} from "vue";
 import {useUserStore} from "@/stores/user";
 import AvatarModifier from "@/views/system/profile/components/AvatarModifier.vue";
 import type {Rule} from "ant-design-vue/es/form";
-import {type FormInstance, message} from "ant-design-vue";
+import {type FormInstance} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import type {ProfileInfo} from "@/api/system/profile/type/sys-profile.ts";
 import {saveBasics, setDefaultDept} from "@/api/system/profile/profile.ts";
 import {initDict} from "@/helpers/dict.ts"

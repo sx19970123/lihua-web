@@ -236,7 +236,8 @@ import type {SysNotice, SysNoticeDTO, SysNoticeVO} from "@/api/system/notice/typ
 import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {deleteByIds, queryById, queryPage, release, revoke, save} from "@/api/system/notice/notice.ts";
 import DictTag from "@/components/dict-tag/index.vue"
-import {type FormInstance, message} from "ant-design-vue";
+import {type FormInstance} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import dayjs from "dayjs";
 import Editor from "@/components/tinymce-editor/index.vue"
 import ColorSelect from "@/components/color-select/index.vue"

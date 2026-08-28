@@ -230,7 +230,8 @@ import {deleteData, exportExcel, queryById, queryPage, save, updateStatus} from 
 import {useRoute} from "vue-router";
 import type {Rule} from "ant-design-vue/es/form";
 import {flattenTree} from "@/utils/tree.ts";
-import {type FormInstance, message} from "ant-design-vue";
+import {type FormInstance} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 import type {SysPost, SysPostDTO, SysPostVO} from "@/api/system/post/type/sys-post.ts";
 import Spin from "@/components/spin";

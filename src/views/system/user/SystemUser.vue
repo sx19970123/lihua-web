@@ -360,7 +360,8 @@ import dayjs from "dayjs";
 import {getDeptOption} from "@/api/system/dept/dept.ts";
 import {getRoleOption} from "@/api/system/role/role.ts";
 import {getPostOptionByDeptId} from "@/api/system/post/post.ts";
-import {type FormInstance, message, Modal} from "ant-design-vue";
+import {type FormInstance} from "ant-design-vue";
+import {message, Modal} from "@/antd-adapter";
 import {cloneDeep} from 'lodash-es';
 import {traverse} from "@/utils/tree.ts";
 import type {Rule} from "ant-design-vue/es/form";
@@ -1045,7 +1046,7 @@ const initExcel = () => {
   const handleBeforeUpdate = (file: File) => {
     const fileName = file.name
     if (!fileName.endsWith(".xls") && !fileName.endsWith(".xlsx")) {
-      message.warn("请上传 .xls 或 .xlsx 类型的文件")
+      message.warning("请上传 .xls 或 .xlsx 类型的文件")
       return false
     }
   }

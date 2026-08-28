@@ -98,7 +98,7 @@ import {getPostOptionByDeptId} from "@/api/system/post/post.ts";
 import type {SysPost} from "@/api/system/post/type/sys-post.ts";
 import SelectableCard from "@/components/selectable-card/index.vue";
 import EasyTreeSelect from "@/components/easy-tree-select/index.vue"
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";
 

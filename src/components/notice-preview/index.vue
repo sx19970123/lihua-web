@@ -62,7 +62,7 @@ import {preview, queryReadInfo} from "@/api/system/notice/notice.ts";
 import UserShow from "@/components/user-show/index.vue"
 import type {SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
 import dayjs from "dayjs";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import type {SysUser} from "@/api/system/user/type/sys-user.ts";
 
 const props = defineProps<{

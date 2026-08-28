@@ -157,7 +157,7 @@ import {ref} from "vue";
 import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import type {LoggedUserQueryParams, LoggedUserType} from "@/api/monitor/logged-user/type/logged-user-type.ts";
 import {forceLogout, queryList} from "@/api/monitor/logged-user/logged-user.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import dayjs from "dayjs";
 import type {SysLog} from "@/api/system/log/type/sys-log.ts";
 import {queryLoginByCacheKey} from "@/api/system/log/log.ts";

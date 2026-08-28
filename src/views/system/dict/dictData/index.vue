@@ -202,7 +202,7 @@ import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {deleteData, queryList, save} from "@/api/system/dict/dict-data.ts";
 import type {UnwrapRef} from 'vue';
 import {nextTick, reactive, ref} from "vue";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {cloneDeep} from 'lodash-es';
 import {initDict, reLoadDict} from "@/helpers/dict.ts";
 import dictTag from "@/components/dict-tag/index.vue"

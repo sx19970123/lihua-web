@@ -1,11 +1,40 @@
 /**
- * antdv-next 消息代理层（3.0 迁移 · 任务 1.2 基础设施）
+ * antdv-next 统一出口
  *
- * 统一导出 message / notification / Modal 静态 API，供全项目消息调用收敛：
- * - 仅做纯 re-export，不做任何旧组件库兼容包装（API 变动直接替换等价 API）；
- * - vnext 的 MessageInstance 无 warn 方法，项目原有 14 处 message.warn 调用随各单元迁移直接改为 message.warning；
- * - vnext message 返回值为销毁函数（非 antdv4 的 thenable 句柄），项目实测 0 处使用返回值，无适配需求（附录 C.1②）。
- * 类型统一从 ./types 提供（已 re-export，混合导入可直接使用 '@/antd-adapter' 单一入口）。
+ * message / notification / Modal 为上下文接线形式：这三个 API 的静态调用会 render 出
+ * 独立的 Vue 实例，不经过应用根部的 ConfigProvider，主题算法（暗色/主色/组件尺寸）
+ * 不生效；这里代理转发到 <a-app> 内部挂载的 hook 实例（处于 ConfigProvider 上下文中），
+ * 应用挂载前或实例未暴露的成员回落原生静态实现。
+ * 其余为纯 re-export，不做 API 兼容包装；类型统一从 ./types 提供。
  */
-export {message, notification, Modal} from 'antdv-next'
+import {message as staticMessage, notification as staticNotification, Modal as staticModal} from 'antdv-next'
+
 export * from './types'
+
+// <a-app> 组件 ref 上暴露的三个上下文内实例
+export type AppApi = {
+    message: typeof staticMessage
+    notification: typeof staticNotification
+    modal: typeof staticModal
+}
+
+let appApi: AppApi | undefined
+
+// 应用根组件挂载后调用一次，注入 <a-app> 暴露的实例
+export const bindAppApi = (api: AppApi) => {
+    appApi = api
+}
+
+// 以原生静态 API 为兜底原型做代理：已绑定时优先读上下文内实例的成员
+const createFacade = <T extends object>(pick: (api: AppApi) => unknown, fallback: T): T =>
+    new Proxy(fallback, {
+        get: (target, prop) => {
+            const source = (appApi && pick(appApi)) || target
+            const value = (source as Record<PropertyKey, unknown>)[prop]
+            return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(source) : value
+        },
+    }) as T
+
+export const message = createFacade(api => api.message, staticMessage)
+export const notification = createFacade(api => api.notification, staticNotification)
+export const Modal = createFacade(api => api.modal, staticModal)

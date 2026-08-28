@@ -235,7 +235,8 @@ import {
   updateStatus
 } from "@/api/system/dept/dept.ts";
 import {reactive, ref, useTemplateRef} from "vue";
-import {type FormInstance, message} from "ant-design-vue";
+import {type FormInstance} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {initDict} from "@/helpers/dict.ts";
 import {cloneDeep} from "lodash-es";
 import type {Rule} from "ant-design-vue/es/form";

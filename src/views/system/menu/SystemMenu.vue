@@ -324,7 +324,8 @@ import DictTag from "@/components/dict-tag/index.vue"
 import IconSelect from "@/components/icon-select/index.vue"
 import {flattenTree} from "@/utils/tree.ts"
 import type {Rule} from "ant-design-vue/es/form";
-import {type FormInstance, message} from "ant-design-vue";
+import {type FormInstance} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {cloneDeep} from 'lodash-es';
 import {useThemeStore} from "@/stores/theme";
 import type {SysMenu, SysMenuVO} from "@/api/system/menu/type/sys-menu.ts";

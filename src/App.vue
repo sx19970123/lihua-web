@@ -11,7 +11,10 @@
       </template>
     </a-alert>
 <!--    网站主要内容-->
-    <router-view/>
+<!--    a-app 默认渲染一层 div.ant-app(component=false 的 Fragment 分支在 antdv-next 1.5.2 下不渲染插槽内容,不可用)-->
+    <a-app ref="appApiRef">
+      <router-view/>
+    </a-app>
   </a-config-provider>
 </template>
 
@@ -21,14 +24,17 @@ import {useThemeStore} from "@/stores/theme"
 import {usePermissionStore} from "@/stores/permission.ts";
 import {useSettingStore} from "@/stores/setting.ts";
 import zhCN from 'antdv-next/locale/zh_CN';
-import {onMounted, onUnmounted, ref, watch} from "vue";
+import {onMounted, onUnmounted, ref, useTemplateRef, watch} from "vue";
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';
 import {theme} from "antdv-next";
+import {bindAppApi, type AppApi} from "@/antd-adapter";
 
 const { token } = theme.useToken()
 const themeStore = useThemeStore()
 const permissionStore = usePermissionStore()
+// <a-app> 暴露的 message/notification/modal 上下文内实例，挂载后供静态方法出口转发
+const appApiRef = useTemplateRef<AppApi>("appApiRef")
 // 应用html-root主题颜色
 themeStore.changeDocumentElement(token.value.colorPrimary)
 // 全局主题引导：登录页不走 initApp 的主题初始化链，须在此做一次全量同步（算法+html属性），
@@ -119,6 +125,8 @@ watch(() => settingStore.enableGrayMode, () => {
 })
 
 onMounted(() => {
+  // 注入上下文内实例，使静态形式的 message/notification/Modal 应用当前主题
+  if (appApiRef.value) bindAppApi(appApiRef.value)
   // 初始化基础设置
   settingStore.initBaseSetting()
   // 主题跟随系统

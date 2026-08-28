@@ -75,7 +75,7 @@ import {initApp} from "@/app-init.ts"
 import {connect} from "@/utils/web-socket.ts"
 import {login} from "@/api/system/authentication/authentication.ts"
 import type {Rule} from "ant-design-vue/es/form"
-import {message} from "ant-design-vue"
+import {message} from "@/antd-adapter"
 import {useRouter} from 'vue-router'
 import {useSettingStore} from "@/stores/setting.ts"
 import {queryPostLoginCheckData} from "@/api/system/profile/profile.ts"

@@ -33,7 +33,7 @@
 import {onMounted, ref} from "vue";
 import type {Rule} from "ant-design-vue/es/form";
 import {useUserStore} from "@/stores/user.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {getLockScreenInfo, setLockScreenInfo} from "@/helpers/lock-screen.ts";
 
 const userStore = useUserStore();

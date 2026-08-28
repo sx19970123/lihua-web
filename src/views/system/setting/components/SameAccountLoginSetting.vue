@@ -36,7 +36,7 @@ import {getCurrentInstance, onMounted, ref} from "vue";
 import type {SameAccountLoginSetting} from "@/api/system/setting/type/same-account-login-setting.ts";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import {useThemeStore} from "@/stores/theme.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import type {Rule} from "ant-design-vue/es/form";
 import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";

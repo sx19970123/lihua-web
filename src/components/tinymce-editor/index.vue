@@ -19,7 +19,7 @@ import {v4 as uuidv4} from "uuid";
 import {useRoute} from "vue-router";
 import {publicUpload} from "@/api/system/attachment/attachment-storage.ts";
 import type {SysAttachmentUrl} from "@/api/system/attachment/type/sys-attachment-url.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {attachmentUrl} from "@/utils/attachment-url.ts";
 
 const themeStore = useThemeStore();

@@ -31,7 +31,7 @@
 import {reactive, ref} from "vue";
 import type {Rule} from "ant-design-vue/es/form";
 import {useUserStore} from "@/stores/user.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import PasswordInput from "@/components/password-input/index.vue";
 import {updatePassword} from "@/api/system/profile/profile.ts";
 

@@ -194,7 +194,7 @@ import {
   queryLoginById,
   queryLoginPage
 } from "@/api/system/log/log.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import DictTag from "@/components/dict-tag/index.vue";
 import TableSetting from "@/components/table-setting/index.vue";
 import type {SysLog, SysLogDTO} from "@/api/system/log/type/sys-log.ts";

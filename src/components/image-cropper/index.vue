@@ -72,7 +72,7 @@ import {VueCropper} from "vue-cropper";
 import 'vue-cropper/dist/index.css'
 import {ref, useTemplateRef} from 'vue';
 import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import type {UploadRequestOption} from "ant-design-vue/lib/vc-upload/interface";
 
 const cropperRef = useTemplateRef<InstanceType<typeof VueCropper>>("cropperRef")
@@ -221,7 +221,7 @@ const handleRealTime = (data: CropperDataType) => {
  */
 const handleBeforeUpload = (file: File) => {
   if (!file.type.startsWith('image')) {
-    message.warn("请上传图片类型文件")
+    message.warning("请上传图片类型文件")
     return false
   }
 }

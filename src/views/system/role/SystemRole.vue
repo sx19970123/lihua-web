@@ -202,7 +202,7 @@ import DictTag from "@/components/dict-tag/index.vue";
 import EasyTreeSelect from "@/components/easy-tree-select/index.vue"
 import {queryMenuTreeOption} from "@/api/system/menu/menu.ts";
 import type {Rule} from "ant-design-vue/es/form";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import dayjs from "dayjs";
 import type {SysMenu} from "@/api/system/menu/type/sys-menu.ts";
 import type {SysRole, SysRoleDTO, SysRoleVO} from "@/api/system/role/type/sys-role.ts";

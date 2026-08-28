@@ -68,7 +68,7 @@ import {useSettingStore} from "@/stores/setting.ts";
 import {getCurrentInstance, onMounted, ref} from "vue";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import type {RestrictAccessIp} from "@/api/system/setting/type/restrict-access-ip.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {useThemeStore} from "@/stores/theme.ts";
 import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";
@@ -125,7 +125,7 @@ const handleFinish = async () => {
     const resp = await save(setting.value)
     if (resp.code === 200) {
       if (flag){
-        message.warn("已合并重复ip")
+        message.warning("已合并重复ip")
       }
       message.success(resp.msg)
       await init()

@@ -217,7 +217,7 @@ import type {ColumnsType} from 'ant-design-vue/es/table/interface';
 import {deleteData, queryById, queryPage, reloadCache, save, updateStatus} from "@/api/system/dict/dict-type.ts";
 import dayjs from "dayjs";
 import type {Rule} from "ant-design-vue/es/form";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import DictData from "./dictData/index.vue"
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"

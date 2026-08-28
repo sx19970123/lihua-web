@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import type {ServerInfo} from "@/api/monitor/server/type/server-info.ts";
 import {onMounted, ref} from "vue";
 import {serverInfo} from "@/api/monitor/server/server.ts";

@@ -101,7 +101,7 @@ import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import type {SysUser} from "@/api/system/user/type/sys-user.ts";
 import UserShow from "@/components/user-show/index.vue"
 import {getUserOption, getUserOptionByUserIds} from "@/api/system/user/user.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 
 const themeStore = useThemeStore();
 

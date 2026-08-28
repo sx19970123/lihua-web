@@ -40,7 +40,7 @@ import {useThemeStore} from "@/stores/theme.ts";
 import {getCurrentInstance, onMounted, ref} from "vue";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import type {GrayModel} from "@/api/system/setting/type/gray-model.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import dayjs, {type Dayjs} from "dayjs";
 import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";

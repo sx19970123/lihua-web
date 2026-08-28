@@ -45,7 +45,7 @@ import {useSettingStore} from "@/stores/setting.ts";
 import {getCurrentInstance, onMounted, ref} from "vue";
 import type {IntervalUpdatePassword} from "@/api/system/setting/type/interval-update-password.ts";
 import type {Rule} from "ant-design-vue/es/form";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import {useThemeStore} from "@/stores/theme.ts";
 import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";
