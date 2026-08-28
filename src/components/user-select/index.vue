@@ -25,7 +25,7 @@
                   v-model:expanded-keys="expandKeys"
                   @select="handleClickTree"
               >
-                <template  #title="{ name }">
+                <template #titleRender="{ name }">
                   <div v-if="name.indexOf(deptKeyword) > -1">
                     <span>{{name.substring(0,name.indexOf(deptKeyword))}}</span>
                     <span :style="{'color':  themeStore.getColorPrimary()}">{{deptKeyword}}</span>

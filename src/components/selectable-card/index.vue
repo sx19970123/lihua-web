@@ -31,9 +31,9 @@
 <script setup lang="ts">
 // 接受父组件传递参数
 import {reactive, ref, useTemplateRef, watch} from "vue";
-import AFlex from "ant-design-vue/es/flex"
+import type {Flex} from "antdv-next"
 import {cloneDeep} from 'lodash-es'
-import {theme} from "ant-design-vue";
+import {theme} from "antdv-next";
 
 const {token} = theme.useToken()
 
@@ -110,7 +110,7 @@ const emit = defineEmits(['update:modelValue','click','change'])
 const activeCardValueList = reactive<Array<any>>([])
 
 // 组件ref
-const selectableRef = useTemplateRef<InstanceType<typeof AFlex>>('selectableRef')
+const selectableRef = useTemplateRef<InstanceType<typeof Flex>>('selectableRef')
 
 // 处理点击选中
 const handleClickCard = (item: any): void => {

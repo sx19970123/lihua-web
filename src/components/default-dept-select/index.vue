@@ -39,7 +39,7 @@ import {ref} from "vue";
 import {useUserStore} from "@/stores/user.ts";
 import {useThemeStore} from "@/stores/theme.ts";
 import {setDefaultDept} from "@/api/system/profile/profile.ts";
-import {message} from "ant-design-vue";
+import {message} from "@/antd-adapter";
 import EasyTreeSelect from "@/components/easy-tree-select/index.vue"
 
 const themeStore = useThemeStore();

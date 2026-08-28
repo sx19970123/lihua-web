@@ -5,7 +5,7 @@
       <a-checkable-tag v-if="multiple" v-model:checked="treeSetting.checkStrictly" @click="handleCheckStrictly">父子关联</a-checkable-tag>
       <a-checkable-tag v-model:checked="treeSetting.expand" @change="handleExpandAll">展开/折叠</a-checkable-tag>
     </div>
-    <a-card :body-style="bodyStyle" :bordered="bordered" style="box-shadow: none">
+    <a-card :body-style="bodyStyle" :variant="bordered ? 'outlined' : 'borderless'" style="box-shadow: none">
       <a-input v-if="showSearch" class="keyword-input" :placeholder="searchPlaceholder" v-model:value="keyword" allowClear @change="handleChangeKeyWord()"/>
       <div :style="maxHeight ? {maxHeight: maxHeight + 'px'} : {}" class="scrollbar" v-if="cloneTreeData && cloneTreeData.length > 0">
         <a-tree :tree-data="cloneTreeData"
@@ -22,10 +22,10 @@
                 style="padding: var(--lihua-space-xs)"
                 ref="treeRef"
         >
-          <template #title="item" v-if="hasTitleSlot">
+          <template #titleRender="item" v-if="hasTitleSlot">
             <slot name="title" v-bind="{ ...item }" :keyword="keyword"/>
           </template>
-          <template #title="data" v-else>
+          <template #titleRender="data" v-else>
             <div v-if="data[fieldNames.title].indexOf(keyword) > -1">
               <span>{{data[fieldNames.title].substring(0,data[fieldNames.title].indexOf(keyword))}}</span>
               <span :style="{'color':  themeStore.getColorPrimary()}">{{keyword}}</span>
@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import {nextTick, onMounted, ref, useSlots, useTemplateRef, watch} from "vue";
-import ATree from "ant-design-vue/es/tree/Tree"
+import type {Tree} from "antdv-next"
 import {traverse} from "@/utils/tree.ts";
 import {cloneDeep} from 'lodash-es'
 import {useThemeStore} from "@/stores/theme.ts";
@@ -54,7 +54,7 @@ const themeStore = useThemeStore();
 const slots = useSlots();
 const hasTitleSlot = !!slots.title
 // treeRef实例
-const treeRef = useTemplateRef<InstanceType<typeof ATree>>("treeRef")
+const treeRef = useTemplateRef<InstanceType<typeof Tree>>("treeRef")
 // 接收的参数：
 // treeData 树形结构数据；
 // fieldNames 树形结构字段对应别名
