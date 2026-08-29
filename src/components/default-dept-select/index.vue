@@ -9,17 +9,13 @@
                       :show-toolbar="false"
                       v-model="userStore.defaultDept.id"
     >
-          <template #title="{name, code, id, keyword}">
+          <template #title="{name, code, id, segments}">
             <div @mouseover="handleMouseOver(id)" @mouseleave="handleMouseLeave" @click="handleSetDefaultDept(id)">
               <a-space>
                 <a-flex :gap="8">
                   <a-tooltip :title="userStore.defaultDept.id !== id ? '点击设为默认部门' : '默认部门'" placement="right" :arrow="false" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
-                    <div v-if="name.indexOf(keyword) > -1">
-                      <span>{{ name.substring(0, name.indexOf(keyword)) }}</span>
-                      <span :style="{'color':  themeStore.getColorPrimary()}">{{ keyword }}</span>
-                      <span>{{ name.substring(name.indexOf(keyword) + keyword.length) }}</span>
-                    </div>
-                    <span v-else>{{ name }}</span>
+                    <span v-for="(segment, index) in segments" :key="index"
+                          :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>
                   </a-tooltip>
                   <a-typography-text type="secondary" v-if="showDeptCode">{{ code }}</a-typography-text>
                 </a-flex>

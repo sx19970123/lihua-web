@@ -169,13 +169,9 @@
         </a-form-item>
         <a-form-item label="菜单">
           <easy-tree-select ref="easyTreeSelectRef" :tree-data="menuTreeOption" v-model="role.menuIds">
-            <template #title="{label,menuType,keyword}">
-              <span v-if="label.indexOf(keyword) > -1">
-                <span>{{label.substring(0,label.indexOf(keyword))}}</span>
-                <span :style="{'color':  themeStore.getColorPrimary()}">{{keyword}}</span>
-                <span>{{label.substring(label.indexOf(keyword) + keyword.length)}}</span>
-              </span>
-              <span v-else>{{ label }}</span>
+            <template #title="{label,menuType,segments}">
+              <span v-for="(segment, index) in segments" :key="index"
+                    :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>
               <dict-tag :dict-data-value="menuType" :dict-data-option="sys_menu_type" :styles="{root: {border: 'none', marginLeft: 'var(--ant-margin-xs)'}}"/>
             </template>
           </easy-tree-select>
