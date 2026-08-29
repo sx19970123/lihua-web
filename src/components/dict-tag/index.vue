@@ -2,10 +2,10 @@
   <template v-for="item in props.dictDataOption">
 <!--    label标签-->
     <a-tag v-if="item.value === props.dictDataValue"
-           style="width: fit-content"
+           class="w-fit"
            :style="props.style"
            :color="item.tagStyle"
-           :bordered="props.bordered">
+           :variant="props.bordered ? 'outlined' : 'filled'">
       <template v-if="props.fullTreeNode">
 <!--       rootTreeNodePrefix 以分割符开头情况下，去除首位分割符 -->
         <template v-if="props.rootTreeNodePrefix.startsWith(props.fullTreeSeparator)">
@@ -22,7 +22,7 @@
     </a-tag>
 <!--    递归调用组件-->
     <dict-tag v-else-if="item.children"
-              style="width: fit-content"
+              class="w-fit"
               :dict-data-value="props.dictDataValue"
               :dict-data-option="item.children"
               :bordered="props.bordered"
