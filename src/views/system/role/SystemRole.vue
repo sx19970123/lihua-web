@@ -176,7 +176,7 @@
                 <span>{{label.substring(label.indexOf(keyword) + keyword.length)}}</span>
               </span>
               <span v-else>{{ label }}</span>
-              <dict-tag :dict-data-value="menuType" :dict-data-option="sys_menu_type" :style="{border: 'none', 'margin-left': 'var(--ant-margin-xs)'}"/>
+              <dict-tag :dict-data-value="menuType" :dict-data-option="sys_menu_type" :styles="{root: {border: 'none', marginLeft: 'var(--ant-margin-xs)'}}"/>
             </template>
           </easy-tree-select>
         </a-form-item>

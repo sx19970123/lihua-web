@@ -200,7 +200,7 @@
           >
             <template #title="{ value: val, label, menuType }">
               {{label}}
-              <dict-tag :dict-data-value="menuType" :dict-data-option="sys_menu_type" :bordered="false"/>
+              <dict-tag :dict-data-value="menuType" :dict-data-option="sys_menu_type" variant="filled"/>
             </template>
           </a-tree-select>
         </a-form-item>

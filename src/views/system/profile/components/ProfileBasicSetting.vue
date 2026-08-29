@@ -57,7 +57,7 @@
                 <a-typography-text strong>
                   {{item.name}}
                 </a-typography-text>
-                <a-tag variant="solid" :style="{backgroundColor: 'var(--ant-color-primary)'}" v-show="item.code === userStore.defaultDept.code">默认部门</a-tag>
+                <a-tag variant="solid" :color="themeStore.getColorPrimary()" v-show="item.code === userStore.defaultDept.code">默认部门</a-tag>
               </a-flex>
               <a-typography-text type="secondary">
                 {{item.code}}
@@ -78,7 +78,7 @@
         <a-card class="flex-1 min-w-[300px]">
           <a-typography-title :level="5">我的角色</a-typography-title>
           <a-form-item>
-            <a-tag v-for="roleName in userStore.roles.map(item => item.name)" variant="solid" :style="{backgroundColor: 'var(--ant-color-primary)'}">{{roleName}}</a-tag>
+            <a-tag v-for="roleName in userStore.roles.map(item => item.name)" variant="solid" :color="themeStore.getColorPrimary()">{{roleName}}</a-tag>
           </a-form-item>
         </a-card>
       </a-flex>
@@ -102,8 +102,10 @@ import DynamicBorderSelect from "@/components/dynamic-border-select/index.vue"
 import SelectableCard from "@/components/selectable-card/index.vue"
 import {flattenTree} from "@/utils/tree.ts"
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
+import {useThemeStore} from "@/stores/theme.ts";
 
 const userStore = useUserStore()
+const themeStore = useThemeStore()
 const {user_gender} = initDict('user_gender')
 
 const formRef = useTemplateRef<FormInstance>("formRef")

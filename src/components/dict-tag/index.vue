@@ -1,19 +1,19 @@
 <template>
-  <template v-for="item in props.dictDataOption">
+  <template v-for="item in dictDataOption">
 <!--    label标签-->
-    <a-tag v-if="item.value === props.dictDataValue"
+    <a-tag v-if="item.value === dictDataValue"
            class="w-fit"
-           :style="props.style"
+           :styles="styles"
            :color="item.tagStyle"
-           :variant="props.bordered ? 'outlined' : 'filled'">
-      <template v-if="props.fullTreeNode">
+           :variant="variant">
+      <template v-if="fullTreeNode">
 <!--       rootTreeNodePrefix 以分割符开头情况下，去除首位分割符 -->
-        <template v-if="props.rootTreeNodePrefix.startsWith(props.fullTreeSeparator)">
-          {{ props.rootTreeNodePrefix.substring(props.fullTreeSeparator.length) + props.fullTreeSeparator + item.label }}
+        <template v-if="rootTreeNodePrefix.startsWith(fullTreeSeparator)">
+          {{ rootTreeNodePrefix.substring(fullTreeSeparator.length) + fullTreeSeparator + item.label }}
         </template>
 <!--       自定义 rootTreeNodePrefix 的情况下保留 rootTreeNodePrefix -->
         <template v-else>
-          {{ props.rootTreeNodePrefix + props.fullTreeSeparator + item.label }}
+          {{ rootTreeNodePrefix + fullTreeSeparator + item.label }}
         </template>
       </template>
       <template v-else>
@@ -23,11 +23,11 @@
 <!--    递归调用组件-->
     <dict-tag v-else-if="item.children"
               class="w-fit"
-              :dict-data-value="props.dictDataValue"
+              :dict-data-value="dictDataValue"
               :dict-data-option="item.children"
-              :bordered="props.bordered"
-              :full-tree-node="props.fullTreeNode"
-              :root-tree-node-prefix="props.rootTreeNodePrefix === '' ? props.fullTreeSeparator + item.label : props.rootTreeNodePrefix + props.fullTreeSeparator + item.label"
+              :variant="variant"
+              :full-tree-node="fullTreeNode"
+              :root-tree-node-prefix="rootTreeNodePrefix === '' ? fullTreeSeparator + item.label : rootTreeNodePrefix + fullTreeSeparator + item.label"
     />
   </template>
 </template>
@@ -35,47 +35,31 @@
 <script setup lang="ts">
 import dictTag from "@/components/dict-tag/index.vue"
 import type {SysDictDataType} from "@/api/system/dict/type/sys-dict-data-type.ts";
+import type {TagStylesType} from "@/antd-adapter";
+
 // 从父组件接收参数
-const props = defineProps({
+const {dictDataOption, dictDataValue, variant = 'outlined', styles = {root: {marginRight: 0}},
+  fullTreeNode = false, fullTreeSeparator = '/', rootTreeNodePrefix = ''} = defineProps<{
   // 字典data集合
-  dictDataOption: {
-    type: Array as () => Array<SysDictDataType>,
-    required: true
-  },
+  dictDataOption: Array<SysDictDataType>,
   // 被翻译的字典值
-  dictDataValue: {
-    type: String,
-    required: true
-  },
-  // 是否有边框
-  bordered: {
-    type: Boolean,
-    default: true
-  },
-  style: {
-    type: Object,
-    default:  { 'margin-right': 0 }
-  },
+  dictDataValue: string,
+  // 标签变体（透传 a-tag variant，默认 outlined 保持 2.x 有边框基线）
+  variant?: 'outlined' | 'filled' | 'solid',
+  // 标签语义化自定义样式（透传 a-tag styles；默认压掉全局补回的相邻 tag 右边距）
+  styles?: TagStylesType,
   // 展示树型结构全路径
-  fullTreeNode: {
-    type: Boolean,
-    default: false
-  },
+  fullTreeNode?: boolean,
   // 树型结构分隔符
-  fullTreeSeparator: {
-    type: String,
-    default: '/'
-  },
-  // 树型跟节点前缀节点
-  rootTreeNodePrefix: {
-    type: String,
-    default: ''
-  }
-})
-if (!props.dictDataValue) {
+  fullTreeSeparator?: string,
+  // 树型根节点前缀
+  rootTreeNodePrefix?: string
+}>()
+
+if (!dictDataValue) {
   console.error("dict-tag/DictTag 组件中 dictDataValue 值不存在")
 }
-if (!props.dictDataOption) {
+if (!dictDataOption) {
   console.error("dict-tag/DictTag 组件中 dictDataOption 值不存在")
 }
 </script>

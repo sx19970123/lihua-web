@@ -24,7 +24,7 @@
                   <a-typography-text type="secondary" v-if="showDeptCode">{{ code }}</a-typography-text>
                 </a-flex>
                 <span v-if="userStore.defaultDept.id === id">
-                 <a-tag variant="solid" :bordered="false" :style="{backgroundColor: 'var(--ant-color-primary)', marginBottom: '2px'}">默认</a-tag>
+                 <a-tag variant="solid" :bordered="false" :color="themeStore.getColorPrimary()" :style="{marginBottom: '2px'}">默认</a-tag>
                 </span>
               </a-space>
             </div>

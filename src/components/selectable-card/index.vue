@@ -1,10 +1,10 @@
 <template>
   <a-spin :spinning="loading">
-    <a-flex :gap="props.gap" :wrap="props.vertical ? 'nowrap' : 'wrap'" :vertical="props.vertical" class="scrollbar" ref="selectableRef" :style="{'max-height': props.vertical ? props.maxHeight + 'px' : 'none', ...props.cardStyle}">
-      <div class="menu-card-item" :style="props.itemStyle" v-if="props.dataSource && props.dataSource.length > 0" v-for="(item,index) in props.dataSource">
-        <div class="select-card select-card-border"
+    <a-flex :gap="gap" :wrap="vertical ? 'nowrap' : 'wrap'" :vertical="vertical" class="scrollbar" ref="selectableRef" :style="{'max-height': vertical ? maxHeight + 'px' : 'none', ...cardStyle}">
+      <div class="menu-card-item" :style="itemStyle" v-if="dataSource && dataSource.length > 0" v-for="(item,index) in dataSource">
+        <div class="rounded-ant-lg p-ant-base border border-solid border-ant-border mr-[3px] hover:cursor-pointer hover:border-[var(--colorPrimary)]"
              @click.stop="handleClickCard(item)"
-             :style="item[props.itemKey] && activeCardValueList.includes(item[props.itemKey]) ? bodyStyle : ''">
+             :style="item[itemKey] && activeCardValueList.includes(item[itemKey]) ? bodyStyle : ''">
           <!--      具名插槽 content-->
           <!--      返回参数 dataSource：传入的option-->
           <!--      返回参数 item：option遍历出的元素-->
@@ -12,16 +12,16 @@
           <!--      返回参数 isSelected：是否为当前选中元素-->
           <!--      返回参数 color：当前主题颜色-->
           <slot name="content"
-                :dataSource="props.dataSource"
+                :dataSource="dataSource"
                 :item="item"
                 :index="index"
-                :isSelected="activeCardValueList.includes(item[props.itemKey])"
+                :isSelected="activeCardValueList.includes(item[itemKey])"
                 :color="token.colorPrimary"/>
         </div>
       </div>
       <!--    空状态-->
-      <div class="select-card" v-else :style="props.itemStyle">
-        <a-empty :description="props.emptyDescription" />
+      <div class="rounded-ant-lg p-ant-base border border-solid border-ant-border mr-[3px] hover:cursor-pointer" v-else :style="itemStyle">
+        <a-empty :description="emptyDescription" />
       </div>
     </a-flex>
   </a-spin>
@@ -31,6 +31,7 @@
 <script setup lang="ts">
 // 接受父组件传递参数
 import {reactive, ref, useTemplateRef, watch} from "vue";
+import type {CSSProperties} from "vue";
 import type {Flex} from "antdv-next"
 import {cloneDeep} from 'lodash-es'
 import {theme} from "antdv-next";
@@ -38,69 +39,33 @@ import {theme} from "antdv-next";
 const {token} = theme.useToken()
 
 // 定义父级传入的配置项
-const props = defineProps({
+const {gap = 16, cardStyle = {}, itemStyle = {}, vertical = false, maxHeight = 300, multiple = false,
+  itemKey, dataSource, emptyDescription, scrollViewIndex = 0, loading = false, modelValue} = defineProps<{
   // 卡片间距
-  gap: {
-    type: Number,
-    default: 16,
-  },
-  // 样式
-  cardStyle: {
-    type: Object,
-    default: {}
-  },
+  gap?: number,
+  // 容器样式
+  cardStyle?: CSSProperties,
   // 元素样式
-  itemStyle: {
-    type: Object,
-    default: {}
-  },
+  itemStyle?: CSSProperties,
   // 是否垂直排列
-  vertical: {
-    type: Boolean,
-    default: false
-  },
-  // 最大高度 （仅对垂直排列生效）
-  maxHeight: {
-    type: Number,
-    default: 300
-  },
+  vertical?: boolean,
+  // 最大高度（仅对垂直排列生效）
+  maxHeight?: number,
   // 是否支持多选
-  multiple: {
-    type: Boolean,
-    default: false
-  },
+  multiple?: boolean,
   // dataSource 对象中的唯一值
-  itemKey: {
-    type: String,
-    required: true
-  },
+  itemKey: string,
   // 可选的数据列表
-  dataSource: {
-    type: Array<any>,
-    required: true
-  },
+  dataSource: Array<any>,
   // 空状态描述
-  emptyDescription: {
-    type: String
-  },
+  emptyDescription?: string,
   // 需要显示的元素索引
-  scrollViewIndex: {
-    type: Number,
-    default: 0
-  },
-  // 显示鼠标悬浮边框样式
-  showHoverStyle: {
-    type: Boolean,
-    default: true
-  },
+  scrollViewIndex?: number,
   // 加载中
-  loading: {
-    type: Boolean,
-    default: false
-  },
-  // 定义 v-model
-  modelValue: {}
-})
+  loading?: boolean,
+  // v-model 绑定值（单选为单值，多选为数组）
+  modelValue?: any
+}>()
 
 
 // 定义 v-model 双向绑定和抛出的函数
@@ -114,7 +79,7 @@ const selectableRef = useTemplateRef<InstanceType<typeof Flex>>('selectableRef')
 
 // 处理点击选中
 const handleClickCard = (item: any): void => {
-  const keyItem = item[props.itemKey]
+  const keyItem = item[itemKey]
   if (!keyItem) {
     console.error("key 不是 option 集合对象的属性");
     return;
@@ -122,13 +87,13 @@ const handleClickCard = (item: any): void => {
   // 取消选中
   if (activeCardValueList.includes(keyItem)) {
     activeCardValueList.splice(activeCardValueList.indexOf(keyItem),1)
-    props.multiple ? emit('update:modelValue', cloneDeep(activeCardValueList)) : emit('update:modelValue', null)
-    props.multiple ? emit('change', cloneDeep(activeCardValueList)) : emit('change',{})
+    multiple ? emit('update:modelValue', cloneDeep(activeCardValueList)) : emit('update:modelValue', null)
+    multiple ? emit('change', cloneDeep(activeCardValueList)) : emit('change',{})
     return;
   }
 
   // 处理单选/多选
-  if (props.multiple) {
+  if (multiple) {
     activeCardValueList.push(keyItem)
     // 多选情况下，返回选中值的集合
     emit('update:modelValue', cloneDeep(activeCardValueList))
@@ -140,7 +105,7 @@ const handleClickCard = (item: any): void => {
   }
 
   // 向父级抛出点击事件
-  emit('click',{activeValueList: cloneDeep(activeCardValueList) ,item: cloneDeep(item), props: cloneDeep(props)})
+  emit('click',{activeValueList: cloneDeep(activeCardValueList) ,item: cloneDeep(item)})
   emit('change',{item: cloneDeep(item)})
 }
 
@@ -152,15 +117,12 @@ const clearActiveCardValueList = () => {
 // 处理双向绑定回显
 const handleVmodel = () => {
   // 双向绑定modelValue
-  const modelValue = props.modelValue;
-
   if (!modelValue) {
     return;
   }
 
   const type = Array.isArray(modelValue) ? 'array' : typeof modelValue;
   // 是否多选
-  const multiple = props.multiple;
 
   if (type === 'array') {
     if (!multiple) {
@@ -213,7 +175,7 @@ const scrollIntoView = (index: number) => {
 }
 
 
-watch(() => props.scrollViewIndex, (value) => {
+watch(() => scrollViewIndex, (value) => {
   scrollIntoView(value)
 })
 
@@ -234,34 +196,33 @@ watch(() => token.value.colorPrimary, () => {
 })
 
 // 监听外部 modelValue 值变化时反应到组件中
-watch(() => props.modelValue,() => {
+watch(() => modelValue,() => {
   handleVmodel()
 },{deep: true})
 
 // 深度监听 dataSource 变化，当dataSource减少时，删除双向绑定中对应的数据
-watch(() => props.dataSource, () => {
+watch(() => dataSource, () => {
   // modelValue 未选中值时不进行操作
-  if (!props.modelValue || props.modelValue === 0) {
+  if (!modelValue || modelValue === 0) {
     // 双向绑定值不存在时，清空已选项
     clearActiveCardValueList()
     return;
   }
   // 双向绑定modelValue
-  const type = Array.isArray(props.modelValue) ? 'array' : typeof props.modelValue;
+  const type = Array.isArray(modelValue) ? 'array' : typeof modelValue;
   // 是否多选
-  const multiple = props.multiple;
-  if (props.dataSource && props.dataSource.length > 0) {
+  if (dataSource && dataSource.length > 0) {
     // 全部可选集合
-    const allList = props.dataSource.map(item => item[props.itemKey])
+    const allList = dataSource.map(item => item[itemKey])
     // 多选情况下
     if (multiple) {
       if (type === 'array') {
-        const modelValue = props.modelValue as Array<any>; // 将 props.modelValue 转换为数组
-        const isSubset = modelValue.every(item => allList.includes(item));
-        if (!isSubset || modelValue.length > allList.length) {
-          // 计算 props.modelValue 与 allList 的交集
-          const intersection = modelValue.filter(item => allList.includes(item));
-          // 清空 props.modelValue 并将交集元素添加回去
+        const modelValueList = modelValue as Array<any>; // 将 modelValue 转换为数组
+        const isSubset = modelValueList.every(item => allList.includes(item));
+        if (!isSubset || modelValueList.length > allList.length) {
+          // 计算 modelValue 与 allList 的交集
+          const intersection = modelValueList.filter(item => allList.includes(item));
+          // 清空 modelValue 并将交集元素添加回去
           // modelValue.length = 0;
           // modelValue.push(...intersection);
           emit('update:modelValue', cloneDeep(intersection));
@@ -275,7 +236,7 @@ watch(() => props.dataSource, () => {
       if (type === 'array') {
         console.error("错误：双向绑定数据类型不匹配，期望接收单一元素，但实际接收到的是一个数组。");
       } else {
-        if (!allList.includes(props.modelValue)) {
+        if (!allList.includes(modelValue)) {
           emit('update:modelValue', null)
         }
       }
@@ -292,17 +253,3 @@ watch(() => props.dataSource, () => {
 
 })
 </script>
-<style scoped>
-.select-card {
-  border-radius: var(--ant-border-radius-lg);
-  padding: var(--ant-padding);
-  border: 1px solid var(--ant-color-border);
-  margin-right: 3px;
-}
-.select-card:hover {
-  cursor: pointer;
-}
-.select-card-border:hover {
-  border-color: var(--colorPrimary);
-}
-</style>

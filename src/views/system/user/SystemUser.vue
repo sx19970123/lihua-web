@@ -270,7 +270,7 @@
               <template #content="{item, isSelected}">
                 <a-flex align="center" justify="space-between">
                   <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}</a-typography-title>
-                  <a-tag v-if="isSelected" variant="solid" :style="{backgroundColor: 'var(--ant-color-primary)'}">默认</a-tag>
+                  <a-tag v-if="isSelected" variant="solid" :color="themeStore.getColorPrimary()">默认</a-tag>
                 </a-flex>
                 <div style="margin-top: var(--ant-margin)">
                   <div v-if="item?.postList && item?.postList.length > 0">
@@ -376,12 +376,14 @@ import {useSettingStore} from "@/stores/setting.ts";
 import {type BaseModalActiveType} from "@/api/global/type.ts";
 import {download} from "@/utils/attachment-download.ts";
 import {useUserStore} from "@/stores/user.ts";
+import {useThemeStore} from "@/stores/theme.ts";
 import {refreshApp} from "@/app-init.ts";
 import {useRoute} from "vue-router";
 
 const easyTreeSelectRef = useTemplateRef<InstanceType<typeof EasyTreeSelect>>("easyTreeSelectRef")
 const settingStore = useSettingStore()
 const userStore = useUserStore()
+const themeStore = useThemeStore()
 const route = useRoute()
 const {sys_status, user_gender, sys_user_register_type} = initDict("sys_status", "user_gender", "sys_user_register_type")
 // 默认密码
