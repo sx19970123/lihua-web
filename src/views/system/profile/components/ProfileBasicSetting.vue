@@ -49,7 +49,8 @@
           <selectable-card :dataSource="deptList"
                            itemKey="id"
                            v-model="defaultDeptId"
-                           @change="handleChangeDefaultDept"
+                           @select="handleSelectDefaultDept"
+                           @unselect="handleUnselectDefaultDept"
           >
           <template #content="{item}">
             <a-flex vertical gap="small">
@@ -210,14 +211,11 @@ const initDept = () => {
   const deptList = flattenTree(userStore.deptTrees)
   // 岗位列表
   const postList = userStore.posts
-  // 修改默认部门
-  const handleChangeDefaultDept = async ({item}:{item: SysDept}) => {
-    // item 为空，表示取消了选中，手动将defaultDeptId赋值为默认部门id
-    if (!item || !item.id) {
-      await nextTick(() => defaultDeptId.value = userStore.defaultDept.id)
+  // 选中部门，修改默认部门
+  const handleSelectDefaultDept = async ({item}:{item: SysDept}) => {
+    if (!item.id) {
       return
     }
-    // 修改默认部门
     try {
       const resp = await setDefaultDept(item.id)
       if (resp.code === 200) {
@@ -236,14 +234,20 @@ const initDept = () => {
     }
   }
 
+  // 取消选中时恢复默认部门的选中回显
+  const handleUnselectDefaultDept = async () => {
+    await nextTick(() => defaultDeptId.value = userStore.defaultDept.id)
+  }
+
   return {
     deptList,
     defaultDeptId,
     postList,
-    handleChangeDefaultDept
+    handleSelectDefaultDept,
+    handleUnselectDefaultDept
   }
 }
-const {deptList, defaultDeptId, postList, handleChangeDefaultDept} = initDept()
+const {deptList, defaultDeptId, postList, handleSelectDefaultDept, handleUnselectDefaultDept} = initDept()
 
 // 默认部门id变化时同步选中
 watch(() => userStore.defaultDept.id, (value) => {

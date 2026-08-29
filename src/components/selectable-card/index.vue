@@ -1,26 +1,28 @@
 <template>
   <a-spin :spinning="loading">
     <a-flex :gap="gap" :wrap="vertical ? 'nowrap' : 'wrap'" :vertical="vertical" class="scrollbar" ref="selectableRef" :style="{'max-height': vertical ? maxHeight + 'px' : 'none', ...cardStyle}">
-      <div class="menu-card-item" :style="itemStyle" v-if="dataSource && dataSource.length > 0" v-for="(item,index) in dataSource">
-        <div class="rounded-ant-lg p-ant-base border border-solid border-ant-border mr-[3px] hover:cursor-pointer hover:border-[var(--colorPrimary)]"
+      <template v-if="dataSource && dataSource.length > 0">
+        <div class="menu-card-item" :style="itemStyle" v-for="(item,index) in dataSource" :key="item[itemKey]">
+          <div class="rounded-ant-lg p-ant-base border border-solid border-ant-border mr-[3px] hover:cursor-pointer hover:border-[var(--colorPrimary)]"
              @click.stop="handleClickCard(item)"
-             :style="item[itemKey] && activeCardValueList.includes(item[itemKey]) ? bodyStyle : ''">
-          <!--      具名插槽 content-->
-          <!--      返回参数 dataSource：传入的option-->
-          <!--      返回参数 item：option遍历出的元素-->
-          <!--      返回参数 index：option遍历索引-->
-          <!--      返回参数 isSelected：是否为当前选中元素-->
-          <!--      返回参数 color：当前主题颜色-->
-          <slot name="content"
-                :dataSource="dataSource"
-                :item="item"
-                :index="index"
-                :isSelected="activeCardValueList.includes(item[itemKey])"
-                :color="token.colorPrimary"/>
+             :style="activeCardValueList.includes(item[itemKey]) ? bodyStyle : undefined">
+            <!--      具名插槽 content-->
+            <!--      返回参数 dataSource：传入的option-->
+            <!--      返回参数 item：option遍历出的元素-->
+            <!--      返回参数 index：option遍历索引-->
+            <!--      返回参数 isSelected：是否为当前选中元素-->
+            <!--      返回参数 color：当前主题颜色-->
+            <slot name="content"
+                  :dataSource="dataSource"
+                  :item="item"
+                  :index="index"
+                  :isSelected="activeCardValueList.includes(item[itemKey])"
+                  :color="token.colorPrimary"/>
+          </div>
         </div>
-      </div>
+      </template>
       <!--    空状态-->
-      <div class="rounded-ant-lg p-ant-base border border-solid border-ant-border mr-[3px] hover:cursor-pointer" v-else :style="itemStyle">
+      <div class="rounded-ant-lg p-ant-base border border-solid border-ant-border mr-[3px]" v-else :style="itemStyle">
         <a-empty :description="emptyDescription" />
       </div>
     </a-flex>
@@ -30,7 +32,7 @@
 
 <script setup lang="ts">
 // 接受父组件传递参数
-import {reactive, ref, useTemplateRef, watch} from "vue";
+import {computed, reactive, useTemplateRef, watch} from "vue";
 import type {CSSProperties} from "vue";
 import type {Flex} from "antdv-next"
 import {cloneDeep} from 'lodash-es'
@@ -67,9 +69,26 @@ const {gap = 16, cardStyle = {}, itemStyle = {}, vertical = false, maxHeight = 3
   modelValue?: any
 }>()
 
+// 选中/取消选中事件载荷
+interface SelectPayload {
+  // 本次操作的卡片元素
+  item: any,
+  // 操作后的绑定值（单选为单值或取消时的 null；多选为选中值数组）
+  value: any[] | any | null
+}
 
-// 定义 v-model 双向绑定和抛出的函数
-const emit = defineEmits(['update:modelValue','click','change'])
+// 定义 v-model 双向绑定和抛出的事件
+const emit = defineEmits<{
+  'update:modelValue': [value: any[] | any | null],
+  // 点击卡片时触发（无论本次点击是选中还是取消选中）
+  click: [payload: {item: any, activeValueList: any[]}],
+  // 本次点击选中卡片时触发
+  select: [payload: SelectPayload],
+  // 本次点击取消选中卡片时触发
+  unselect: [payload: SelectPayload],
+  // 绑定值变化时触发（选中与取消选中均触发）
+  change: [payload: {value: any[] | any | null, item: any}]
+}>()
 
 // 选中的元素集合
 const activeCardValueList = reactive<Array<any>>([])
@@ -77,36 +96,37 @@ const activeCardValueList = reactive<Array<any>>([])
 // 组件ref
 const selectableRef = useTemplateRef<InstanceType<typeof Flex>>('selectableRef')
 
-// 处理点击选中
+// 处理点击卡片
 const handleClickCard = (item: any): void => {
   const keyItem = item[itemKey]
-  if (!keyItem) {
+  if (keyItem == null) {
     console.error("key 不是 option 集合对象的属性");
     return;
   }
   // 取消选中
   if (activeCardValueList.includes(keyItem)) {
-    activeCardValueList.splice(activeCardValueList.indexOf(keyItem),1)
-    multiple ? emit('update:modelValue', cloneDeep(activeCardValueList)) : emit('update:modelValue', null)
-    multiple ? emit('change', cloneDeep(activeCardValueList)) : emit('change',{})
+    activeCardValueList.splice(activeCardValueList.indexOf(keyItem), 1)
+    const value = multiple ? cloneDeep(activeCardValueList) : null
+    emit('update:modelValue', value)
+    emit('click', {activeValueList: cloneDeep(activeCardValueList), item: cloneDeep(item)})
+    emit('unselect', {item: cloneDeep(item), value})
+    emit('change', {value, item: cloneDeep(item)})
     return;
   }
 
   // 处理单选/多选
   if (multiple) {
     activeCardValueList.push(keyItem)
-    // 多选情况下，返回选中值的集合
-    emit('update:modelValue', cloneDeep(activeCardValueList))
   } else {
     clearActiveCardValueList()
     activeCardValueList.push(keyItem)
-    // 单选情况下返回选中的值
-    emit('update:modelValue', cloneDeep(keyItem))
   }
+  const value = multiple ? cloneDeep(activeCardValueList) : cloneDeep(keyItem)
 
-  // 向父级抛出点击事件
-  emit('click',{activeValueList: cloneDeep(activeCardValueList) ,item: cloneDeep(item)})
-  emit('change',{item: cloneDeep(item)})
+  emit('update:modelValue', value)
+  emit('click', {activeValueList: cloneDeep(activeCardValueList), item: cloneDeep(item)})
+  emit('select', {item: cloneDeep(item), value})
+  emit('change', {value, item: cloneDeep(item)})
 }
 
 // 清空选中集合
@@ -116,13 +136,13 @@ const clearActiveCardValueList = () => {
 
 // 处理双向绑定回显
 const handleVmodel = () => {
-  // 双向绑定modelValue
-  if (!modelValue) {
+  // 绑定值不存在时清空已选项（0/false/'' 为合法选中值，不做清空）
+  if (modelValue == null) {
+    clearActiveCardValueList()
     return;
   }
 
   const type = Array.isArray(modelValue) ? 'array' : typeof modelValue;
-  // 是否多选
 
   if (type === 'array') {
     if (!multiple) {
@@ -161,6 +181,7 @@ const scrollIntoView = (index: number) => {
   }
 
   const target = el.children[index]
+  if (!target) return
   const containerRect = el.getBoundingClientRect()
   const targetRect = target.getBoundingClientRect()
 
@@ -177,23 +198,13 @@ const scrollIntoView = (index: number) => {
 
 watch(() => scrollViewIndex, (value) => {
   scrollIntoView(value)
-})
+}, {immediate: true})
 
-// 选中的卡片样式
-const bodyStyle = ref<{
-  'border': string,
-  'box-shadow': string
-}>({
-  'border': '1px solid ' + token.value.colorPrimary,
+// 选中的卡片样式（跟随主题色）
+const bodyStyle = computed<CSSProperties>(() => ({
+  border: '1px solid ' + token.value.colorPrimary,
   'box-shadow': 'inset 0 0 0 1px ' + token.value.colorPrimary,
-})
-// 监听主题变化同步卡片样式
-watch(() => token.value.colorPrimary, () => {
-  bodyStyle.value = {
-    'border': '1px solid ' + token.value.colorPrimary,
-    'box-shadow': 'inset 0 0 0 1px ' + token.value.colorPrimary,
-  }
-})
+}))
 
 // 监听外部 modelValue 值变化时反应到组件中
 watch(() => modelValue,() => {
@@ -202,9 +213,8 @@ watch(() => modelValue,() => {
 
 // 深度监听 dataSource 变化，当dataSource减少时，删除双向绑定中对应的数据
 watch(() => dataSource, () => {
-  // modelValue 未选中值时不进行操作
-  if (!modelValue || modelValue === 0) {
-    // 双向绑定值不存在时，清空已选项
+  // 绑定值不存在时清空已选项
+  if (modelValue == null) {
     clearActiveCardValueList()
     return;
   }
@@ -222,9 +232,6 @@ watch(() => dataSource, () => {
         if (!isSubset || modelValueList.length > allList.length) {
           // 计算 modelValue 与 allList 的交集
           const intersection = modelValueList.filter(item => allList.includes(item));
-          // 清空 modelValue 并将交集元素添加回去
-          // modelValue.length = 0;
-          // modelValue.push(...intersection);
           emit('update:modelValue', cloneDeep(intersection));
         }
       } else {
@@ -251,5 +258,5 @@ watch(() => dataSource, () => {
     }
   }
 
-})
+}, {deep: true})
 </script>

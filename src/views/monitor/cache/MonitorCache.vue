@@ -9,7 +9,8 @@
                        item-key="keyPrefix"
                        :item-style="{width: '100%'}"
                        :gap="8"
-                       @change="handleChangeKeyTypeItem"
+                       @select="handleChangeKeyTypeItem"
+                       @unselect="handleClearKeyTypeItem"
           >
             <template #content="{item, index}">
               <a-flex justify="space-between">
@@ -51,7 +52,8 @@
                        item-key="key"
                        :item-style="{width: '100%'}"
                        :gap="8"
-                       @change="handleClickKey"
+                       @select="handleSelectKey"
+                       @unselect="handleClearKey"
                       :loading="loadingKeys"
           >
             <template #content="{item, index}">
@@ -165,17 +167,17 @@ const initCacheKeyGroups = async () => {
   }
 }
 
-// 处理点击缓存类型
-const handleChangeKeyTypeItem = async ({item}:{item: CacheMonitor | undefined}) => {
-  // 取消选中时清空数据
-  if (!item) {
-    keys.value = []
-    info.value = undefined
-    infoKey.value = undefined
-    targetKeyType.value = undefined
-    return
-  }
+// 处理选中缓存类型
+const handleChangeKeyTypeItem = async ({item}:{item: CacheMonitor}) => {
   await loadKeyList(item)
+}
+
+// 取消选中缓存类型时清空数据
+const handleClearKeyTypeItem = () => {
+  keys.value = []
+  info.value = undefined
+  infoKey.value = undefined
+  targetKeyType.value = undefined
 }
 
 // 加载键值列表
@@ -198,18 +200,17 @@ const loadKeyList = async (item: CacheMonitor) => {
   }
 }
 
-// 处理点击缓存key
-const handleClickKey = async ({item}:{item: {key: string | undefined}}) => {
-  if (!item) {
-    info.value = undefined
-    infoKey.value = undefined
-    return
-  }
+// 处理选中缓存key
+const handleSelectKey = async ({item}:{item: {key: string}}) => {
   infoKey.value = item.key
   // 加载缓存内容
-  if (item.key) {
-    await loadCacheInfo(item.key)
-  }
+  await loadCacheInfo(item.key)
+}
+
+// 取消选中缓存key时清空内容
+const handleClearKey = () => {
+  info.value = undefined
+  infoKey.value = undefined
 }
 
 // 加载缓存内容
