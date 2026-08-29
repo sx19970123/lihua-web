@@ -49,12 +49,6 @@
           Day.js
         </a-typography-link>
       </a-card-grid>
-      <a-card-grid >
-        <a-typography-link ellipsis href="https://vue-draggable-plus.pages.dev/" target="_blank">
-          <img src="https://vue-draggable-plus.pages.dev/logo.svg" style="width: 16px;height: 16px">
-          vue-draggable-plus
-        </a-typography-link>
-      </a-card-grid>
     </a-card>
   </div>
 </template>

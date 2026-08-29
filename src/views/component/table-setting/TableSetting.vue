@@ -6,13 +6,11 @@
     <a-flex vertical :gap="16" style="margin-top: var(--ant-margin)">
       <Demo1/>
       <demo2/>
-      <Demo3/>
     </a-flex>
   </a-card>
 </template>
 
 <script setup lang="ts">
-import Demo3 from './Demo3.vue'
 import Demo2 from './Demo2.vue'
 import Demo1 from './Demo1.vue'
 
