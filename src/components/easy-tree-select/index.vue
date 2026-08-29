@@ -5,10 +5,12 @@
       <a-checkable-tag v-if="multiple" :checked="treeSetting.checkRelate" @change="handleCheckRelate">父子关联</a-checkable-tag>
       <a-checkable-tag :checked="treeSetting.expand" @change="handleExpandAll">展开/折叠</a-checkable-tag>
     </div>
-    <a-card :styles="cardStyles" :variant="bordered ? 'outlined' : 'borderless'" class="shadow-none">
+    <!-- box-shadow 内联保留：压 .ant-card:not(-bordered) 根级 boxShadowTertiary（(0,2,0) 反杀 shadow-none 工具类） -->
+    <a-card :styles="cardStyles" :variant="bordered ? 'outlined' : 'borderless'" style="box-shadow: none">
       <a-input v-if="showSearch" class="h-28px mb-ant-xs" :placeholder="searchPlaceholder" v-model:value="keyword" allowClear @change="handleKeywordChange"/>
       <!-- height（虚拟滚动）与 maxHeight（容器滚动）互斥，同传时以 height 为准 -->
       <div :style="maxHeight && height == null ? {maxHeight: maxHeight + 'px'} : {}" class="scrollbar" v-if="cloneTreeData && cloneTreeData.length > 0">
+      <!-- padding 内联保留：.ant-tree 根级 resetComponent padding:0 同特异性 cssinjs 后注入反杀 p-ant-xxs 工具类 -->
         <a-tree v-bind="treeAttrs"
                 :tree-data="cloneTreeData"
                 :field-names="fieldNames"
@@ -23,7 +25,7 @@
                 @check="handleSelect"
                 @select="handleSelect"
                 @expand="handleExpand"
-                class="p-ant-xxs"
+                style="padding: var(--ant-padding-xxs)"
         >
           <template #titleRender="item" v-if="hasTitleSlot">
             <slot name="title" v-bind="{ ...item, keyword, segments: buildSegments(item[fieldNames.title]) }"/>

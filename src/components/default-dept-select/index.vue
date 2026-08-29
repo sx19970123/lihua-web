@@ -14,8 +14,11 @@
               <a-space>
                 <a-flex :gap="8">
                   <a-tooltip :title="userStore.defaultDept.id !== id ? '点击设为默认部门' : '默认部门'" placement="right" :arrow="false" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
-                    <span v-for="(segment, index) in segments" :key="index"
-                          :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>
+                    <!-- 外层 span 为 tooltip 提供唯一子元素（tooltip 只渲染首个子节点） -->
+                    <span>
+                      <span v-for="(segment, index) in segments" :key="index"
+                            :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>
+                    </span>
                   </a-tooltip>
                   <a-typography-text type="secondary" v-if="showDeptCode">{{ code }}</a-typography-text>
                 </a-flex>
