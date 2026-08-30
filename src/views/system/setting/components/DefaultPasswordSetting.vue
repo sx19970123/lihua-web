@@ -10,7 +10,7 @@
             <QuestionCircleOutlined class="question-icon"/>
           </a-tooltip>
         </template>
-        <password-input class="w-[270px]" v-model:value="settingForm.defaultPassword" placeholder="请输入默认密码" :size="90"/>
+        <password-input class="w-[270px]" v-model="settingForm.defaultPassword" placeholder="请输入默认密码" :progress-width="90"/>
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit" :loading="submitLoading">提 交</a-button>

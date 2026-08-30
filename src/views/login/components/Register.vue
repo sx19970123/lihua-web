@@ -24,12 +24,12 @@
       </a-form-item>
       <a-form-item name="password" hasFeedback>
         <password-input class="register-form-item"
-                        v-model:value="userRegister.password"
-                        :size="98"
+                        v-model="userRegister.password"
+                        :progress-width="98"
                         placeholder="密码"
                         height="48px"
-                        prefixIcon
-                        :showProgress="!!userRegister.password && userRegister.password.length >= 6"
+                        prefix-icon
+                        :show-progress="!!userRegister.password && userRegister.password.length >= 6"
         />
       </a-form-item>
 

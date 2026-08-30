@@ -8,9 +8,9 @@
       </a-form-item>
       <a-form-item label="新密码" name="newPassword">
         <password-input class="w-[270px]"
-                        v-model:value="password.newPassword"
+                        v-model="password.newPassword"
                         placeholder="请输入新密码"
-                        :size="90"
+                        :progress-width="90"
                         :show-progress="!!password.newPassword && password.newPassword.length >= 6"
         />
       </a-form-item>

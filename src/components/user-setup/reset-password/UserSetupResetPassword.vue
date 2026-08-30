@@ -19,8 +19,8 @@
           </a-form-item>
           <a-form-item name="newPassword">
             <password-input class="form-item-width"
-                            v-model:value="password.newPassword"
-                            placeholder="请输入新密码" :size="92"
+                            v-model="password.newPassword"
+                            placeholder="请输入新密码" :progress-width="92"
                             :show-progress="!!password.newPassword && password.newPassword.length >= 6 && password.newPassword.length <= 30"
             />
           </a-form-item>
