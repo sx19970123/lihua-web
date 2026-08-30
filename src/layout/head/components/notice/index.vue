@@ -34,7 +34,7 @@
                                 v-model:value="item.starFlagNumber"
                                 @click="(event:MouseEvent) => event.stopPropagation()"
                                 @change="(value: number) => handleStar(item.noticeId, value)" />
-                        <dict-tag :dict-data-option="sys_notice_priority" :dict-data-value="item.priority"/>
+                        <dict-tag :dict-data-option="sys_notice_priority" :dict-data-value="item.priority" variant="solid"/>
                       </a-flex>
                     </a-flex>
                     <!--                      发布人/发布时间：两端对齐-->
