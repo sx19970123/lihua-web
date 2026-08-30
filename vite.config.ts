@@ -4,7 +4,7 @@ import type {UserConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import UnoCSS from '@unocss/vite'
 import svgLoader from 'vite-svg-loader'
-import replaceAttrFill from "./plugins/svgo-plugin.ts"
+import fillToCurrentColor from "./plugins/svgo-plugin.ts"
 
 export default defineConfig(({ mode }): UserConfig => {
   // 获取请求前缀
@@ -60,7 +60,7 @@ export default defineConfig(({ mode }): UserConfig => {
           plugins: [
             // 设置svg图标fill属性为currentColor，保证图标受css控制改变颜色
             // 参数为排除目录，保证该目录下的图标不受影响，防止彩色图标被修改
-            replaceAttrFill("assets/icons/fixed-color"),
+            fillToCurrentColor("assets/icons/fixed-color"),
             // 删除图标的width和height属性
             {
               name: "removeAttrs",
@@ -68,7 +68,7 @@ export default defineConfig(({ mode }): UserConfig => {
                 attrs: ['width', 'height'],
               }
             },
-              // 设置图标的width和height属性为1em
+            // 设置图标的width和height属性为1em
             {
               name: "addAttributesToSVGElement",
               params: {
@@ -76,6 +76,13 @@ export default defineConfig(({ mode }): UserConfig => {
                   {'width': '1em'},
                   {'height': '1em'},
                 ]
+              }
+            },
+            // 在svg根节点追加anticon类（与已有class合并），对齐官方图标的行内对齐样式
+            {
+              name: "addClassesToSVGElement",
+              params: {
+                classNames: ['anticon'],
               }
             }
           ]
