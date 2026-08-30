@@ -1,6 +1,10 @@
 <template>
-  <div>
-    <div class="lihua-user-select">
+  <div :class="{ 'cursor-pointer': clickable }" @click="emits('click')">
+    <div class="lihua-user-select relative inline-block border border-solid border-[var(--ant-color-border)] rounded-20px p-[2px] m-ant-xxs shadow-[var(--ant-box-shadow-tertiary)] unselectable">
+<!--      整颗 chip 悬停浮层：内容与行为由插槽消费方决定，组件只提供定位与显隐（贴合 chip 圆角）-->
+      <span v-if="hasHoverSlot" class="chip-hover-layer">
+        <slot name="hover"/>
+      </span>
       <a-flex align="center" :gap="4" wrap="nowrap">
 <!--        头像-->
         <user-avatar
@@ -20,8 +24,7 @@
 import UserAvatar from '@/components/user-avatar/index.vue'
 import {useUserStore} from "@/stores/user.ts";
 import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
-import {ref} from "vue";
-import {publicAttachmentDownload} from "@/api/system/attachment/attachment-storage.ts";
+import {computed, getCurrentInstance, ref, useSlots} from "vue";
 import {attachmentUrl, getTemporaryPath} from "@/utils/attachment-url.ts";
 
 const userStore = useUserStore();
@@ -30,6 +33,16 @@ const props = defineProps<{
   avatarJson?: string,
   nickname?: string
 }>()
+
+const emits = defineEmits(['click'])
+
+const slots = useSlots()
+const hasHoverSlot = computed(() => !!slots.hover)
+
+// 绑定了 click 监听才显示可点击光标：纯展示场景（如通知预览）保持默认光标
+const instance = getCurrentInstance()
+const clickable = computed(() => !!instance?.vnode.props?.onClick)
+
 // 回显头像
 const avatar = ref<AvatarType>({})
 try {
@@ -54,17 +67,33 @@ try {
 </script>
 
 <style scoped>
-.lihua-user-select {
-  border: 1px solid var(--ant-color-border);
-  border-radius: 20px;
-  padding: 2px;
-  display: inline-block;
-  margin: var(--ant-margin-xxs);
-  box-shadow: var(--ant-box-shadow-tertiary);
-  user-select: none;
-}
+/* 昵称内边距：.ant-typography 根级 resetComponent 声明 padding，工具类同特异性会被 cssinjs 后注入反杀，维持 scoped */
 .nickname {
-  padding-right: var(--ant-padding-xs);
+  padding-right: var(--ant-padding-xxs);
   white-space: nowrap;
+}
+
+/* 整颗 chip 悬停浮层：毛玻璃为主 + 轻暗底（0.18），× 靠投影保证对比度；圆角贴合 chip 本体，仅当提供 hover 插槽时渲染 */
+.chip-hover-layer {
+  position: absolute;
+  inset: 0;
+  /* .ant-avatar 自带 position:relative，同为定位元素时按 DOM 序绘制会盖住浮层，显式提升层级 */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.18);
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  backdrop-filter: var(--lihua-backdrop-filter-lg);
+  opacity: 0;
+  transition: opacity 0.17s ease;
+  pointer-events: none;
+}
+
+.lihua-user-select:hover .chip-hover-layer {
+  opacity: 1;
 }
 </style>
