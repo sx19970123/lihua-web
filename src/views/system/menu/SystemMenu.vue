@@ -318,7 +318,7 @@
 // 列表查询相关
 import type {ColumnsType} from 'ant-design-vue/es/table/interface';
 import {deleteData, queryById, queryList, queryMenuTreeOption, save, updateStatus} from "@/api/system/menu/menu.ts";
-import {reactive, ref, useTemplateRef} from "vue";
+import {computed, reactive, ref, useTemplateRef} from "vue";
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"
 import IconSelect from "@/components/icon-select/index.vue"
@@ -339,18 +339,19 @@ const initSearch = () => {
   // 选中的数据id集合
   const selectedIds = ref<Array<string>>([])
   // 列表勾选对象
-  const menuRowSelectionType = {
+  // selectedRowKeys 必须传真实数组：vnext 内部会展开迭代该字段，直接传 ref 会抛 not iterable
+  const menuRowSelectionType = computed(() => ({
     checkStrictly: true,
     columnWidth: '55px',
-    type: 'checkbox',
+    type: 'checkbox' as const,
     // 支持跨页勾选
     preserveSelectedRowKeys: true,
     // 指定选中id的数据集合，操作完后可手动清空
-    selectedRowKeys: selectedIds,
+    selectedRowKeys: selectedIds.value,
     onChange: (ids: Array<string>) => {
       selectedIds.value = ids
     }
-  }
+  }))
   const handleRowClick = (record:SysMenuVO) => {
     return {
       onClick: () => {

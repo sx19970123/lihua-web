@@ -231,7 +231,7 @@
 </template>
 <script setup lang="ts">
 import {initDict} from "@/helpers/dict.ts";
-import {reactive, ref, useTemplateRef} from "vue";
+import {computed, reactive, ref, useTemplateRef} from "vue";
 import type {SysNotice, SysNoticeDTO, SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
 import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {deleteByIds, queryById, queryPage, release, revoke, save} from "@/api/system/notice/notice.ts";
@@ -254,17 +254,18 @@ const {sys_notice_type, sys_notice_status, 	sys_notice_user_scope, sys_notice_pr
 const initSearch = () => {
   // 列表多选
   const selectedIds = ref<Array<string>>([])
-  const noticeRowSelectionType = {
+  // selectedRowKeys 必须传真实数组：vnext 内部会展开迭代该字段，直接传 ref 会抛 not iterable
+  const noticeRowSelectionType = computed(() => ({
     columnWidth: '55px',
-    type: 'checkbox',
+    type: 'checkbox' as const,
     // 支持跨页勾选
     preserveSelectedRowKeys: true,
     // 指定选中id的数据集合，操作完后可手动清空
-    selectedRowKeys: selectedIds,
+    selectedRowKeys: selectedIds.value,
     onChange: (ids: Array<string>) => {
       selectedIds.value = ids
     }
-  }
+  }))
   // 处理选择
   const handleRowClick = (record: SysNotice) => {
     return {

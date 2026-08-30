@@ -192,7 +192,7 @@
 
 <script setup lang="ts">
 import {initDict} from "@/helpers/dict.ts"
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {
   clearOperateLog,
   deleteOperateByIds,
@@ -229,17 +229,18 @@ const initSearch = () => {
   // 选中的数据id集合
   const selectedIds = ref<Array<string>>([])
   // 列表勾选对象
-  const logRowSelectionType = {
+  // selectedRowKeys 必须传真实数组：vnext 内部会展开迭代该字段，直接传 ref 会抛 not iterable
+  const logRowSelectionType = computed(() => ({
     columnWidth: '55px',
-    type: 'checkbox',
+    type: 'checkbox' as const,
     // 支持跨页勾选
     preserveSelectedRowKeys: true,
     // 指定选中id的数据集合，操作完后可手动清空
-    selectedRowKeys: selectedIds,
+    selectedRowKeys: selectedIds.value,
     onChange: (ids: Array<string>) => {
       selectedIds.value = ids
     }
-  }
+  }))
   const handleRowClick = (record:SysLog) => {
     return {
       onClick: () => {

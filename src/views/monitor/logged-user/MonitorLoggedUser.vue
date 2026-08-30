@@ -153,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import type {LoggedUserQueryParams, LoggedUserType} from "@/api/monitor/logged-user/type/logged-user-type.ts";
 import {forceLogout, queryList} from "@/api/monitor/logged-user/logged-user.ts";
@@ -170,17 +170,18 @@ const initSearch = () => {
   // 选中的数据id集合
   const logoutCacheKeys = ref<Array<string>>([])
   // 列表勾选对象
-  const userRowSelectionType = {
+  // selectedRowKeys 必须传真实数组：vnext 内部会展开迭代该字段，直接传 ref 会抛 not iterable
+  const userRowSelectionType = computed(() => ({
     columnWidth: '55px',
-    type: 'checkbox',
+    type: 'checkbox' as const,
     // 支持跨页勾选
     preserveSelectedRowKeys: true,
     // 指定选中key的数据集合，操作完后可手动清空
-    selectedRowKeys: logoutCacheKeys,
+    selectedRowKeys: logoutCacheKeys.value,
     onChange: (keys: Array<string>) => {
       logoutCacheKeys.value = keys
     }
-  }
+  }))
 
   const handleRowClick = (record:LoggedUserType) => {
     return {

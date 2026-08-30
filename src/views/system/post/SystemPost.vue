@@ -223,7 +223,7 @@
 <script setup lang="ts">
 
 import {getDeptOption} from "@/api/system/dept/dept.ts";
-import {reactive, ref, useTemplateRef, watch} from "vue";
+import {computed, reactive, ref, useTemplateRef, watch} from "vue";
 import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {initDict} from "@/helpers/dict.ts";
 import {deleteData, exportExcel, queryById, queryPage, save, updateStatus} from "@/api/system/post/post.ts";
@@ -274,17 +274,18 @@ const initSearch = () => {
   // 选中的数据id集合
   const selectedIds = ref<Array<string>>([])
   // 列表勾选对象
-  const postRowSelectionType = {
+  // selectedRowKeys 必须传真实数组：vnext 内部会展开迭代该字段，直接传 ref 会抛 not iterable
+  const postRowSelectionType = computed(() => ({
     columnWidth: '55px',
-    type: 'checkbox',
+    type: 'checkbox' as const,
     // 支持跨页勾选
     preserveSelectedRowKeys: true,
     // 指定选中id的数据集合，操作完后可手动清空
-    selectedRowKeys: selectedIds,
+    selectedRowKeys: selectedIds.value,
     onChange: (ids: Array<string>) => {
       selectedIds.value = ids
     }
-  }
+  }))
   const handleRowClick = (record:SysPostVO) => {
     return {
       onClick: () => {
