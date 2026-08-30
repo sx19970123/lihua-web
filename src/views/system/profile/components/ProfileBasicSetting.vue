@@ -13,32 +13,29 @@
         <a-typography-title :level="5">个人信息</a-typography-title>
         <div class="max-w-[400px] mx-auto">
           <a-form-item>
-            <avatar-modifier v-model="profileInfo.avatar" @change="(value: string) => handleFinish({avatar: value})"/>
+            <avatar-modifier v-model="profileInfo.avatar" @change="(value?: string) => handleSave({avatar: value})"/>
           </a-form-item>
           <a-form-item label="用户昵称" name="nickname">
-            <dynamic-border-input ref="nicknameInputRef"
-                                  required
-                                  v-model="profileInfo.nickname"
-                                  @reset="handleClearValidate"
-                                  @submit="(value: string) => handleFinish({nickname : value})"
+            <inline-edit-input required
+                                v-model="profileInfo.nickname"
+                                :on-submit="(value?: string) => handleSave({nickname : value})"
+                                @reset="handleClearValidate"
             />
           </a-form-item>
           <a-form-item label="手机号码" name="phoneNumber">
-            <dynamic-border-input ref="phoneNumberInputRef"
-                                  v-model="profileInfo.phoneNumber"
-                                  @reset="handleClearValidate"
-                                  @submit="(value: string) => handleFinish({phoneNumber : value})"/>
+            <inline-edit-input v-model="profileInfo.phoneNumber"
+                               :on-submit="(value?: string) => handleSave({phoneNumber : value})"
+                               @reset="handleClearValidate"/>
           </a-form-item>
           <a-form-item label="电子邮箱" name="email">
-            <dynamic-border-input ref="emailInputRef"
-                                  v-model="profileInfo.email"
-                                  @reset="handleClearValidate"
-                                  @submit="(value: string) => handleFinish({email : value})"/>
+            <inline-edit-input v-model="profileInfo.email"
+                               :on-submit="(value?: string) => handleSave({email : value})"
+                               @reset="handleClearValidate"/>
           </a-form-item>
           <a-form-item label="用户性别">
-            <dynamic-border-select ref="genderInputRef"
-                                   v-model="profileInfo.gender"
-                                   :options="user_gender" @submit="(value: string) => handleFinish({gender : value})"/>
+            <inline-edit-select v-model="profileInfo.gender"
+                                :options="user_gender"
+                                :on-submit="(value?: string) => handleSave({gender : value})"/>
           </a-form-item>
         </div>
       </a-card>
@@ -91,6 +88,8 @@
 import {nextTick, reactive, ref, useTemplateRef, watch} from "vue";
 import {useUserStore} from "@/stores/user";
 import AvatarModifier from "@/views/system/profile/components/AvatarModifier.vue";
+import InlineEditInput from "@/views/system/profile/components/InlineEditInput.vue";
+import InlineEditSelect from "@/views/system/profile/components/InlineEditSelect.vue";
 import type {Rule} from "ant-design-vue/es/form";
 import {type FormInstance} from "ant-design-vue";
 import {message} from "@/antd-adapter";
@@ -98,8 +97,6 @@ import type {ProfileInfo} from "@/api/system/profile/type/sys-profile.ts";
 import {saveBasics, setDefaultDept} from "@/api/system/profile/profile.ts";
 import {initDict} from "@/helpers/dict.ts"
 import {ResponseError} from "@/api/global/type.ts";
-import DynamicBorderInput from "@/components/dynamic-border-input/index.vue"
-import DynamicBorderSelect from "@/components/dynamic-border-select/index.vue"
 import SelectableCard from "@/components/selectable-card/index.vue"
 import {flattenTree} from "@/utils/tree.ts"
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
@@ -110,12 +107,6 @@ const themeStore = useThemeStore()
 const {user_gender} = initDict('user_gender')
 
 const formRef = useTemplateRef<FormInstance>("formRef")
-
-// 动态边框输入框组件ref
-const nicknameInputRef = useTemplateRef<InstanceType<typeof DynamicBorderInput>>("nicknameInputRef")
-const phoneNumberInputRef = useTemplateRef<InstanceType<typeof DynamicBorderInput>>("phoneNumberInputRef")
-const emailInputRef = useTemplateRef<InstanceType<typeof DynamicBorderInput>>("emailInputRef")
-const genderInputRef = useTemplateRef<InstanceType<typeof DynamicBorderSelect>>("genderInputRef")
 
 // 初始化数据
 const init = () => {
@@ -153,20 +144,20 @@ const init = () => {
 const { profileInfo, userRoles }= init()
 
 /**
- * 保存用户信息
+ * 保存用户信息，返回是否成功（inline-edit 组件据此收尾编辑态）
  * @param values
  */
-const handleFinish = async (values: {avatar?: string,nickname?: string, gender?: string, email?: string, phoneNumber?: string}) => {
+const handleSave = async (values: {avatar?: string,nickname?: string, gender?: string, email?: string, phoneNumber?: string}): Promise<boolean> => {
   try {
     const resp = await saveBasics(values)
     if (resp.code === 200){
-      dynamicBorderSuccess()
       message.success(resp.msg)
       // 重新获取用户信息
       await userStore.initUserInfo()
+      return true
     } else {
-      dynamicBorderError()
       message.error(resp.msg)
+      return false
     }
   } catch(e) {
     if (e instanceof ResponseError) {
@@ -174,26 +165,9 @@ const handleFinish = async (values: {avatar?: string,nickname?: string, gender?:
     } else {
       console.error(e)
     }
-    dynamicBorderError()
+    return false
   }
 }
-
-// 动态边框输入框同一执行成功方法调用
-const dynamicBorderSuccess = () => {
-  nicknameInputRef.value?.success()
-  genderInputRef.value?.success()
-  emailInputRef.value?.success()
-  phoneNumberInputRef.value?.success()
-}
-
-// 动态边框输入框同一执行失败方法调用
-const dynamicBorderError = () => {
-  nicknameInputRef.value?.error()
-  genderInputRef.value?.error()
-  emailInputRef.value?.error()
-  phoneNumberInputRef.value?.error()
-}
-
 
 // 清除验证提示
 const handleClearValidate = () => {
