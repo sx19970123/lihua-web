@@ -1,12 +1,12 @@
 let isOverflowHidden = false;
 
 // 隐藏滚动条
+// 宽度不再做 calc 补偿：html 已设 scrollbar-gutter: stable，滚动条槽位常驻，
+// 隐藏/恢复不会引起页面横向回流（旧的双向补偿会在恢复瞬间引发整页重排跳动）
 export const hiddenOverflowY = () => {
     if (isOverflowHidden) return;
     if (hasScrollbar()) {
-        const scrollbarWidth = getScrollbarWidth();
         document.body.style.overflowY = 'hidden';
-        document.body.style.width = `calc(100% - ${scrollbarWidth}px)`;
         isOverflowHidden = true;
     }
 };
@@ -15,7 +15,6 @@ export const hiddenOverflowY = () => {
 export const showOverflowY = () => {
     if (!isOverflowHidden) return;
     document.body.style.overflowY = '';
-    document.body.style.removeProperty('width');
     isOverflowHidden = false;
 };
 

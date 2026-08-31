@@ -25,12 +25,6 @@
           Ant Design Vue
         </a-typography-link>
       </a-card-grid>
-      <a-card-grid>
-        <a-typography-link ellipsis href="https://gsap.com/docs/v3/" target="_blank">
-          <img src="https://th.bing.com/th?id=ODLS.0adef11b-095c-4c5f-a47a-5815c6307ae1&w=32&h=32&qlt=90&pcl=fffffa&o=6&cb=13&pid=1.2" style="width: 16px;height:16px">
-          GSAP
-        </a-typography-link>
-      </a-card-grid>
       <a-card-grid >
         <a-typography-link ellipsis href="https://www.lodashjs.com/#:~:text=Lodash%20%E6%98%AF%E4%B8%80%E4%B8%AA" target="_blank">
           <img src="https://th.bing.com/th?id=ODLS.2871bf84-a83f-47b6-9643-23bb1422c135&w=32&h=32&qlt=90&pcl=fffffa&o=6&cb=13&pid=1.2" style="width: 16px;height: 16px">

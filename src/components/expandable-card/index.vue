@@ -38,10 +38,80 @@
 
 <script setup lang="ts">
 import Mask from "@/components/mask/index.vue"
-import {gsap} from 'gsap';
 import type {CSSProperties} from 'vue';
 import {nextTick, onMounted, onUnmounted, ref, useSlots, useTemplateRef, watch} from "vue";
 import {hiddenOverflowY} from "@/utils/scrollbar.ts";
+
+// ===== 用 Web Animations API 平行替换 gsap 的 to / fromTo =====
+// 动画时长与缓动（gsap 平行替换值），收拢一处便于统调
+const TRANSITION = {
+  // 悬浮/缩放还原时长（原 gsap 0.1s）
+  hover: 100,
+  // 展开/关闭主动画时长（原 gsap 0.4s）
+  expand: 400,
+  // gsap power1.out（gsap 默认缓动）
+  easeOut: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  // gsap power2.out
+  easeOutCubic: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+}
+
+// 数值转 px 字符串
+const px = (value?: number) => value === undefined ? undefined : value + 'px'
+
+// 参与动画的 css 属性（gsap 的 scale 映射为 transform）
+const ANIMATE_PROPS = ['width', 'height', 'left', 'right', 'top', 'opacity', 'transform'] as const
+
+// 容器上最近一次未结束的动画，新动画开始前取消（对应 gsap 被 kill 后不再触发 onComplete）
+let lastAnimation: Animation | null = null
+
+type AnimateOptions = {
+  duration: number
+  ease?: string
+  onStart?: () => void
+  onComplete?: () => void
+}
+
+// 平行替换 gsap.fromTo：from 中未给出的属性从当前计算值起步（同 gsap 缺省行为）
+const animateFromTo = (el: HTMLElement | null,
+                       from: Record<string, string | number | undefined>,
+                       to: Record<string, string | number | undefined>,
+                       options: AnimateOptions) => {
+  if (!el) return
+  // 采样当前计算值（含进行中动画的当前帧），保证打断旧动画时从当前位置继续
+  const computed = getComputedStyle(el)
+  const fromKeyframe: Record<string, string> = {}
+  for (const prop of ANIMATE_PROPS) {
+    if (to[prop] === undefined) continue
+    fromKeyframe[prop] = from[prop] === undefined ? computed[prop] : String(from[prop])
+  }
+  const toKeyframe: Record<string, string> = {}
+  for (const key in to) {
+    if (to[key] !== undefined) toKeyframe[key] = String(to[key])
+  }
+  lastAnimation?.cancel()
+  const animation = el.animate([fromKeyframe, toKeyframe], {
+    duration: options.duration,
+    easing: options.ease ?? TRANSITION.easeOut,
+  })
+  lastAnimation = animation
+  options.onStart?.()
+  animation.onfinish = () => {
+    // 动画结束后把终值留在内联样式上（对应 gsap 结束后内联样式残留，
+    // windowWidthResize 直接写 style.width 依赖此行为）
+    for (const key in toKeyframe) {
+      el.style.setProperty(key, toKeyframe[key])
+    }
+    options.onComplete?.()
+  }
+}
+
+// 平行替换 gsap.to：从元素当前状态动画到目标值
+const animateTo = (el: HTMLElement | null,
+                   to: Record<string, string | number | undefined>,
+                   options: AnimateOptions) => {
+  animateFromTo(el, {}, to, options)
+}
+
 // 是否使用具名插槽middle
 const slots = useSlots();
 const hasMiddleSlot = !!slots.middle
@@ -122,6 +192,8 @@ const init = () => {
   const expandedHeight = ref<number>(props.expandedHeight)
   // 显示遮罩
   const showMask = ref<boolean>(false)
+  // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
+  const closing = ref<boolean>(false)
 
   // 点击卡片
   const handleClickCard = () => {
@@ -139,9 +211,10 @@ const init = () => {
     // 即将执行动画前触发
     emits('beforeCardExpand')
     // 执行动画，先将缩放还原
-    gsap.to(containerRef.value, {
-      scale: 1,
-      duration: 0.1,
+    animateTo(containerRef.value, {
+      transform: 'scale(1)',
+    }, {
+      duration: TRANSITION.hover,
       onStart: () => {
         // 缩放状态设置为进行中
         hoverStatus.value = 'activity'
@@ -158,21 +231,22 @@ const init = () => {
         // 为展开后高度赋值
         expandedHeight.value = height
         // 执行主要动画
-        gsap.fromTo(containerRef.value, {
-          width: bounding?.width,
-          left: bounding?.left,
-          right: bounding?.right,
-          top:  bounding?.top,
+        animateFromTo(containerRef.value, {
+          width: px(bounding?.width),
+          left: px(bounding?.left),
+          right: px(bounding?.right),
+          top:  px(bounding?.top),
           opacity: 0,
         },{
-          left: side,
-          right: side,
-          top: top,
-          width: width,
-          height: height,
+          left: px(side),
+          right: px(side),
+          top: px(top),
+          width: px(width),
+          height: px(height),
           opacity: 1,
-          duration: 0.4,
-          ease: 'power2.out',
+        }, {
+          duration: TRANSITION.expand,
+          ease: TRANSITION.easeOutCubic,
           onStart: () => {
             // 打开遮罩
             showMask.value = true
@@ -180,8 +254,9 @@ const init = () => {
             showStatus.value = 'activity'
           },
           onComplete: () => {
-            // 动画播完 或 外部控制为已完成 并且 动画状态不为kill时，展示内容
-            if ((props.autoComplete || props.isComplete) && showStatus.value !== 'kill') {
+            // 动画播完 或 外部控制为已完成时展示内容
+            // 仅在 activity 状态放行：kill 表示被关闭打断，complete 表示 watch 已处理过 isComplete，避免重复触发
+            if ((props.autoComplete || props.isComplete) && showStatus.value === 'activity') {
               handleExpandComplete()
             }
           }
@@ -208,6 +283,12 @@ const init = () => {
       return;
     }
 
+    // 关闭动画进行中，忽略重复的关闭请求（连按 esc / esc 与点击蒙版几乎同时触发时，
+    // 避免重启关闭动画与重复抛出 beforeCardClose）
+    if (closing.value) {
+      return;
+    }
+
     // 动画播放完才可关闭
     if (showStatus.value !== 'complete') {
       showStatus.value = 'kill'
@@ -215,14 +296,17 @@ const init = () => {
 
     const bounding = placeholderRef.value?.getBoundingClientRect()
     // 执行主要动画
-    gsap.to(containerRef.value, {
-      width: bounding?.width,
-      height: bounding?.height,
-      top: bounding?.top,
-      left: bounding?.left,
-      duration: 0.4,
-      ease: 'power2.out',
+    animateTo(containerRef.value, {
+      width: px(bounding?.width),
+      height: px(bounding?.height),
+      top: px(bounding?.top),
+      left: px(bounding?.left),
+    }, {
+      duration: TRANSITION.expand,
+      ease: TRANSITION.easeOutCubic,
       onStart: () => {
+        // 标记关闭动画进行中
+        closing.value = true
         // 状态修改为进行时
         if (showStatus.value !== 'kill') {
           showStatus.value = 'activity'
@@ -233,8 +317,10 @@ const init = () => {
         showMask.value = false
       },
       onComplete: () => {
-        // 恢复 container 默认的静态布局
-        style.value = {position: 'static', width: '', height: '', top: '', left: ''}
+        // 关闭动画结束，解除关闭中标志
+        closing.value = false
+        // 恢复 container 默认的静态布局，并清除展开动画残留的 right/opacity 内联样式
+        style.value = {position: 'static', width: '', height: '', top: '', left: '', right: '', opacity: ''}
         // 动画执行完成后，状态修改为就绪
         showStatus.value = 'ready'
         hoverStatus.value = 'complete'
@@ -294,7 +380,7 @@ const init = () => {
   }
 
   // 获取展开后的top值
-  const detailTop = ref<number|string>(props.expandedTop)
+  const detailTop = ref<number>(props.expandedTop)
 
   // 处理展开完成
   const handleExpandComplete = () => {
@@ -307,6 +393,7 @@ const init = () => {
   return {
     showStatus,
     showMask,
+    closing,
     style,
     placeholderRef,
     containerRef,
@@ -319,7 +406,7 @@ const init = () => {
     handleExpandComplete
   }
 }
-const {showStatus, showMask, style, placeholderRef, containerRef, detailRef, keydownClose, handleClose, handleClickCard, getDetailWidth, handleExpandComplete} = init()
+const {showStatus, showMask, closing, style, placeholderRef, containerRef, detailRef, keydownClose, handleClose, handleClickCard, getDetailWidth, handleExpandComplete} = init()
 
 
 // 加载鼠标在卡片悬浮相关逻辑
@@ -334,9 +421,10 @@ const initHover = () => {
     }
 
     if (hoverStatus.value === 'ready' || hoverStatus.value === 'complete') {
-      gsap.to(containerRef.value, {
-        scale: props.hoverScale,
-        duration: 0.1,
+      animateTo(containerRef.value, {
+        transform: `scale(${props.hoverScale})`,
+      }, {
+        duration: TRANSITION.hover,
         onStart: () => {
           // 鼠标悬浮时抛出方法
           emits('onMouseEnter')
@@ -352,9 +440,10 @@ const initHover = () => {
   // 鼠标从卡片移出
   const handleMouseLeaveCard = () => {
     if (showStatus.value === 'ready') {
-      gsap.to(containerRef.value, {
-        scale: 1,
-        duration: 0.1,
+      animateTo(containerRef.value, {
+        transform: 'scale(1)',
+      }, {
+        duration: TRANSITION.hover,
         onComplete: () => {
           hoverStatus.value = 'ready'
           handleRemoveHoverStyle()
@@ -402,6 +491,8 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', windowWidthResize)
   window.removeEventListener("keydown", keydownClose);
+  // 取消进行中的动画，避免动画结束后向已卸载组件抛出事件
+  lastAnimation?.cancel()
 })
 
 // 窗口变化后重新设置展开卡片布局
@@ -458,7 +549,8 @@ const windowWidthResize = () => {
 
 // 监听 isComplete 变化，当 autoComplete 为 false 时，isComplete 为true 改变 showStatus 状态
 watch(() => props.isComplete, (value) => {
-  if (!props.autoComplete && props.isDetailVisible && showStatus.value === 'activity' && value) {
+  // 关闭动画进行中不处理（异步响应在关闭期间到达时直接忽略，关闭完成后由外部重置 isComplete）
+  if (!props.autoComplete && props.isDetailVisible && !closing.value && showStatus.value === 'activity' && value) {
     handleExpandComplete()
   }
 })

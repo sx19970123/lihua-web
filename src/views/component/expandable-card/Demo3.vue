@@ -5,7 +5,6 @@
       :hover-scale="1.03"
       :expanded-width="600"
       :expanded-height="610"
-      :middle-style="{'background': 'var(--ant-color-bg-container)','background-size': 'contain','border-radius':'var(--ant-border-radius-lg)'}"
   >
     <template #overview>
       <a-card :body-style="{height: '100px'}" class="card-background">

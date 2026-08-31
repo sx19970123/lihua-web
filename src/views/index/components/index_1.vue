@@ -3,7 +3,6 @@
              style="width: 100%"
              :hover-scale="1"
              :expanded-width="600"
-             :middle-style="{'background':'#fff','background-size': 'contain','border-radius':'var(--ant-border-radius-lg)'}"
              :is-detail-visible="false"
              :expanded-height="600"
   >
