@@ -36,30 +36,30 @@
           <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{latestVersion.version}}</a-typography-text>
         </a-typography-text>
         <div class="scrollbar" id="lihua-index-8-content" style="height: 484px;margin-top: var(--ant-margin-xs)">
+          <!-- antdv-next 的 Timeline 按内部标记只认 a-timeline-item 直接子节点，包装元素会被过滤为空；
+               条目过滤用 slice（v-if 优先级高于 v-for，不能同元素引用 v-for 变量），按钮移出时间轴 -->
           <a-timeline style="margin-top: var(--ant-margin-xs)">
-            <div v-for="(item, index) in versionInfo.lihuaUpdateLog">
-              <a-timeline-item v-if="index <= showIndex">
-                <a-typography-title :level="5">
-                  {{item.version}}
-                  <a-typography-text type="secondary">{{item.updateDate}}</a-typography-text>
-                </a-typography-title>
-                <a-alert v-if="item.title" strong :message="item.title" style="margin-bottom: var(--ant-margin-xs);margin-right: var(--ant-margin-xs)">{{item.title}}</a-alert>
-                <a-flex v-for="content in item.updateContent" vertical>
-                  <a-typography-text>{{content}}</a-typography-text>
-                </a-flex>
-              </a-timeline-item>
-            </div>
-            <a-flex>
-              <a-button type="link"
-                        style="margin: auto"
-                        :disabled="versionInfo.lihuaUpdateLog.length === showIndex" @click="handleShowMore">
-                <template #icon v-if="versionInfo.lihuaUpdateLog.length !== showIndex">
-                  <DoubleRightOutlined style="rotate: 90deg" />
-                </template>
-                {{versionInfo.lihuaUpdateLog.length === showIndex ? '已显示全部' : '显示更多' }}
-              </a-button>
-            </a-flex>
+            <a-timeline-item v-for="item in versionInfo.lihuaUpdateLog.slice(0, showIndex + 1)" :key="item.version">
+              <a-typography-title :level="5">
+                {{item.version}}
+                <a-typography-text type="secondary">{{item.updateDate}}</a-typography-text>
+              </a-typography-title>
+              <a-alert v-if="item.title" strong :message="item.title" style="margin-bottom: var(--ant-margin-xs);margin-right: var(--ant-margin-xs)">{{item.title}}</a-alert>
+              <a-flex v-for="content in item.updateContent" vertical>
+                <a-typography-text>{{content}}</a-typography-text>
+              </a-flex>
+            </a-timeline-item>
           </a-timeline>
+          <a-flex>
+            <a-button type="link"
+                      style="margin: auto"
+                      :disabled="versionInfo.lihuaUpdateLog.length === showIndex" @click="handleShowMore">
+              <template #icon v-if="versionInfo.lihuaUpdateLog.length !== showIndex">
+                <DoubleRightOutlined style="rotate: 90deg" />
+              </template>
+              {{versionInfo.lihuaUpdateLog.length === showIndex ? '已显示全部' : '显示更多' }}
+            </a-button>
+          </a-flex>
         </div>
       </a-card>
     </template>

@@ -8,8 +8,9 @@
          @mouseover="handleMouseOverCard"
          @mouseleave="handleMouseLeaveCard"
     >
-      <!-- overview 层：ready 态在流内撑起卡片自然尺寸；过渡期转为绝对定位拉伸铺满，充当 middle 时内容不带外部边框/阴影 -->
-      <div class="transition-opacity"
+      <!-- overview 层：ready 态在流内撑起卡片自然尺寸；过渡期钉源排版宽 + zoom 等比缩放，充当 middle 时内容不带外部边框/阴影 -->
+      <div ref="overviewRef"
+           class="transition-opacity"
            :class="showStatus === 'ready' ? '' : 'as-middle'"
            :style="overviewStyle">
         <slot name="overview"></slot>
@@ -66,11 +67,11 @@ const TRANSITION = {
   },
   // 过渡期内容交接（overview ↔ detail/spin 相交渐变）
   fade: {
-    duration: 150,
-    // 交接滑块：动画进度上的交接点。0 = detail 从头充当 middle（揭示式，零重排）；
-    // 1 = overview 坚持到动画结束（拉伸铺满，文本会重排，旧 middle 观感）；中间值 = 该进度点交接。
+    duration: 200,
+    // 交接滑块：动画时间比例上的交接点（弹簧前快后慢，1/5 时间 ≈ 一半行程）。
+    // 0 = detail 从头充当 middle；1 = overview 坚持到动画结束；中间值 = 该时间点交接。
     // 关闭方向镜像（1 - handover）
-    handover: 1,
+    handover: 0.2,
   },
 }
 
@@ -80,8 +81,13 @@ const px = (value?: number) => value === undefined ? undefined : value + 'px'
 // 参与动画的 css 属性（gsap 的 scale 映射为 transform）
 const ANIMATE_PROPS = ['width', 'height', 'left', 'right', 'top', 'opacity', 'transform'] as const
 
-// 容器上最近一次未结束的动画，新动画开始前取消（对应 gsap 被 kill 后不再触发 onComplete）
-let lastAnimation: Animation | null = null
+// 进行中的动画集合（容器主动画 + 内容层 zoom 动画），新飞行开始前全部取消
+// （对应 gsap 被 kill 后不再触发 onComplete；zoom 随容器一并取消，打断时由新飞行从计算值续跑）
+let activeAnimations: Animation[] = []
+const cancelActiveAnimations = () => {
+  activeAnimations.forEach(animation => animation.cancel())
+  activeAnimations = []
+}
 
 type AnimateOptions = {
   duration?: number
@@ -92,28 +98,17 @@ type AnimateOptions = {
   onComplete?: () => void
 }
 
-// 阻尼弹簧采样：数值解（半隐式欧拉）推进进度 0→1，把 from→to 的数值插值铺成 linear 关键帧
-// ——WAAPI 无原生弹簧，采样关键帧是标准做法；打断时同样从计算值重新起步，采样天然支持
-// 仅插值纯数值属性（px 字符串 / opacity），transform 等非数值属性不参与
-const springFrames = (fromKeyframe: Record<string, string>, toKeyframe: Record<string, string>): Record<string, string>[] => {
+// 阻尼弹簧进度序列（半隐式欧拉数值解，0→1，末项精确 1）——
+// 容器布局帧与内容 zoom 帧共用同一序列 + 同 duration/linear，实现逐帧自同步
+const springProgress = (): number[] => {
   const {duration, stiffness, damping, mass, frames} = TRANSITION.spring
   const step = duration / frames / 1000
-  const props = Object.keys(toKeyframe)
-      .map(key => ({key, start: parseFloat(fromKeyframe[key]), end: parseFloat(toKeyframe[key]), unit: toKeyframe[key].replace(/^-?[\d.]+/, '')}))
-      .filter(prop => Number.isFinite(prop.start) && Number.isFinite(prop.end))
-      .map(prop => ({...prop, delta: prop.end - prop.start}))
   let progress = 0
   let velocity = 0
-  const result: Record<string, string>[] = []
+  const result: number[] = []
   for (let i = 0; i <= frames; i++) {
-    // 末帧强制精确终值，消除积分残差（弹簧参数与 duration 配套时此处已收敛，无可见跳变）
-    const current = i === frames ? 1 : progress
-    const frame: Record<string, string> = {}
-    for (const prop of props) {
-      const value = prop.start + prop.delta * current
-      frame[prop.key] = prop.unit ? value + prop.unit : String(value)
-    }
-    result.push(frame)
+    // 末项强制精确 1，消除积分残差（弹簧参数与 duration 配套时此处已收敛，无可见跳变）
+    result.push(i === frames ? 1 : progress)
     // 目标位移 1：加速度 = (-刚度·(x-1) - 阻尼·v) / 质量
     const force = (-stiffness * (progress - 1) - damping * velocity) / mass
     velocity += force * step
@@ -122,12 +117,30 @@ const springFrames = (fromKeyframe: Record<string, string>, toKeyframe: Record<s
   return result
 }
 
+// 弹簧数值关键帧：把 from→to 的数值插值（px 字符串 / 纯数字）沿进度序列铺成 linear 关键帧
+// ——WAAPI 无原生弹簧，采样关键帧是标准做法；打断时同样从计算值重新起步，采样天然支持
+// 仅插值纯数值属性（px 字符串 / opacity），transform 等非数值属性不参与
+const springFrames = (fromKeyframe: Record<string, string>, toKeyframe: Record<string, string>): Record<string, string>[] => {
+  const props = Object.keys(toKeyframe)
+      .map(key => ({key, start: parseFloat(fromKeyframe[key]), end: parseFloat(toKeyframe[key]), unit: toKeyframe[key].replace(/^-?[\d.]+/, '')}))
+      .filter(prop => Number.isFinite(prop.start) && Number.isFinite(prop.end))
+      .map(prop => ({...prop, delta: prop.end - prop.start}))
+  return springProgress().map(current => {
+    const frame: Record<string, string> = {}
+    for (const prop of props) {
+      const value = prop.start + prop.delta * current
+      frame[prop.key] = prop.unit ? value + prop.unit : String(value)
+    }
+    return frame
+  })
+}
+
 // 平行替换 gsap.fromTo：from 中未给出的属性从当前计算值起步（同 gsap 缺省行为）
 const animateFromTo = (el: HTMLElement | null,
                        from: Record<string, string | number | undefined>,
                        to: Record<string, string | number | undefined>,
-                       options: AnimateOptions) => {
-  if (!el) return
+                       options: AnimateOptions): Animation | null => {
+  if (!el) return null
   // 采样当前计算值（含进行中动画的当前帧），保证打断旧动画时从当前位置继续
   const computed = getComputedStyle(el)
   const fromKeyframe: Record<string, string> = {}
@@ -139,7 +152,7 @@ const animateFromTo = (el: HTMLElement | null,
   for (const key in to) {
     if (to[key] !== undefined) toKeyframe[key] = String(to[key])
   }
-  lastAnimation?.cancel()
+  cancelActiveAnimations()
   // 弹簧路径：采样出的 linear 关键帧（值序列即曲线）；普通路径：首末两帧 + 缓动
   const useSpring = options.spring === true
   const animation = el.animate(
@@ -149,7 +162,7 @@ const animateFromTo = (el: HTMLElement | null,
         easing: useSpring ? 'linear' : (options.ease ?? TRANSITION.easeOut),
       }
   )
-  lastAnimation = animation
+  activeAnimations.push(animation)
   options.onStart?.()
   animation.onfinish = () => {
     // 动画结束后把终值留在内联样式上（对应 gsap 结束后内联样式残留，
@@ -159,13 +172,38 @@ const animateFromTo = (el: HTMLElement | null,
     }
     options.onComplete?.()
   }
+  return animation
 }
 
 // 平行替换 gsap.to：从元素当前状态动画到目标值
 const animateTo = (el: HTMLElement | null,
                    to: Record<string, string | number | undefined>,
-                   options: AnimateOptions) => {
-  animateFromTo(el, {}, to, options)
+                   options: AnimateOptions): Animation | null => {
+  return animateFromTo(el, {}, to, options)
+}
+
+// 内容层非等比缩放飞行：transform scale(sx, sy) 关键帧，与容器主动画共用弹簧进度序列
+// sx/sy 各自沿进度仿射插值——与容器宽/高的仿射插值逐帧等价（层排版尺寸 × scale ≡ 容器尺寸），
+// 内容横纵独立拉伸填满容器（旧版拉伸感来源）；transform-origin: 0 0
+// 已知代价（用户知情选择）：transform 走合成器栅格缓存，大倍率纵向缩放存在中段重采样闪烁风险（旧会话 index_8 雷区）
+const transformFlight = (el: HTMLElement | null, sx0: number, sx1: number, sy0: number, sy1: number) => {
+  if (!el) return
+  const frames = springProgress().map(progress => ({
+    transform: `scale(${sx0 + (sx1 - sx0) * progress}, ${sy0 + (sy1 - sy0) * progress})`,
+  }))
+  const animation = el.animate(frames, {duration: TRANSITION.spring.duration, easing: 'linear'})
+  // 落定把终值矩阵留在内联样式上持有（不写 'none'、不提前 cancel——避免落定重栅格跳变）
+  animation.onfinish = () => {
+    el.style.transform = `scale(${sx1}, ${sy1})`
+  }
+  activeAnimations.push(animation)
+}
+
+// 读取元素当前 transform 的横纵缩放分量（打断续跑/关闭续降的起点；无变换时为 1）
+const computedScale = (el: HTMLElement | null): {sx: number, sy: number} => {
+  if (!el) return {sx: 1, sy: 1}
+  const matrix = new DOMMatrix(getComputedStyle(el).transform)
+  return {sx: matrix.a, sy: matrix.d}
 }
 
 // 接受父组件参数
@@ -234,6 +272,8 @@ const init = () => {
   const placeholderRef = useTemplateRef<HTMLElement>("placeholderRef")
   // 容器元素ref
   const containerRef = useTemplateRef<HTMLElement>("containerRef")
+  // overview 层元素ref（zoom 飞行目标）
+  const overviewRef = useTemplateRef<HTMLElement>("overviewRef")
   // 详情ref
   const detailRef = useTemplateRef<HTMLElement>("detailRef")
 
@@ -255,6 +295,11 @@ const init = () => {
   const detailStyle = ref<CSSProperties>({})
   // 异步等待层样式（透明度渐变）
   const spinStyle = ref<CSSProperties>({opacity: 0})
+  // 本次飞行的排版尺寸基准（缩放计算：内容视觉尺寸 = 排版尺寸 × scale）
+  let flightSrcW = 0
+  let flightSrcH = 0
+  let flightFinalW = 0
+  let flightFinalH = 0
   // 交接定时器（展开/关闭共用，新调度覆盖旧调度）
   let handoverTimer: number | null = null
   // 展开方向交接：overview → detail（数据已就绪）/ spin（异步等待中）
@@ -272,11 +317,17 @@ const init = () => {
     detailStyle.value = {...detailStyle.value, opacity: 0}
     spinStyle.value = {...spinStyle.value, opacity: 0}
   }
-  // 各层复位（关闭完成回到 ready 态，detail/spin 层随 v-if 卸载）
+  // 各层复位（关闭完成回到 ready 态，detail/spin 层随 v-if 卸载；overview 常驻，须手动清落定持有的 transform）
   const resetLayers = () => {
     overviewStyle.value = {}
     detailStyle.value = {}
     spinStyle.value = {opacity: 0}
+    if (overviewRef.value) {
+      overviewRef.value.style.transform = ''
+    }
+    if (detailRef.value) {
+      detailRef.value.style.transform = ''
+    }
   }
   const clearHandoverTimer = () => {
     if (handoverTimer !== null) {
@@ -328,42 +379,55 @@ const init = () => {
         // 还原完成后采集卡片布局位置作为展开起点——点击瞬间 hover 缩放仍在生效，
         // 此时 getBoundingClientRect 返回的是放大后的包围盒（起点会偏大 hoverScale 倍）
         const bounding = containerRef.value?.getBoundingClientRect()
-        // container 设置为固定定位；过渡期提供卡片表面（与 detail 的 a-card 同底色），
-        // 否则展开中的容器是透明的，"展开"过程不可见，只剩 overview 跟随容器左上角平移
+        // container 设置为固定定位；过渡期提供卡片表面（与 detail 的 a-card 同底色）+ 悬浮阴影
+        //（阴影与 hover 态同源，起飞无闪变）；不整体淡入——起飞本身无缝，
+        // 且容器级淡入会淹没交接处的层间交叉淡化
         style.value = {
           position: 'fixed',
           backgroundColor: 'var(--ant-color-bg-container)',
           borderRadius: 'var(--ant-border-radius-lg)',
+          boxShadow: 'var(--ant-box-shadow-tertiary)',
         }
         // 获取展开后参数（宽度按视口收缩并水平居中，高度按视口适配并计算 top）
         const {width, height, top, left: side} = getExpandLayout()
-        // overview 层转为拉伸铺满（随容器长大，旧 middle 观感，宽向文本会重排）；
-        // detail 层以最终宽度挂载，揭示式渲染（零重排，被容器裁切）
+        // 源排版尺寸（computed 布局值，transform 不影响 computed 布局）——overview 钉宽高与缩放基准
+        const srcW = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).width) : 0
+        const srcH = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).height) : 0
+        flightSrcW = srcW
+        flightSrcH = srcH
+        flightFinalW = width
+        flightFinalH = height
+        // 起飞视觉尺寸（bounding 实测）
+        const takeoffW = bounding?.width ?? srcW
+        const takeoffH = bounding?.height ?? srcH
+        // overview 层钉源排版尺寸转为绝对定位（零重排）；detail 层以最终尺寸挂载（零重排）；
+        // 两层均以 transform-origin 0 0 做非等比缩放，视觉尺寸逐帧等于容器尺寸（几何逐帧重合）
         overviewStyle.value = {
           position: 'absolute', top: '0', left: '0',
-          width: '100%', height: '100%',
+          width: px(srcW), height: px(srcH),
+          transformOrigin: '0 0',
           opacity: 1,
           transitionDuration: TRANSITION.fade.duration + 'ms',
         }
         detailStyle.value = {
-          width: px(width), opacity: 0,
+          width: px(width), height: px(height),
+          transformOrigin: '0 0',
+          opacity: 0,
           transitionDuration: TRANSITION.fade.duration + 'ms',
         }
         spinStyle.value = {opacity: 0, transitionDuration: TRANSITION.fade.duration + 'ms'}
-        // 执行主要动画
+        // 执行主要动画（无整体淡入——层间交叉淡化是唯一的渐变，保持可感知）
         animateFromTo(containerRef.value, {
           width: px(bounding?.width),
           left: px(bounding?.left),
           right: px(bounding?.right),
           top:  px(bounding?.top),
-          opacity: 0,
         },{
           left: px(side),
           right: px(side),
           top: px(top),
           width: px(width),
           height: px(height),
-          opacity: 1,
         }, {
           spring: true,
           onStart: () => {
@@ -371,10 +435,17 @@ const init = () => {
             showMask.value = true
             // 状态修改为进行时
             showStatus.value = 'activity'
-            // 内容按最终高度渲染（揭示式要求从动画第一帧起即最终布局，文本零重排）
-            // detail 层由 v-if 在本次状态变更后的微任务中挂载，须等 nextTick 才能取到 firstChild
-            nextTick(() => setExpandHeight(height))
-            // 交接滑块：动画进度 handover 处 overview → detail/spin（t=0 即刻交接，渐变被容器淡入掩盖）
+            // detail 层由 v-if 在本次状态变更后的微任务中挂载，nextTick 后才可操作其元素
+            nextTick(() => {
+              // 内容按最终高度渲染（从动画第一帧起即最终布局，文本零重排）
+              setExpandHeight(height)
+              // 内容层非等比缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
+              // （overview 从 1 拉伸到 final/src，detail 从 src/final 拉伸到 1，横纵独立）
+              transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH)
+              transformFlight(detailRef.value, takeoffW / width, 1, takeoffH / height, 1)
+            })
+            // 交接滑块：动画时间 handover 处 overview → detail/spin 相交渐变
+            //（弹簧前快后慢，1/5 时间 ≈ 一半行程，交接发生在视觉中段）
             handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handover * TRANSITION.spring.duration)
           },
           onComplete: () => {
@@ -418,6 +489,10 @@ const init = () => {
     }
 
     const bounding = placeholderRef.value?.getBoundingClientRect()
+    // 采样两层当前缩放分量作为续降起点——须在 animateTo 取消旧动画之前读取
+    // （kill 打断的飞行中值、resize 后漂移的驻留值均自然衔接）
+    const overviewScaleNow = computedScale(overviewRef.value)
+    const detailScaleNow = computedScale(detailRef.value)
     // 执行主要动画
     animateTo(containerRef.value, {
       width: px(bounding?.width),
@@ -437,9 +512,22 @@ const init = () => {
         emits('beforeCardClose')
         // 关闭遮罩
         showMask.value = false
-        // 打断展开：清除尚未触发的展开交接，改为关闭方向交接（镜像 1 - handover）
+        // 内容层缩放续降至占位尺寸比例（与容器同序列逐帧同步，横纵独立）
+        if (flightSrcW > 0 && flightSrcH > 0) {
+          transformFlight(overviewRef.value, overviewScaleNow.sx, (bounding?.width ?? flightSrcW) / flightSrcW,
+              overviewScaleNow.sy, (bounding?.height ?? flightSrcH) / flightSrcH)
+        }
+        if (flightFinalW > 0 && flightFinalH > 0) {
+          transformFlight(detailRef.value, detailScaleNow.sx, (bounding?.width ?? flightFinalW) / flightFinalW,
+              detailScaleNow.sy, (bounding?.height ?? flightFinalH) / flightFinalH)
+        }
+        // 打断展开：清除尚未触发的展开交接，改为关闭方向交接——镜像 1 - handover，
+        // 并钳制不晚于「动画结束前能完成渐变」的最晚位置：动画结束时 detail 恰好淡尽，
+        // v-if 卸载发生在全透明态（无亮度跳变、无驻留窗口、复位零延迟）
         clearHandoverTimer()
-        handoverTimer = window.setTimeout(fadeCloseHandover, (1 - TRANSITION.fade.handover) * TRANSITION.spring.duration)
+        const closeHandoverAt = Math.max(0, Math.min(1 - TRANSITION.fade.handover,
+            (TRANSITION.spring.duration - TRANSITION.fade.duration) / TRANSITION.spring.duration))
+        handoverTimer = window.setTimeout(fadeCloseHandover, closeHandoverAt * TRANSITION.spring.duration)
       },
       onComplete: () => {
         // 关闭动画结束，解除关闭中标志
@@ -448,7 +536,7 @@ const init = () => {
         expandPending.value = false
         // 恢复 container 默认的静态布局，并清除展开动画残留的内联样式（含过渡期卡片表面）
         style.value = {position: 'static', width: '', height: '', top: '', left: '', right: '', opacity: '', backgroundColor: '', borderRadius: ''}
-        // 各层复位：overview 回流内瞬间接管（同旧版 v-show 切换时机），detail/spin 层随 v-if 卸载
+        // 各层复位：overview 回流内接管，detail/spin 层随 v-if 卸载（交接点已钳制，此刻 detail 已淡尽）
         resetLayers()
         clearHandoverTimer()
         // 动画执行完成后，状态修改为就绪
@@ -494,6 +582,7 @@ const init = () => {
     spinStyle,
     placeholderRef,
     containerRef,
+    overviewRef,
     detailRef,
     keydownClose,
     handleClose,
@@ -501,7 +590,7 @@ const init = () => {
     handleExpandComplete
   }
 }
-const {showStatus, showMask, closing, expandPending, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
+const {showStatus, showMask, closing, expandPending, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
 
 
 // 加载鼠标在卡片悬浮相关逻辑
@@ -642,8 +731,8 @@ watch(showStatus, (status, previous) => {
 onUnmounted(() => {
   window.removeEventListener('resize', windowWidthResize)
   window.removeEventListener("keydown", keydownClose);
-  // 取消进行中的动画，避免动画结束后向已卸载组件抛出事件
-  lastAnimation?.cancel()
+  // 取消进行中的全部动画（容器 + zoom），避免动画结束后向已卸载组件抛出事件
+  cancelActiveAnimations()
   // 取消尚未执行的 resize 处理
   if (resizeRafId !== null) {
     cancelAnimationFrame(resizeRafId)
