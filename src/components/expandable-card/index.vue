@@ -42,17 +42,25 @@ import type {CSSProperties} from 'vue';
 import {nextTick, onUnmounted, ref, useSlots, useTemplateRef, watch} from "vue";
 import {hiddenOverflowY} from "@/utils/scrollbar.ts";
 
-// ===== 用 Web Animations API 平行替换 gsap 的 to / fromTo =====
-// 动画时长与缓动（gsap 平行替换值），收拢一处便于统调
+// ===== 用 Web Animations API 实现的动画时长与曲线，收拢一处便于统调 =====
 const TRANSITION = {
-  // 悬浮/缩放还原时长（原 gsap 0.1s）
+  // 悬浮/缩放还原时长
   hover: 100,
-  // 展开/关闭主动画时长（原 gsap 0.4s）
-  expand: 400,
-  // gsap power1.out（gsap 默认缓动）
+  // 悬浮缓动
   easeOut: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-  // gsap power2.out
-  easeOutCubic: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+  // 主动画弹簧参数（iPad 小组件展开手感：果断飞出、长尾滑行、无回弹）
+  // 当前为临界阻尼（damping = 2√(stiffness·mass)）→ 无过冲的最快收敛曲线
+  // 飞出感不够 → 升 stiffness（damping 按 2√(stiffness·mass) 同步调，duration 随收敛点缩短）
+  // 想要回弹 → damping 降到 2√(stiffness·mass) 以下
+  // duration 需与刚度/阻尼配套（弹簧约在该时长内收敛，末帧强制精确终值）
+  spring: {
+    duration: 340,
+    stiffness: 800,
+    damping: 57,
+    mass: 1,
+    // 采样帧数（duration/frames ≈ 每 8.5ms 一帧，linear 插值平滑）
+    frames: 40,
+  }
 }
 
 // 数值转 px 字符串
@@ -65,10 +73,42 @@ const ANIMATE_PROPS = ['width', 'height', 'left', 'right', 'top', 'opacity', 'tr
 let lastAnimation: Animation | null = null
 
 type AnimateOptions = {
-  duration: number
+  duration?: number
   ease?: string
+  // 使用弹簧采样关键帧（急起步长尾滑行），时长/曲线取 TRANSITION.spring，忽略 duration/ease
+  spring?: boolean
   onStart?: () => void
   onComplete?: () => void
+}
+
+// 阻尼弹簧采样：数值解（半隐式欧拉）推进进度 0→1，把 from→to 的数值插值铺成 linear 关键帧
+// ——WAAPI 无原生弹簧，采样关键帧是标准做法；打断时同样从计算值重新起步，采样天然支持
+// 仅插值纯数值属性（px 字符串 / opacity），transform 等非数值属性不参与
+const springFrames = (fromKeyframe: Record<string, string>, toKeyframe: Record<string, string>): Record<string, string>[] => {
+  const {duration, stiffness, damping, mass, frames} = TRANSITION.spring
+  const step = duration / frames / 1000
+  const props = Object.keys(toKeyframe)
+      .map(key => ({key, start: parseFloat(fromKeyframe[key]), end: parseFloat(toKeyframe[key]), unit: toKeyframe[key].replace(/^-?[\d.]+/, '')}))
+      .filter(prop => Number.isFinite(prop.start) && Number.isFinite(prop.end))
+      .map(prop => ({...prop, delta: prop.end - prop.start}))
+  let progress = 0
+  let velocity = 0
+  const result: Record<string, string>[] = []
+  for (let i = 0; i <= frames; i++) {
+    // 末帧强制精确终值，消除积分残差（弹簧参数与 duration 配套时此处已收敛，无可见跳变）
+    const current = i === frames ? 1 : progress
+    const frame: Record<string, string> = {}
+    for (const prop of props) {
+      const value = prop.start + prop.delta * current
+      frame[prop.key] = prop.unit ? value + prop.unit : String(value)
+    }
+    result.push(frame)
+    // 目标位移 1：加速度 = (-刚度·(x-1) - 阻尼·v) / 质量
+    const force = (-stiffness * (progress - 1) - damping * velocity) / mass
+    velocity += force * step
+    progress += velocity * step
+  }
+  return result
 }
 
 // 平行替换 gsap.fromTo：from 中未给出的属性从当前计算值起步（同 gsap 缺省行为）
@@ -89,10 +129,15 @@ const animateFromTo = (el: HTMLElement | null,
     if (to[key] !== undefined) toKeyframe[key] = String(to[key])
   }
   lastAnimation?.cancel()
-  const animation = el.animate([fromKeyframe, toKeyframe], {
-    duration: options.duration,
-    easing: options.ease ?? TRANSITION.easeOut,
-  })
+  // 弹簧路径：采样出的 linear 关键帧（值序列即曲线）；普通路径：首末两帧 + 缓动
+  const useSpring = options.spring === true
+  const animation = el.animate(
+      useSpring ? springFrames(fromKeyframe, toKeyframe) : [fromKeyframe, toKeyframe],
+      {
+        duration: useSpring ? TRANSITION.spring.duration : (options.duration ?? TRANSITION.hover),
+        easing: useSpring ? 'linear' : (options.ease ?? TRANSITION.easeOut),
+      }
+  )
   lastAnimation = animation
   options.onStart?.()
   animation.onfinish = () => {
@@ -260,8 +305,7 @@ const init = () => {
           height: px(height),
           opacity: 1,
         }, {
-          duration: TRANSITION.expand,
-          ease: TRANSITION.easeOutCubic,
+          spring: true,
           onStart: () => {
             // 打开遮罩
             showMask.value = true
@@ -317,8 +361,7 @@ const init = () => {
       top: px(bounding?.top),
       left: px(bounding?.left),
     }, {
-      duration: TRANSITION.expand,
-      ease: TRANSITION.easeOutCubic,
+      spring: true,
       onStart: () => {
         // 标记关闭动画进行中
         closing.value = true
