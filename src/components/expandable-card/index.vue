@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 展示 overview 和 detail 的容器-->
-    <div class="expandable-card"
+    <div class="z-1001"
          ref="containerRef"
          :style="style"
          @click="handleClickCard"
@@ -14,7 +14,7 @@
       </div>
       <!-- 过渡时展示自定义封面 -->
       <div v-show="showStatus === 'activity' || showStatus === 'kill'"
-           class="expandable-card-middle">
+           class="flex h-full w-full overflow-hidden">
 <!--        使用了自定义过渡插槽-->
         <slot name="middle" v-if="hasMiddleSlot"/>
 <!--        没使用自定义过渡，过渡时展示详情插槽-->
@@ -27,7 +27,7 @@
     </div>
 
     <!-- 占位元素，复刻slot:title，会随着页面视口变化而变化，返回动画参数从该组建中获取 -->
-    <div v-if="showStatus !== 'ready'" style="opacity: 0" ref="placeholderRef">
+    <div v-if="showStatus !== 'ready'" class="opacity-0" ref="placeholderRef">
       <slot name="overview"></slot>
     </div>
 
@@ -565,15 +565,3 @@ watch(() => props.isComplete, (value) => {
   }
 })
 </script>
-
-<style scoped>
-.expandable-card {
-  z-index: 1001
-}
-.expandable-card-middle {
-  display: flex;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-</style>

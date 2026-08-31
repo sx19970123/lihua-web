@@ -1,7 +1,11 @@
 <template>
   <!-- mask 打开时背景蒙版 -->
   <Teleport to="body">
-    <div class="lihua-mask" :style="{zIndex: zIndex}" v-if="showMask" @click="handleClickMask($event)"></div>
+    <!-- lihua-mask 类名是 ground-glass.css 毛玻璃模式的全局样式钩子，不可移除 -->
+    <div class="lihua-mask fixed top-0 left-0 w-screen h-screen bg-black/45"
+         :style="{zIndex: zIndex}"
+         v-if="showMask"
+         @click="handleClickMask($event)"></div>
   </Teleport>
 </template>
 
@@ -33,14 +37,3 @@ watch(() => showMask, (value) => {
   }
 })
 </script>
-
-<style scoped>
-.lihua-mask {
-  position: fixed;
-  background: rgba(0, 0, 0, 0.45);
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-}
-</style>
