@@ -68,10 +68,11 @@ const TRANSITION = {
   // 过渡期内容交接（overview ↔ detail/spin 相交渐变）
   fade: {
     duration: 200,
-    // 交接滑块：动画时间比例上的交接点（弹簧前快后慢，1/5 时间 ≈ 一半行程）。
-    // 0 = detail 从头充当 middle；1 = overview 坚持到动画结束；中间值 = 该时间点交接。
-    // 关闭方向镜像（1 - handover）
-    handover: 0.2,
+    // 交接滑块：动画时间比例上的交接点，展开/关闭各自独立可调（弹簧前快后慢，1/5 时间 ≈ 一半行程）
+    // 0 = 从头就是目标层；1 = 坚持到动画结束
+    // 关闭方向受"淡完才卸载"钳制（见 handleClose），配置值过晚时自动贴到最晚可完整渐变位置
+    handoverExpand: 0.2,
+    handoverClose: 0.2,
   },
 }
 
@@ -297,7 +298,6 @@ const init = () => {
   const spinStyle = ref<CSSProperties>({opacity: 0})
   // 本次飞行的排版尺寸基准（缩放计算：内容视觉尺寸 = 排版尺寸 × scale）
   let flightSrcW = 0
-  let flightSrcH = 0
   let flightFinalW = 0
   let flightFinalH = 0
   // 交接定时器（展开/关闭共用，新调度覆盖旧调度）
@@ -394,7 +394,6 @@ const init = () => {
         const srcW = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).width) : 0
         const srcH = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).height) : 0
         flightSrcW = srcW
-        flightSrcH = srcH
         flightFinalW = width
         flightFinalH = height
         // 起飞视觉尺寸（bounding 实测）
@@ -439,14 +438,16 @@ const init = () => {
             nextTick(() => {
               // 内容按最终高度渲染（从动画第一帧起即最终布局，文本零重排）
               setExpandHeight(height)
-              // 内容层非等比缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
-              // （overview 从 1 拉伸到 final/src，detail 从 src/final 拉伸到 1，横纵独立）
-              transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH)
+              // 内容层缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
+              // overview 等比缩放（宽比驱动）：上/左/右三面贴合容器，底部按原比例留白（容器表面兜底）；
+              // detail 非等比：四面贴合容器
+              const scaleFrom = takeoffW / srcW
+              const scaleTo = width / srcW
+              transformFlight(overviewRef.value, scaleFrom, scaleTo, scaleFrom, scaleTo)
               transformFlight(detailRef.value, takeoffW / width, 1, takeoffH / height, 1)
             })
-            // 交接滑块：动画时间 handover 处 overview → detail/spin 相交渐变
-            //（弹簧前快后慢，1/5 时间 ≈ 一半行程，交接发生在视觉中段）
-            handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handover * TRANSITION.spring.duration)
+            // 交接滑块：展开动画时间 handoverExpand 处 overview → detail/spin 相交渐变
+            handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handoverExpand * TRANSITION.spring.duration)
           },
           onComplete: () => {
             // 展开完成：仅在 activity 状态放行（kill=被关闭打断，complete=watch 已处理过 isComplete）
@@ -512,20 +513,20 @@ const init = () => {
         emits('beforeCardClose')
         // 关闭遮罩
         showMask.value = false
-        // 内容层缩放续降至占位尺寸比例（与容器同序列逐帧同步，横纵独立）
-        if (flightSrcW > 0 && flightSrcH > 0) {
-          transformFlight(overviewRef.value, overviewScaleNow.sx, (bounding?.width ?? flightSrcW) / flightSrcW,
-              overviewScaleNow.sy, (bounding?.height ?? flightSrcH) / flightSrcH)
+        // 内容层缩放续降（与容器同序列逐帧同步）：overview 等比（宽比驱动），detail 非等比四面贴合
+        if (flightSrcW > 0) {
+          const overviewScaleTo = (bounding?.width ?? flightSrcW) / flightSrcW
+          transformFlight(overviewRef.value, overviewScaleNow.sx, overviewScaleTo, overviewScaleNow.sy, overviewScaleTo)
         }
         if (flightFinalW > 0 && flightFinalH > 0) {
           transformFlight(detailRef.value, detailScaleNow.sx, (bounding?.width ?? flightFinalW) / flightFinalW,
               detailScaleNow.sy, (bounding?.height ?? flightFinalH) / flightFinalH)
         }
-        // 打断展开：清除尚未触发的展开交接，改为关闭方向交接——镜像 1 - handover，
+        // 打断展开：清除尚未触发的展开交接，改为关闭方向交接——handoverClose 独立配置，
         // 并钳制不晚于「动画结束前能完成渐变」的最晚位置：动画结束时 detail 恰好淡尽，
         // v-if 卸载发生在全透明态（无亮度跳变、无驻留窗口、复位零延迟）
         clearHandoverTimer()
-        const closeHandoverAt = Math.max(0, Math.min(1 - TRANSITION.fade.handover,
+        const closeHandoverAt = Math.max(0, Math.min(TRANSITION.fade.handoverClose,
             (TRANSITION.spring.duration - TRANSITION.fade.duration) / TRANSITION.spring.duration))
         handoverTimer = window.setTimeout(fadeCloseHandover, closeHandoverAt * TRANSITION.spring.duration)
       },
