@@ -194,6 +194,9 @@ const init = () => {
   const showMask = ref<boolean>(false)
   // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
   const closing = ref<boolean>(false)
+  // 点击后缩放还原动画进行中标志——展开链挂在该动画的 onComplete 里，
+  // 期间禁止启动会将其取消的动画（如鼠标移出触发的缩离动画）
+  const expandPending = ref<boolean>(false)
 
   // 点击卡片
   const handleClickCard = () => {
@@ -218,16 +221,17 @@ const init = () => {
       onStart: () => {
         // 缩放状态设置为进行中
         hoverStatus.value = 'activity'
+        // 标记还原动画进行中，保护其 onComplete 里的展开链不被后续动画取消
+        expandPending.value = true
       },
       // 缩放还原后再进行主要动画
       onComplete: () => {
+        // 还原动画结束，展开链即将接管（主动画 onStart 会将 showStatus 置为 activity）
+        expandPending.value = false
         // container 设置为固定定位
         style.value = {position: 'fixed'}
-        // 获取展开后参数
-        const side = innerWidth.value / 2 - getDetailWidth() / 2
-        const height = getDetailHeight()
-        const width = getDetailWidth()
-        const top = detailTop.value
+        // 获取展开后参数（宽度按视口收缩并水平居中，高度按视口适配并计算 top）
+        const {width, height, top, left: side} = getExpandLayout()
         // 为展开后高度赋值
         expandedHeight.value = height
         // 执行主要动画
@@ -319,6 +323,8 @@ const init = () => {
       onComplete: () => {
         // 关闭动画结束，解除关闭中标志
         closing.value = false
+        // 兜底复位展开中标志，保证回到就绪态时各标志归零
+        expandPending.value = false
         // 恢复 container 默认的静态布局，并清除展开动画残留的 right/opacity 内联样式
         style.value = {position: 'static', width: '', height: '', top: '', left: '', right: '', opacity: ''}
         // 动画执行完成后，状态修改为就绪
@@ -328,33 +334,6 @@ const init = () => {
         emits('afterCardClose')
       }
     })
-  }
-
-  // 获取展开后高度
-  const getDetailHeight = () => {
-    let height = props.expandedHeight
-    let top = props.expandedTop
-    const minWindowSpace = props.minWindowSpace
-    // height + top > 视口 - 上下边距，表示此时视口内容不下容器和top值了，优先缩减top值
-    if (height + top > innerHeight.value - minWindowSpace * 2) {
-      // height 小于 视口边距时，缩小top值
-      if (height < innerHeight.value - minWindowSpace * 2) {
-        // 设置position top值
-        detailTop.value = (innerHeight.value - height) / 2
-      }
-      // 反之top值设置为默认最小值，开始缩小卡片值
-      else {
-        detailTop.value = minWindowSpace
-        // 设置高度为视口高度 - 上下间距
-        height = innerHeight.value - minWindowSpace * 2
-      }
-    }
-    // 防止缩小窗口状态下打开卡片，之后再放大窗口，应用的detailTop和height还沿用小窗口模式，在这里再次初始化值
-    else {
-      detailTop.value = props.expandedTop
-      height = props.expandedHeight
-    }
-    return height;
   }
 
   // 设置展开后详情元素的高度，并添加滚动条样式
@@ -369,19 +348,6 @@ const init = () => {
     }
   }
 
-  // 获取展开后的宽度
-  const getDetailWidth = () => {
-    let width = props.expandedWidth
-    const minWindowSpace = props.minWindowSpace
-    if (width > innerWidth.value - minWindowSpace * 2) {
-      width = innerWidth.value - minWindowSpace * 2
-    }
-    return width;
-  }
-
-  // 获取展开后的top值
-  const detailTop = ref<number>(props.expandedTop)
-
   // 处理展开完成
   const handleExpandComplete = () => {
     showStatus.value = 'complete'
@@ -394,6 +360,7 @@ const init = () => {
     showStatus,
     showMask,
     closing,
+    expandPending,
     style,
     placeholderRef,
     containerRef,
@@ -401,12 +368,10 @@ const init = () => {
     keydownClose,
     handleClose,
     handleClickCard,
-    getDetailWidth,
-    getDetailHeight,
     handleExpandComplete
   }
 }
-const {showStatus, showMask, closing, style, placeholderRef, containerRef, detailRef, keydownClose, handleClose, handleClickCard, getDetailWidth, handleExpandComplete} = init()
+const {showStatus, showMask, closing, expandPending, style, placeholderRef, containerRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
 
 
 // 加载鼠标在卡片悬浮相关逻辑
@@ -440,6 +405,14 @@ const initHover = () => {
   // 鼠标从卡片移出
   const handleMouseLeaveCard = () => {
     if (showStatus.value === 'ready') {
+      // 点击后的缩放还原动画正在奔向 scale(1)——不可再启动缩离动画，那会取消还原动画、
+      // 中断其 onComplete 里的展开链；还原动画的终点即移出想要的视觉结果，这里仅同步完成移出逻辑
+      // （hoverStatus 保持 activity，防止窗口期内 mouseover 再次取消还原动画）
+      if (expandPending.value) {
+        handleRemoveHoverStyle()
+        emits('onMouseLeave')
+        return
+      }
       animateTo(containerRef.value, {
         transform: 'scale(1)',
       }, {
@@ -482,6 +455,28 @@ const innerWidth = ref<number>(window.innerWidth)
 // 视口的高度，视口宽高变化时对展开的卡片重新定位
 const innerHeight = ref<number>(window.innerHeight)
 
+// 依据视口与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
+// 宽度：视口容不下（展开宽度 + 两侧最小间距）时按视口收缩，之后水平居中（收缩时居中即为最小间距）
+// 高度：设定高度 + top 超出视口（扣除上下最小间距）时优先压缩 top 垂直居中，仍放不下则 top 压到最小值并按视口收缩高度
+const getExpandLayout = () => {
+  const minWindowSpace = props.minWindowSpace
+  const width = props.expandedWidth > innerWidth.value - minWindowSpace * 2
+      ? innerWidth.value - minWindowSpace * 2
+      : props.expandedWidth
+  const left = innerWidth.value / 2 - width / 2
+  let height = props.expandedHeight
+  let top = props.expandedTop
+  if (height + top > innerHeight.value - minWindowSpace * 2) {
+    if (height < innerHeight.value - minWindowSpace * 2) {
+      top = (innerHeight.value - height) / 2
+    } else {
+      top = minWindowSpace
+      height = innerHeight.value - minWindowSpace * 2
+    }
+  }
+  return {width, height, top, left}
+}
+
 // 监听窗口变化和键盘事件
 onMounted(() => {
   window.addEventListener('resize', windowWidthResize)
@@ -493,58 +488,38 @@ onUnmounted(() => {
   window.removeEventListener("keydown", keydownClose);
   // 取消进行中的动画，避免动画结束后向已卸载组件抛出事件
   lastAnimation?.cancel()
+  // 取消尚未执行的 resize 处理
+  if (resizeRafId !== null) {
+    cancelAnimationFrame(resizeRafId)
+  }
 })
 
 // 窗口变化后重新设置展开卡片布局
+// resize 事件在拖拽窗口时高频触发，通过 rAF 合并为每帧最多计算一次；
+// 布局由 getExpandLayout 纯计算得出（无 DOM 读取），读写不再交错触发强制重排
+let resizeRafId: number | null = null
 const windowWidthResize = () => {
-  innerWidth.value = window.innerWidth
-  innerHeight.value = window.innerHeight
-  if (showStatus.value === 'complete' && containerRef.value) {
-    const minWindowSpace = props.minWindowSpace
-    // 隐藏Y轴滚动条
-    hiddenOverflowY()
-    // 处理宽度
-    // 视口缩小到比展开宽度 + 两面padding 窄时，固定两边间距，缩小卡片宽度
-    if (props.expandedWidth + minWindowSpace * 2 > innerWidth.value) {
-      style.value.left = minWindowSpace + 'px';
-      containerRef.value.style.width = innerWidth.value - minWindowSpace * 2 + 'px'
-    }
-    // 视口缩小到比展开宽度 + 两面padding 宽时，只修改定位的left值
-    else {
-      const left = window.innerWidth / 2 - getDetailWidth() / 2
-      style.value.left = left + 'px'
-      containerRef.value.style.width = props.expandedWidth + 'px'
-    }
-
-    // 处理高度
-    if (detailRef.value) {
-      const firstChild = detailRef.value.firstElementChild as HTMLElement
-      if (firstChild) {
-        // 插槽内子节点高度
-        const firstChildHeight = firstChild.clientHeight
-        // 设定的展开后高度
-        const expandedHeight = props.expandedHeight
-
-        // 元素内节点高度小于组件设定的展开高度时，元素高度跟随视口
-        if (expandedHeight + props.expandedTop > innerHeight.value - minWindowSpace * 2) {
-          // height 小于 视口边距时，缩小top值
-          if (expandedHeight < innerHeight.value - minWindowSpace * 2) {
-            // 设置position top值
-            style.value.top = (innerHeight.value - firstChildHeight) / 2 + 'px'
-          }
-          // 反之top值设置为默认最小值，开始缩小卡片值
-          else {
-            style.value.top = minWindowSpace + 'px'
-            // 设置高度为视口高度 - 上下间距
-            firstChild.style.height = innerHeight.value - minWindowSpace * 2 + 'px'
-          }
-        } else {
-          firstChild.style.height = expandedHeight + 'px'
-          style.value.top = props.expandedTop + 'px'
-        }
-      }
-    }
+  if (resizeRafId !== null) {
+    return
   }
+  resizeRafId = requestAnimationFrame(() => {
+    resizeRafId = null
+    innerWidth.value = window.innerWidth
+    innerHeight.value = window.innerHeight
+    if (showStatus.value !== 'complete' || !containerRef.value) {
+      return
+    }
+    // 展开状态下若 resize 引发页面回流出现滚动条，补充隐藏（Mask 打开时已隐藏过一次，此处幂等）
+    hiddenOverflowY()
+    const {width, height, top, left} = getExpandLayout()
+    style.value.left = left + 'px'
+    style.value.top = top + 'px'
+    containerRef.value.style.width = width + 'px'
+    const firstChild = detailRef.value?.firstElementChild as HTMLElement | null
+    if (firstChild) {
+      firstChild.style.height = height + 'px'
+    }
+  })
 }
 
 // 监听 isComplete 变化，当 autoComplete 为 false 时，isComplete 为true 改变 showStatus 状态
