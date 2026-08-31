@@ -6,13 +6,6 @@
         <a-typography-title>这里是封面</a-typography-title>
       </a-card>
     </template>
-    <template #middle>
-      <a-card style="width: 100%" :bordered="false">
-        <a-typography-title>这里是过渡</a-typography-title>
-        <a-typography-title>这里是过渡</a-typography-title>
-        <a-typography-title>这里是过渡</a-typography-title>
-      </a-card>
-    </template>
     <template #detail>
       <a-card>
         <a-typography-title>这里是展开</a-typography-title>

@@ -14,15 +14,6 @@
         </a-typography-text>
       </a-card>
     </template>
-    <template #middle>
-      <a-card :body-style="{height: '100px'}" class="card-background child">
-        <a-typography-title :level="4" ellipsis>前端</a-typography-title>
-        <a-typography-text ellipsis type="secondary">
-          <a-typography-text type="secondary">当前Vue版本为 </a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{versionInfo.vueVersion}}</a-typography-text>
-        </a-typography-text>
-      </a-card>
-    </template>
     <template #detail>
       <a-card class="scrollbar card-background" id="test">
         <a-typography-title :level="4" ellipsis>前端</a-typography-title>
@@ -53,7 +44,6 @@
             <a-descriptions-item label="异步请求">axios</a-descriptions-item>
             <a-descriptions-item label="数据加密">crypto-js</a-descriptions-item>
             <a-descriptions-item label="日期工具类">dayjs</a-descriptions-item>
-            <a-descriptions-item label="动画库">gsap</a-descriptions-item>
             <a-descriptions-item label="工具库">lodash</a-descriptions-item>
             <a-descriptions-item label="路由切换进度条">nprogress</a-descriptions-item>
             <a-descriptions-item label="富文本工具">tinymce</a-descriptions-item>
@@ -74,18 +64,6 @@ const themeStore = useThemeStore();
 </script>
 <style scoped>
 .card-background {
-  background-image: url("../static/vue.png");
-  background-position-y: 10px; /* 增加10像素间距 */
-  background-position-x: calc(100% - 10px); /* 保持右对齐 */
-  background-repeat: no-repeat;
-  background-size: 36px 36px;
-}
-.child {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   background-image: url("../static/vue.png");
   background-position-y: 10px; /* 增加10像素间距 */
   background-position-x: calc(100% - 10px); /* 保持右对齐 */

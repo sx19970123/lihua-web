@@ -16,11 +16,6 @@
           </a-typography-title>
         </a-card>
       </template>
-      <template #middle>
-        <a-card style="width: 100%;">
-          过渡状态持续1.5s后展示展开卡片
-        </a-card>
-      </template>
       <template #detail>
         <a-card>
           <a-typography-title>

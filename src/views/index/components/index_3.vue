@@ -1,22 +1,12 @@
 <template>
   <expandable-card
              style="width: 100%"
-             :is-complete="middleComplete"
              :hover-scale="1.03"
              :expanded-width="600"
              :expanded-height="610"
   >
     <template #overview>
       <a-card :body-style="{height: '100px'}" class="card-background">
-        <a-typography-title :level="4" ellipsis>后端</a-typography-title>
-        <a-typography-text ellipsis type="secondary">
-          <a-typography-text type="secondary">当前SpringBoot版本为</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{versionInfo.springBootVersion}}</a-typography-text>
-        </a-typography-text>
-      </a-card>
-    </template>
-    <template #middle>
-      <a-card :body-style="{height: '100px'}" class="card-background child">
         <a-typography-title :level="4" ellipsis>后端</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">当前SpringBoot版本为</a-typography-text>
@@ -68,27 +58,13 @@
 </template>
 <script setup lang="ts">
 import ExpandableCard from "@/components/expandable-card/index.vue";
-import {ref} from "vue";
 import {useThemeStore} from "@/stores/theme.ts";
 import {versionInfo} from "@/views/index/setting.ts";
 
 const themeStore = useThemeStore();
-const middleComplete = ref<boolean>(false)
 </script>
 <style scoped>
 .card-background {
-  background-image: url("../static/spring-boot.png");
-  background-position-y: 10px; /* 增加10像素间距 */
-  background-position-x: calc(100% - 10px); /* 保持右对齐 */
-  background-repeat: no-repeat;
-  background-size: 36px 36px;
-}
-.child {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   background-image: url("../static/spring-boot.png");
   background-position-y: 10px; /* 增加10像素间距 */
   background-position-x: calc(100% - 10px); /* 保持右对齐 */

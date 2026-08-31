@@ -1,32 +1,35 @@
 <template>
   <div>
-    <!-- 展示 overview 和 detail 的容器-->
-    <div class="z-1001"
+    <!-- 展示 overview 和 detail 的容器；overflow-hidden 使过渡期对最终尺寸的 detail 呈"揭示"效果 -->
+    <div class="z-1001 overflow-hidden"
          ref="containerRef"
          :style="style"
          @click="handleClickCard"
          @mouseover="handleMouseOverCard"
          @mouseleave="handleMouseLeaveCard"
     >
-      <!-- 展示概述信息 -->
-      <div v-if="showStatus === 'ready'">
+      <!-- overview 层：ready 态在流内撑起卡片自然尺寸；过渡期转为绝对定位拉伸铺满，充当 middle 时内容不带外部边框/阴影 -->
+      <div class="transition-opacity"
+           :class="showStatus === 'ready' ? '' : 'as-middle'"
+           :style="overviewStyle">
         <slot name="overview"></slot>
       </div>
-      <!-- 过渡时展示自定义封面 -->
-      <div v-show="showStatus === 'activity' || showStatus === 'kill'"
-           class="flex h-full w-full overflow-hidden">
-<!--        使用了自定义过渡插槽-->
-        <slot name="middle" v-if="hasMiddleSlot"/>
-<!--        没使用自定义过渡，过渡时展示详情插槽-->
-        <slot name="detail" v-else/>
-      </div>
-      <!-- 需要动态设置detail内的元素高度，所以需要保留detail的dom节点，所以showStatus === 'complete' 之前设置为全透明 -->
-      <div v-show="showStatus === 'complete'" ref="detailRef" :style="{opacity: showStatus === 'complete' ? 1 : 0}">
+      <!-- detail 层：过渡期挂载，按最终尺寸渲染（显式宽度），被容器裁切，与 overview 相交渐变 -->
+      <div v-if="showStatus !== 'ready'"
+           ref="detailRef"
+           class="absolute top-0 left-0 transition-opacity"
+           :style="detailStyle">
         <slot name="detail"></slot>
+      </div>
+      <!-- 异步等待层：autoComplete=false 且数据未就绪时居中播放 spin，完成后渐隐换 detail -->
+      <div v-if="showStatus !== 'ready' && !autoComplete"
+           class="absolute inset-0 flex items-center justify-center bg-[var(--ant-color-bg-container)] transition-opacity"
+           :style="spinStyle">
+        <a-spin size="large"/>
       </div>
     </div>
 
-    <!-- 占位元素，复刻slot:title，会随着页面视口变化而变化，返回动画参数从该组建中获取 -->
+    <!-- 占位元素，复刻slot:overview，会随着页面视口变化而变化，返回动画参数从该组建中获取 -->
     <div v-if="showStatus !== 'ready'" class="opacity-0" ref="placeholderRef">
       <slot name="overview"></slot>
     </div>
@@ -39,7 +42,7 @@
 <script setup lang="ts">
 import Mask from "@/components/mask/index.vue"
 import type {CSSProperties} from 'vue';
-import {nextTick, onUnmounted, ref, useSlots, useTemplateRef, watch} from "vue";
+import {nextTick, onUnmounted, ref, useTemplateRef, watch} from "vue";
 import {hiddenOverflowY} from "@/utils/scrollbar.ts";
 
 // ===== 用 Web Animations API 实现的动画时长与曲线，收拢一处便于统调 =====
@@ -60,7 +63,15 @@ const TRANSITION = {
     mass: 1,
     // 采样帧数（duration/frames ≈ 每 8.5ms 一帧，linear 插值平滑）
     frames: 40,
-  }
+  },
+  // 过渡期内容交接（overview ↔ detail/spin 相交渐变）
+  fade: {
+    duration: 150,
+    // 交接滑块：动画进度上的交接点。0 = detail 从头充当 middle（揭示式，零重排）；
+    // 1 = overview 坚持到动画结束（拉伸铺满，文本会重排，旧 middle 观感）；中间值 = 该进度点交接。
+    // 关闭方向镜像（1 - handover）
+    handover: 1,
+  },
 }
 
 // 数值转 px 字符串
@@ -157,9 +168,6 @@ const animateTo = (el: HTMLElement | null,
   animateFromTo(el, {}, to, options)
 }
 
-// 是否使用具名插槽middle
-const slots = useSlots();
-const hasMiddleSlot = !!slots.middle
 // 接受父组件参数
 const props = defineProps({
   // 展开后的宽度
@@ -233,8 +241,6 @@ const init = () => {
   const showStatus = ref<StatusType>('ready')
   // 展开后改变css定位布局
   const style = ref<CSSProperties>({position: 'static'})
-  // 展开后的高度
-  const expandedHeight = ref<number>(props.expandedHeight)
   // 显示遮罩
   const showMask = ref<boolean>(false)
   // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
@@ -242,6 +248,44 @@ const init = () => {
   // 点击后缩放还原动画进行中标志——展开链挂在该动画的 onComplete 里，
   // 期间禁止启动会将其取消的动画（如鼠标移出触发的缩离动画）
   const expandPending = ref<boolean>(false)
+
+  // overview 层样式：ready 态无定位（流内）；过渡期绝对定位 + 实测宽高 + 相交渐变透明度
+  const overviewStyle = ref<CSSProperties>({})
+  // detail 层样式：显式最终宽度（内容按最终尺寸渲染）+ 相交渐变透明度
+  const detailStyle = ref<CSSProperties>({})
+  // 异步等待层样式（透明度渐变）
+  const spinStyle = ref<CSSProperties>({opacity: 0})
+  // 交接定时器（展开/关闭共用，新调度覆盖旧调度）
+  let handoverTimer: number | null = null
+  // 展开方向交接：overview → detail（数据已就绪）/ spin（异步等待中）
+  const fadeExpandHandover = () => {
+    overviewStyle.value = {...overviewStyle.value, opacity: 0}
+    if (props.autoComplete || props.isComplete) {
+      detailStyle.value = {...detailStyle.value, opacity: 1}
+    } else {
+      spinStyle.value = {...spinStyle.value, opacity: 1}
+    }
+  }
+  // 关闭方向交接：detail/spin → overview
+  const fadeCloseHandover = () => {
+    overviewStyle.value = {...overviewStyle.value, opacity: 1}
+    detailStyle.value = {...detailStyle.value, opacity: 0}
+    spinStyle.value = {...spinStyle.value, opacity: 0}
+  }
+  // 各层复位（关闭完成回到 ready 态，detail/spin 层随 v-if 卸载）
+  const resetLayers = () => {
+    overviewStyle.value = {}
+    detailStyle.value = {}
+    spinStyle.value = {opacity: 0}
+  }
+  const clearHandoverTimer = () => {
+    if (handoverTimer !== null) {
+      clearTimeout(handoverTimer)
+      handoverTimer = null
+    }
+  }
+  // 卸载时清除未触发的交接定时器
+  onUnmounted(clearHandoverTimer)
 
   // 点击卡片
   const handleClickCard = () => {
@@ -284,12 +328,28 @@ const init = () => {
         // 还原完成后采集卡片布局位置作为展开起点——点击瞬间 hover 缩放仍在生效，
         // 此时 getBoundingClientRect 返回的是放大后的包围盒（起点会偏大 hoverScale 倍）
         const bounding = containerRef.value?.getBoundingClientRect()
-        // container 设置为固定定位
-        style.value = {position: 'fixed'}
+        // container 设置为固定定位；过渡期提供卡片表面（与 detail 的 a-card 同底色），
+        // 否则展开中的容器是透明的，"展开"过程不可见，只剩 overview 跟随容器左上角平移
+        style.value = {
+          position: 'fixed',
+          backgroundColor: 'var(--ant-color-bg-container)',
+          borderRadius: 'var(--ant-border-radius-lg)',
+        }
         // 获取展开后参数（宽度按视口收缩并水平居中，高度按视口适配并计算 top）
         const {width, height, top, left: side} = getExpandLayout()
-        // 为展开后高度赋值
-        expandedHeight.value = height
+        // overview 层转为拉伸铺满（随容器长大，旧 middle 观感，宽向文本会重排）；
+        // detail 层以最终宽度挂载，揭示式渲染（零重排，被容器裁切）
+        overviewStyle.value = {
+          position: 'absolute', top: '0', left: '0',
+          width: '100%', height: '100%',
+          opacity: 1,
+          transitionDuration: TRANSITION.fade.duration + 'ms',
+        }
+        detailStyle.value = {
+          width: px(width), opacity: 0,
+          transitionDuration: TRANSITION.fade.duration + 'ms',
+        }
+        spinStyle.value = {opacity: 0, transitionDuration: TRANSITION.fade.duration + 'ms'}
         // 执行主要动画
         animateFromTo(containerRef.value, {
           width: px(bounding?.width),
@@ -311,10 +371,14 @@ const init = () => {
             showMask.value = true
             // 状态修改为进行时
             showStatus.value = 'activity'
+            // 内容按最终高度渲染（揭示式要求从动画第一帧起即最终布局，文本零重排）
+            // detail 层由 v-if 在本次状态变更后的微任务中挂载，须等 nextTick 才能取到 firstChild
+            nextTick(() => setExpandHeight(height))
+            // 交接滑块：动画进度 handover 处 overview → detail/spin（t=0 即刻交接，渐变被容器淡入掩盖）
+            handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handover * TRANSITION.spring.duration)
           },
           onComplete: () => {
-            // 动画播完 或 外部控制为已完成时展示内容
-            // 仅在 activity 状态放行：kill 表示被关闭打断，complete 表示 watch 已处理过 isComplete，避免重复触发
+            // 展开完成：仅在 activity 状态放行（kill=被关闭打断，complete=watch 已处理过 isComplete）
             if ((props.autoComplete || props.isComplete) && showStatus.value === 'activity') {
               handleExpandComplete()
             }
@@ -373,14 +437,20 @@ const init = () => {
         emits('beforeCardClose')
         // 关闭遮罩
         showMask.value = false
+        // 打断展开：清除尚未触发的展开交接，改为关闭方向交接（镜像 1 - handover）
+        clearHandoverTimer()
+        handoverTimer = window.setTimeout(fadeCloseHandover, (1 - TRANSITION.fade.handover) * TRANSITION.spring.duration)
       },
       onComplete: () => {
         // 关闭动画结束，解除关闭中标志
         closing.value = false
         // 兜底复位展开中标志，保证回到就绪态时各标志归零
         expandPending.value = false
-        // 恢复 container 默认的静态布局，并清除展开动画残留的 right/opacity 内联样式
-        style.value = {position: 'static', width: '', height: '', top: '', left: '', right: '', opacity: ''}
+        // 恢复 container 默认的静态布局，并清除展开动画残留的内联样式（含过渡期卡片表面）
+        style.value = {position: 'static', width: '', height: '', top: '', left: '', right: '', opacity: '', backgroundColor: '', borderRadius: ''}
+        // 各层复位：overview 回流内瞬间接管（同旧版 v-show 切换时机），detail/spin 层随 v-if 卸载
+        resetLayers()
+        clearHandoverTimer()
         // 动画执行完成后，状态修改为就绪
         showStatus.value = 'ready'
         hoverStatus.value = 'complete'
@@ -407,7 +477,10 @@ const init = () => {
     showStatus.value = 'complete'
     hoverStatus.value = 'complete'
     emits('afterCardExpand')
-    setExpandHeight(expandedHeight.value)
+    // 动画结束/数据就绪时切换内容：overview/spin 渐隐，detail 渐显
+    overviewStyle.value = {...overviewStyle.value, opacity: 0}
+    spinStyle.value = {...spinStyle.value, opacity: 0}
+    detailStyle.value = {...detailStyle.value, opacity: 1}
   }
 
   return {
@@ -416,6 +489,9 @@ const init = () => {
     closing,
     expandPending,
     style,
+    overviewStyle,
+    detailStyle,
+    spinStyle,
     placeholderRef,
     containerRef,
     detailRef,
@@ -425,7 +501,7 @@ const init = () => {
     handleExpandComplete
   }
 }
-const {showStatus, showMask, closing, expandPending, style, placeholderRef, containerRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
+const {showStatus, showMask, closing, expandPending, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
 
 
 // 加载鼠标在卡片悬浮相关逻辑
@@ -608,3 +684,13 @@ watch(() => props.isComplete, (value) => {
   }
 })
 </script>
+
+<style scoped>
+/* overview 充当 middle 时去掉内容自带的外部边框/阴影（旧 middle 无边框特点）；
+   双写类名抬高优先级以压过 .ant-card:not(.ant-card-bordered) 的根级 boxShadowTertiary；
+   圆角由容器 border-radius + overflow-hidden 裁切承担 */
+.as-middle :deep(.ant-card.ant-card) {
+  border: none;
+  box-shadow: none;
+}
+</style>

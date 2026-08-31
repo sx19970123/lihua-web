@@ -17,18 +17,6 @@
         </a-typography-text>
       </a-card>
     </template>
-    <template #middle>
-      <a-card :body-style="{height: '100px'}" class="child">
-        <a-typography-title :level="4" ellipsis>关于</a-typography-title>
-        <a-typography-text ellipsis type="secondary">
-          <a-typography-text type="secondary">狸花猫是一款基于</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}"> SpringBoot </a-typography-text>
-          <a-typography-text type="secondary">和</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}"> Vue </a-typography-text>
-          <a-typography-text type="secondary">的权限管理系统</a-typography-text>
-        </a-typography-text>
-      </a-card>
-    </template>
     <template #detail>
       <a-card class="card-background" id="test">
         <a-typography-title :level="4" ellipsis>关于</a-typography-title>
@@ -120,18 +108,6 @@ const themeStore = useThemeStore();
 </script>
 <style scoped>
 .card-background {
-  background-image: url("../static/狸花猫-小喵子-酷.svg");
-  background-position-y: 10px; /* 增加10像素间距 */
-  background-position-x: calc(100% - 10px); /* 保持右对齐 */
-  background-repeat: no-repeat;
-  background-size: 36px 36px;
-}
-.child {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   background-image: url("../static/狸花猫-小喵子-酷.svg");
   background-position-y: 10px; /* 增加10像素间距 */
   background-position-x: calc(100% - 10px); /* 保持右对齐 */
