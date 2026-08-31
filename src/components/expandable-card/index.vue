@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import Mask from "@/components/mask/index.vue"
 import type {CSSProperties} from 'vue';
-import {nextTick, onMounted, onUnmounted, ref, useSlots, useTemplateRef, watch} from "vue";
+import {nextTick, onUnmounted, ref, useSlots, useTemplateRef, watch} from "vue";
 import {hiddenOverflowY} from "@/utils/scrollbar.ts";
 
 // ===== 用 Web Animations API 平行替换 gsap 的 to / fromTo =====
@@ -209,7 +209,15 @@ const init = () => {
     if (!detailVisible) {
       return
     }
-    const bounding = containerRef.value?.getBoundingClientRect()
+
+    // 缩离动画进行中点击卡片：还原动画会取消缩离动画，其 onComplete 不再执行，
+    // 在此同步补执行移出完成逻辑，保证 onMouseEnter/onMouseLeave 严格成对
+    if (leavePending.value) {
+      leavePending.value = false
+      hoverStatus.value = 'ready'
+      handleRemoveHoverStyle()
+      emits('onMouseLeave')
+    }
 
     // 即将执行动画前触发
     emits('beforeCardExpand')
@@ -228,6 +236,9 @@ const init = () => {
       onComplete: () => {
         // 还原动画结束，展开链即将接管（主动画 onStart 会将 showStatus 置为 activity）
         expandPending.value = false
+        // 还原完成后采集卡片布局位置作为展开起点——点击瞬间 hover 缩放仍在生效，
+        // 此时 getBoundingClientRect 返回的是放大后的包围盒（起点会偏大 hoverScale 倍）
+        const bounding = containerRef.value?.getBoundingClientRect()
         // container 设置为固定定位
         style.value = {position: 'fixed'}
         // 获取展开后参数（宽度按视口收缩并水平居中，高度按视口适配并计算 top）
@@ -378,6 +389,10 @@ const {showStatus, showMask, closing, expandPending, style, placeholderRef, cont
 const initHover = () => {
   // 缩放状态分为 ready就绪 activity活动中 complete已完成
   const hoverStatus = ref<StatusType>('ready')
+  // 缩离动画进行中标志——缩离动画被移入动画/点击还原动画取消时，其 onComplete
+  // （hoverStatus 复位、移除 hover 样式、抛出 onMouseLeave）不会再执行，
+  // 由取消方同步补执行该逻辑，保证 onMouseEnter/onMouseLeave 严格成对
+  const leavePending = ref<boolean>(false)
   // 鼠标悬浮于卡片
   const handleMouseOverCard = () => {
     // 动画在下面三种状态时，不会触发卡片悬浮
@@ -386,6 +401,14 @@ const initHover = () => {
     }
 
     if (hoverStatus.value === 'ready' || hoverStatus.value === 'complete') {
+      // 缩离动画进行中再次移入：移入动画会取消缩离动画，其 onComplete（含 onMouseLeave 抛出）
+      // 不再执行——在此同步补执行移出完成逻辑，保证 onMouseEnter/onMouseLeave 严格成对
+      if (leavePending.value) {
+        leavePending.value = false
+        hoverStatus.value = 'ready'
+        handleRemoveHoverStyle()
+        emits('onMouseLeave')
+      }
       animateTo(containerRef.value, {
         transform: `scale(${props.hoverScale})`,
       }, {
@@ -417,7 +440,12 @@ const initHover = () => {
         transform: 'scale(1)',
       }, {
         duration: TRANSITION.hover,
+        onStart: () => {
+          // 标记缩离动画进行中（若被移入动画/点击还原动画取消，由对方同步补执行完成逻辑）
+          leavePending.value = true
+        },
         onComplete: () => {
+          leavePending.value = false
           hoverStatus.value = 'ready'
           handleRemoveHoverStyle()
           // 鼠标悬浮结束后抛出
@@ -443,46 +471,55 @@ const initHover = () => {
   }
   return {
     hoverStatus,
+    leavePending,
     handleMouseOverCard,
-    handleMouseLeaveCard
+    handleMouseLeaveCard,
+    handleRemoveHoverStyle
   }
 }
 
-const {hoverStatus, handleMouseOverCard, handleMouseLeaveCard } = initHover()
+const {hoverStatus, leavePending, handleMouseOverCard, handleMouseLeaveCard, handleRemoveHoverStyle } = initHover()
 
-// 视口的宽度，用于定位展开后元素位置及视口宽度变化时对展开的卡片重新定位
-const innerWidth = ref<number>(window.innerWidth)
-// 视口的高度，视口宽高变化时对展开的卡片重新定位
-const innerHeight = ref<number>(window.innerHeight)
-
-// 依据视口与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
+// 依据当前视口（实时读取，无需缓存）与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
 // 宽度：视口容不下（展开宽度 + 两侧最小间距）时按视口收缩，之后水平居中（收缩时居中即为最小间距）
 // 高度：设定高度 + top 超出视口（扣除上下最小间距）时优先压缩 top 垂直居中，仍放不下则 top 压到最小值并按视口收缩高度
 const getExpandLayout = () => {
   const minWindowSpace = props.minWindowSpace
-  const width = props.expandedWidth > innerWidth.value - minWindowSpace * 2
-      ? innerWidth.value - minWindowSpace * 2
+  const viewWidth = window.innerWidth
+  const viewHeight = window.innerHeight
+  const width = props.expandedWidth > viewWidth - minWindowSpace * 2
+      ? viewWidth - minWindowSpace * 2
       : props.expandedWidth
-  const left = innerWidth.value / 2 - width / 2
+  const left = viewWidth / 2 - width / 2
   let height = props.expandedHeight
   let top = props.expandedTop
-  if (height + top > innerHeight.value - minWindowSpace * 2) {
-    if (height < innerHeight.value - minWindowSpace * 2) {
-      top = (innerHeight.value - height) / 2
+  if (height + top > viewHeight - minWindowSpace * 2) {
+    if (height < viewHeight - minWindowSpace * 2) {
+      top = (viewHeight - height) / 2
     } else {
       top = minWindowSpace
-      height = innerHeight.value - minWindowSpace * 2
+      height = viewHeight - minWindowSpace * 2
     }
   }
   return {width, height, top, left}
 }
 
-// 监听窗口变化和键盘事件
-onMounted(() => {
-  window.addEventListener('resize', windowWidthResize)
-  window.addEventListener("keydown", keydownClose);
+// 全局监听按需挂载：keydown（esc 关闭）仅在非就绪态需要，resize（重定位展开中的卡片）仅在展开态需要，
+// 就绪态不挂任何全局监听——首页多卡片实例平时零监听开销；随展开/关闭的状态流转自动挂载与卸载
+watch(showStatus, (status, previous) => {
+  if (status === 'complete') {
+    window.addEventListener('resize', windowWidthResize)
+  } else if (previous === 'complete') {
+    window.removeEventListener('resize', windowWidthResize)
+  }
+  if (status === 'ready') {
+    window.removeEventListener('keydown', keydownClose)
+  } else if (previous === 'ready') {
+    window.addEventListener('keydown', keydownClose)
+  }
 })
-// 卸载组件前删除监听函数
+
+// 卸载组件前删除监听函数（防御性移除，未挂载时为 no-op）
 onUnmounted(() => {
   window.removeEventListener('resize', windowWidthResize)
   window.removeEventListener("keydown", keydownClose);
@@ -504,8 +541,6 @@ const windowWidthResize = () => {
   }
   resizeRafId = requestAnimationFrame(() => {
     resizeRafId = null
-    innerWidth.value = window.innerWidth
-    innerHeight.value = window.innerHeight
     if (showStatus.value !== 'complete' || !containerRef.value) {
       return
     }
