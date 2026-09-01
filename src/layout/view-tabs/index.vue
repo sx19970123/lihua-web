@@ -145,7 +145,8 @@ const initDrag = () => {
     KeyboardSensor,
   ]
 
-  /** 拖拽中的本地顺序覆盖；null 时回落 store 顺序（拖拽期间不动 store，松手才提交） */
+  /** 拖拽中的本地顺序覆盖；null 时回落 store 顺序（拖拽期间不动 store，松手才提交。
+   *  取消拖拽的回滚即清空此值——视图随之回落 store 顺序） */
   const dragOrder = ref<Array<string> | null>(null)
 
   /** tabs 的 items：key 为路由路径键；剔除 icon（Tabs 会把它原生渲染成前置内容），raw 透传原始 tab 供 #labelRender 使用 */
@@ -159,10 +160,8 @@ const initDrag = () => {
     return dragOrder.value.map(key => byKey.get(key)).filter(item => item !== undefined)
   })
 
-  /** 取消拖拽时回滚用的 key 序列快照（同时用于初始化 dragOrder） */
-  let snapshotKeys: Array<string> = []
-
-  /** 换位判定上下文（dragMove 缓存）：源页签元素与其轨道，供换位后的追帧重评使用 */
+  /** 换位判定上下文（dragStart 一次性锚定，dragEnd 清空）：源页签元素与其轨道——
+   *  keyed v-for 换位只移动节点不重建，拖拽全程稳定不变 */
   let dragSourceEl: HTMLElement | undefined
   let dragNavList: HTMLElement | undefined
   let dragSourceKey = ''
@@ -188,8 +187,8 @@ const initDrag = () => {
 
   /** 边缘换位：被拖元素同侧边缘越过紧邻页签的布局中心线才换位（盖过一半即让位），阈值随邻居宽度缩放；
    *  边缘参考在轨道钳制下仍可达窄页签中心（中心参考下宽页签中心够不着窄页签，首尾换位死区）。
-   *  槽位中心取 offsetLeft/offsetWidth 布局值——不受 FLIP 让位动画 transform 影响：换位后邻居的
-   *  动画中途矩形恰好落进边缘规则的死区，读视觉矩形会形成换位⇄回换振荡（中段停手抖动的根因）。
+   *  槽位中心取 offsetLeft/offsetWidth 布局值——getBoundingClientRect 含轨道平移 transform，
+   *  视觉矩形随平移漂移会污染换位判定（历史版本另有让位 FLIP 中间矩形问题，该动画已归零）。
    *  每步至多换一格，换位后追帧重评至稳态——drag-move 只随指针移动触发，快速甩动后停住时
    *  未追平的换位会滞留（滞后阻尼感）；占位克隆（data-dnd-placeholder）即被拖页签的槽位 */
   const evaluateEdgeSwap = () => {
@@ -226,12 +225,6 @@ const initDrag = () => {
   const onDragMove = (event: DragMoveEvent) => {
     const {source} = event.operation
     if (!source || !isSortable(source) || !dragOrder.value) return
-    const sourceEl = source.element as HTMLElement | undefined
-    const navList = sourceEl?.closest<HTMLElement>('.ant-tabs-nav-list')
-    if (!sourceEl || !navList) return
-    dragSourceEl = sourceEl
-    dragNavList = navList
-    dragSourceKey = String(source.id)
     evaluateEdgeSwap()
   }
 
@@ -302,16 +295,19 @@ const initDrag = () => {
     trackReleaseTimer = setTimeout(releaseTrack, TRACK_GRACE_MS)
   }
 
-  /** 拖拽开始：快照轨道边界与 key 序列，上轨道锁 */
+  /** 拖拽开始：快照轨道边界、上轨道锁、一次性锚定换位上下文，初始化本地顺序覆盖 */
   const onDragStart = (event: DragStartEvent) => {
-    const tabEl = event.operation.source?.element as HTMLElement | undefined
+    const source = event.operation.source
+    const tabEl = source?.element as HTMLElement | undefined
     if (tabEl) {
       // 快照轨道边界（水平 clamp 依据）
       snapshotTrackBounds(tabEl)
       lockTrack(tabEl)
+      dragSourceEl = tabEl
+      dragNavList = tabEl.closest<HTMLElement>('.ant-tabs-nav-list') ?? undefined
+      dragSourceKey = source?.id === undefined ? '' : String(source.id)
     }
-    snapshotKeys = viewTabsStore.viewTabs.map(tab => tab.routerPathKey)
-    dragOrder.value = snapshotKeys.slice()
+    dragOrder.value = viewTabsStore.viewTabs.map(tab => tab.routerPathKey)
   }
 
   /** 拖拽结束：取消则视图随 dragOrder 清空自动回滚；否则按索引变化提交 store */
@@ -319,6 +315,9 @@ const initDrag = () => {
     unlockTrack()
     resetTrackBounds()
     dragOrder.value = null
+    dragSourceEl = undefined
+    dragNavList = undefined
+    dragSourceKey = ''
     if (event.canceled) {
       return
     }
@@ -446,9 +445,10 @@ watch(() => route.path,() => {
   background: var(--ant-color-border-secondary);
 }
 
-/* 换位让位动画在 SortableTabLabel.vue 的 sortable transition 配置（duration: 0）归零：
-   卡片瞬时落位、缝隙分片不随卡飞行；其 FLIP 走 WAAPI（element.animate），
-   CSS transition 冻结对它无效，故不在此设规则 */
+/* 换位让位动画已在 SortableTabLabel.vue 的 sortable transition 配置（duration: 0）归零：
+   卡片瞬时落位，缝隙分片/底边框/槽位线全程静止。其 FLIP 走 WAAPI（element.animate），
+   CSS transition 冻结对它无效，故不在此设规则。曾试过的"滑行熄片+三路补线"调和方案
+   见 stash（让位动画全套实验），最终因落位边框淡入无法与补线无缝衔接而整体回退 */
 
 /* dnd-kit 给占位克隆设的是 visibility:hidden（槽位呈空），visibility 可继承——
    克隆携带的缝隙片与上面的槽位线都会跟着隐形，须对其伪元素显式恢复可见 */

@@ -1,5 +1,4 @@
 import {Modifier, type DragOperation} from '@dnd-kit/abstract';
-import {RestrictToHorizontalAxis} from '@dnd-kit/abstract/modifiers';
 import type {Coordinates} from '@dnd-kit/geometry';
 
 /**
@@ -48,5 +47,6 @@ export class TrackClampModifier extends Modifier {
     }
 }
 
-/** view-tabs 拖拽修饰器：先锁水平轴，再钳制在轨道边界内 */
-export const trackModifiers = [RestrictToHorizontalAxis, TrackClampModifier]
+/** view-tabs 拖拽修饰器：TrackClampModifier 单出——y 归零已内含其中
+ *  （原并列的 RestrictToHorizontalAxis 仅做 y 归零，为其子集，故不重复挂载） */
+export const trackModifiers = [TrackClampModifier]
