@@ -15,10 +15,10 @@
            :style="overviewStyle">
         <slot name="overview"></slot>
       </div>
-      <!-- detail 层：过渡期挂载，按最终尺寸渲染（显式宽度），被容器裁切，与 overview 相交渐变 -->
+      <!-- detail 层：过渡期挂载，按最终尺寸渲染（显式宽高），被容器裁切，与 overview 相交渐变 -->
       <div v-if="showStatus !== 'ready'"
            ref="detailRef"
-           class="absolute top-0 left-0 transition-opacity"
+           class="absolute top-0 left-0 transition-opacity as-middle"
            :style="detailStyle">
         <slot name="detail"></slot>
       </div>
@@ -187,15 +187,24 @@ const animateTo = (el: HTMLElement | null,
 // sx/sy 各自沿进度仿射插值——与容器宽/高的仿射插值逐帧等价（层排版尺寸 × scale ≡ 容器尺寸），
 // 内容横纵独立拉伸填满容器（旧版拉伸感来源）；transform-origin: 0 0
 // 已知代价（用户知情选择）：transform 走合成器栅格缓存，大倍率纵向缩放存在中段重采样闪烁风险（旧会话 index_8 雷区）
-const transformFlight = (el: HTMLElement | null, sx0: number, sx1: number, sy0: number, sy1: number) => {
+// radius 为反补偿圆角：transform 会连带缩放 border-radius，每帧本地弧度取 R/sx、R/sy（x/y 分轴），
+// 被该帧缩放一乘后视觉弧度恒等于容器圆角——配合 as-middle 剥离内容自身圆角（内容方角），
+// 圆角完全由本层裁切承担，内容圆角的缩放漂移不再露底
+const transformFlight = (el: HTMLElement | null, sx0: number, sx1: number, sy0: number, sy1: number, radius: number) => {
   if (!el) return
-  const frames = springProgress().map(progress => ({
-    transform: `scale(${sx0 + (sx1 - sx0) * progress}, ${sy0 + (sy1 - sy0) * progress})`,
-  }))
+  const frames = springProgress().map(progress => {
+    const sx = sx0 + (sx1 - sx0) * progress
+    const sy = sy0 + (sy1 - sy0) * progress
+    return {
+      transform: `scale(${sx}, ${sy})`,
+      borderRadius: `${radius / sx}px / ${radius / sy}px`,
+    }
+  })
   const animation = el.animate(frames, {duration: TRANSITION.spring.duration, easing: 'linear'})
-  // 落定把终值矩阵留在内联样式上持有（不写 'none'、不提前 cancel——避免落定重栅格跳变）
+  // 落定把终值矩阵与反补偿半径留在内联样式上持有（不写 'none'、不提前 cancel——避免落定重栅格跳变）
   animation.onfinish = () => {
     el.style.transform = `scale(${sx1}, ${sy1})`
+    el.style.borderRadius = `${radius / sx1}px / ${radius / sy1}px`
   }
   activeAnimations.push(animation)
 }
@@ -331,9 +340,11 @@ const init = () => {
     spinStyle.value = {opacity: 0}
     if (overviewRef.value) {
       overviewRef.value.style.transform = ''
+      overviewRef.value.style.borderRadius = ''
     }
     if (detailRef.value) {
       detailRef.value.style.transform = ''
+      detailRef.value.style.borderRadius = ''
     }
   }
   const clearHandoverTimer = () => {
@@ -408,21 +419,26 @@ const init = () => {
         const takeoffW = bounding?.width ?? srcW
         const takeoffH = bounding?.height ?? srcH
         // overview 层钉源排版尺寸转为绝对定位（零重排）；detail 层以最终尺寸挂载（零重排）；
-        // 两层均以 transform-origin 0 0 做非等比缩放，视觉尺寸逐帧等于容器尺寸（几何逐帧重合）
+        // 两层均以 transform-origin 0 0 做缩放，视觉尺寸逐帧等于容器尺寸（几何逐帧重合）。
+        // 层带 overflow 裁切 + 每帧反补偿圆角（见 transformFlight）——配合 as-middle 剥离内容自身圆角，
+        // 圆角完全由层裁切承担，弧度逐帧贴合容器，内容圆角的缩放漂移不再露底
         overviewStyle.value = {
           position: 'absolute', top: '0', left: '0',
           width: px(srcW), height: px(srcH),
           transformOrigin: '0 0',
+          overflow: 'hidden',
           opacity: 1,
           transitionDuration: TRANSITION.fade.duration + 'ms',
         }
         detailStyle.value = {
           width: px(width), height: px(height),
           transformOrigin: '0 0',
+          overflow: 'hidden',
           opacity: 0,
           transitionDuration: TRANSITION.fade.duration + 'ms',
         }
-        spinStyle.value = {opacity: 0, transitionDuration: TRANSITION.fade.duration + 'ms'}
+        // spin 层无缩放，圆角直接取容器同款变量
+        spinStyle.value = {opacity: 0, borderRadius: 'var(--ant-border-radius-lg)', transitionDuration: TRANSITION.fade.duration + 'ms'}
         // 执行主要动画（无整体淡入——层间交叉淡化是唯一的渐变，保持可感知）
         animateFromTo(containerRef.value, {
           width: px(bounding?.width),
@@ -446,17 +462,19 @@ const init = () => {
             nextTick(() => {
               // 内容按最终高度渲染（从动画第一帧起即最终布局，文本零重排）
               setExpandHeight(height)
+              // 容器圆角（此时 patch 已完成，var 解析为 px）——反补偿基准弧度
+              const radius = containerRef.value ? (parseFloat(getComputedStyle(containerRef.value).borderRadius) || 8) : 8
               // 内容层缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
               // overview 三面贴合：等比缩放（宽比驱动），底部按比例留白由容器表面兜底；
               // overview 四面贴合：非等比拉伸填满；detail 恒为四面贴合
               if (props.overviewFit === 'four') {
-                transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH)
+                transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH, radius)
               } else {
                 const scaleFrom = takeoffW / srcW
                 const scaleTo = width / srcW
-                transformFlight(overviewRef.value, scaleFrom, scaleTo, scaleFrom, scaleTo)
+                transformFlight(overviewRef.value, scaleFrom, scaleTo, scaleFrom, scaleTo, radius)
               }
-              transformFlight(detailRef.value, takeoffW / width, 1, takeoffH / height, 1)
+              transformFlight(detailRef.value, takeoffW / width, 1, takeoffH / height, 1, radius)
             })
             // 交接滑块：展开动画时间 handoverExpand 处 overview → detail/spin 相交渐变
             handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handoverExpand * TRANSITION.spring.duration)
@@ -526,18 +544,20 @@ const init = () => {
         // 关闭遮罩
         showMask.value = false
         // 内容层缩放续降（与容器同序列逐帧同步）：overview 按贴合配置（three 等比 / four 非等比），detail 恒四面贴合
+        // 容器圆角此刻仍在 inline（复位发生在动画结束），解析为反补偿基准
+        const closeRadius = containerRef.value ? (parseFloat(getComputedStyle(containerRef.value).borderRadius) || 8) : 8
         if (flightSrcW > 0) {
           if (props.overviewFit === 'four' && flightSrcH > 0) {
             transformFlight(overviewRef.value, overviewScaleNow.sx, (bounding?.width ?? flightSrcW) / flightSrcW,
-                overviewScaleNow.sy, (bounding?.height ?? flightSrcH) / flightSrcH)
+                overviewScaleNow.sy, (bounding?.height ?? flightSrcH) / flightSrcH, closeRadius)
           } else {
             const overviewScaleTo = (bounding?.width ?? flightSrcW) / flightSrcW
-            transformFlight(overviewRef.value, overviewScaleNow.sx, overviewScaleTo, overviewScaleNow.sy, overviewScaleTo)
+            transformFlight(overviewRef.value, overviewScaleNow.sx, overviewScaleTo, overviewScaleNow.sy, overviewScaleTo, closeRadius)
           }
         }
         if (flightFinalW > 0 && flightFinalH > 0) {
           transformFlight(detailRef.value, detailScaleNow.sx, (bounding?.width ?? flightFinalW) / flightFinalW,
-              detailScaleNow.sy, (bounding?.height ?? flightFinalH) / flightFinalH)
+              detailScaleNow.sy, (bounding?.height ?? flightFinalH) / flightFinalH, closeRadius)
         }
         // 打断展开：清除尚未触发的展开交接，改为关闭方向交接——handoverClose 独立配置，
         // 并钳制不晚于「动画结束前能完成渐变」的最晚位置：动画结束时 detail 恰好淡尽，
@@ -793,11 +813,15 @@ watch(() => props.isComplete, (value) => {
 </script>
 
 <style scoped>
-/* overview 充当 middle 时去掉内容自带的外部边框/阴影（旧 middle 无边框特点）；
-   双写类名抬高优先级以压过 .ant-card:not(.ant-card-bordered) 的根级 boxShadowTertiary；
-   圆角由容器 border-radius + overflow-hidden 裁切承担 */
+/* 充当 middle 时去掉内容自带的外部边框/阴影（旧 middle 无边框特点）；
+   双写类名抬高优先级以压过 .ant-card:not(.ant-card-bordered) 的根级 boxShadowTertiary */
 .as-middle :deep(.ant-card.ant-card) {
   border: none;
   box-shadow: none;
+}
+/* 充当 middle 时剥离层第一个子元素的自身圆角：transform 会连带缩放圆角导致角部与容器弧度失配露底，
+   飞行期角部弧度完全由层的反补偿裁切承担（ready 态类移除，内容恢复自身圆角） */
+.as-middle > :deep(:first-child) {
+  border-radius: 0;
 }
 </style>
