@@ -1,6 +1,6 @@
 <template>
   <a-spin :spinning="spinning">
-    <div style="margin: var(--ant-margin-xl)">
+    <div class="m-ant-xl">
       <a-flex vertical :gap="32" align="center">
         <a-flex vertical align="center">
           <!--    标题-->
@@ -22,19 +22,20 @@
                         <a-typography-title :level="5">已读</a-typography-title>
                         <a-typography-text type="secondary">{{readUserList.length + '/' +(readUserList.length + unreadUserList.length)}}</a-typography-text>
                       </a-flex>
-                      <div class="read-content scrollbar">
+                      <div class="max-w-[250px] max-h-[400px] scrollbar">
                         <a-flex wrap="wrap">
                           <user-show v-for="user in readUserList" :avatar-json="user.avatar" :nickname="user.nickname"/>
                         </a-flex>
                       </div>
                     </div>
-                    <a-divider type="vertical" style="height: auto" v-if="readUserList.length > 0 && unreadUserList.length > 0"/>
+                    <!-- height 内联保留：.ant-divider-vertical 有 0.9em 高度声明，与单类工具类同特异性会被 cssinjs 晚注入反杀 -->
+                    <a-divider :vertical="true" style="height: auto" v-if="readUserList.length > 0 && unreadUserList.length > 0"/>
                     <div v-if="unreadUserList.length > 0">
                       <a-flex :gap="8">
                         <a-typography-title :level="5">未读</a-typography-title>
                         <a-typography-text type="secondary">{{unreadUserList.length + '/' +(readUserList.length + unreadUserList.length)}}</a-typography-text>
                       </a-flex>
-                      <div class="read-content scrollbar">
+                      <div class="max-w-[250px] max-h-[400px] scrollbar">
                         <a-flex wrap="wrap">
                           <user-show v-for="user in unreadUserList" :avatar-json="user.avatar" :nickname="user.nickname"/>
                         </a-flex>
@@ -43,7 +44,7 @@
                   </a-flex>
                   <a-empty v-else/>
               </template>
-              <a-typography-text type="secondary" style="cursor: pointer" v-if="showReadUser && notice.status === '1'">
+              <a-typography-text type="secondary" class="cursor-pointer" v-if="showReadUser && notice.status === '1'">
                 <EyeOutlined />
               </a-typography-text>
             </a-popover>
@@ -125,10 +126,3 @@ watch(() => props.noticeId, () => {
   handlePreview()
 })
 </script>
-
-<style scoped>
-.read-content {
-  max-width: 250px;
-  max-height: 400px;
-}
-</style>

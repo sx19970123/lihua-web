@@ -3,7 +3,7 @@
     <!--   左侧导航   -->
     <transition :name="themeStore.routeTransition" mode="out-in" v-if="showSider">
       <a-layout-sider :class="themeStore.siderTheme === 'light' ? 'background-glass' : ''"
-                      class="side-navigation-sider top-0 h-screen z-4 shadow-ant-ter"
+                      class="side-navigation-sider top-0 h-screen z-11 shadow-ant-ter"
                       v-show="props.showLayout"
                       :theme="themeStore.siderTheme"
                       :width="themeStore.siderWith"
@@ -21,7 +21,7 @@
     </transition>
     <!--   右侧head和content   -->
     <a-layout>
-      <a-layout-header class="side-navigation-header background-glass z-3"
+      <a-layout-header class="side-navigation-header background-glass z-10"
                        :class="{ 'sticky top-0': themeStore.affixHead }">
         <transition :name="themeStore.routeTransition" mode="out-in">
           <a-flex class="side-navigation-header-inner shadow-ant-ter"

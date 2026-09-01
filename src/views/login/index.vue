@@ -44,7 +44,7 @@ import UserLogin from "@/views/login/components/Login.vue"
 import settings from "@/settings.ts"
 import userSetup from "@/helpers/user-setup.ts"
 import {screenUnlock} from "@/helpers/lock-screen.ts"
-import {enableOverflowY} from "@/utils/scrollbar.ts"
+import {showOverflowY} from "@/utils/scrollbar.ts"
 // 显示登录卡片
 const showCard = ref<boolean>(false)
 // 显示左侧title
@@ -144,7 +144,7 @@ onMounted(() => {
   // 进入登录页的用户关闭锁屏
   screenUnlock()
   // 启用y轴滚动条，防止锁屏状态下登录失效后滚动条消失的问题
-  enableOverflowY()
+  showOverflowY()
   // 检查是否存在登录必要配置的项
   checkUserSetup()
 })

@@ -128,11 +128,12 @@ const handleWebsocketMessage = (data: SysNotice) => {
   const {id, title, type} = data
   // 新未读消息计数 + 1
   handleUnReadCount()
-  // 弹出消息通知
+  // 弹出消息通知（icon/actions 必须传 VNode：vnext 的 PureContent 把它们直接作为 children 渲染，
+  // 不调用函数，传入渲染函数会被 String() 成源码文本）
   notification.open({
     title: '您有一条新' + getDictLabel(sys_notice_type.value, type),
     description: title,
-    actions: () => h( Button, {
+    actions: h( Button, {
       type: "text",
       size: "small",
       onClick: () => {
@@ -148,143 +149,147 @@ const handleWebsocketMessage = (data: SysNotice) => {
     }, {
       default: () => '查看详情'
     }),
-    icon: () => h("0" === type ? MessageOutlined : NotificationOutlined, { style: 'color: ' + themeStore.getColorPrimary()}),
+    icon: h("0" === type ? MessageOutlined : NotificationOutlined, { style: 'color: ' + themeStore.getColorPrimary()}),
     key: id
   })
 }
 
-// 初始化列表查询
-const initList = () => {
-  const open = ref<boolean>(false)
-  const loading = ref<boolean>(false)
-  // notice 列表数据
-  const userNoticeList = ref<SysUserNoticeVO[]>([])
-  // 全部数量
-  const total = ref<number>(0)
+// 下拉开关
+const open = ref<boolean>(false)
+// 列表查询中
+const loading = ref<boolean>(false)
+// notice 列表数据
+const userNoticeList = ref<SysUserNoticeVO[]>([])
+// 全部数量
+const total = ref<number>(0)
 
-  // 分页查询
-  const query = ref<SysNoticeDTO>({
-    pageNum: 1,
-    pageSize: 5,
-  })
+// 分页查询
+const query = ref<SysNoticeDTO>({
+  pageNum: 1,
+  pageSize: 5,
+})
 
-  // 处理展开关闭Notice
-  const handleChangeNoticeList = (open: boolean) => {
-    if (open) {
-      query.value.pageNum = 1
-      userNoticeList.value = []
-      // 查询列表
-      initNoticeList()
-      // 查询未读数量
-      handleUnReadCount()
+// 列表视图代号：重置视图（打开下拉/切换 tab）时递增；在途请求的响应回来时代号已变，
+// 说明视图已被后续操作重置，过期响应直接丢弃，避免旧数据 append 进新列表
+let listViewSeq = 0
+
+// 处理展开关闭Notice
+const handleChangeNoticeList = (isOpen: boolean) => {
+  if (isOpen) {
+    listViewSeq++
+    query.value.pageNum = 1
+    userNoticeList.value = []
+    // 查询列表
+    initNoticeList()
+    // 查询未读数量
+    handleUnReadCount()
+  }
+}
+
+const queryMore = () => {
+  query.value.pageNum++
+  initNoticeList()
+}
+
+// 查询star
+const queryStar = () => {
+  listViewSeq++
+  query.value.pageNum = 1
+  query.value.star = '1'
+  userNoticeList.value = []
+  initNoticeList()
+}
+
+// 查询全部
+const queryAll = () => {
+  listViewSeq++
+  query.value.pageNum = 1
+  query.value.star = undefined
+  userNoticeList.value = []
+  initNoticeList()
+}
+
+// 切换tab时查询不同数据
+const handleChangeTabs = (key: string) => {
+  switch (key) {
+    case 'ALL': {
+      queryAll()
+      break
+    }
+    case 'STAR': {
+      queryStar()
+      break
     }
   }
+}
 
-  const queryMore = () => {
-    query.value.pageNum++
-    initNoticeList()
-  }
-
-  // 查询star
-  const queryStar = () => {
-    query.value.pageNum = 1
-    query.value.star = '1'
-    userNoticeList.value = []
-    initNoticeList()
-  }
-
-  // 查询全部
-  const queryAll = () => {
-    query.value.pageNum = 1
-    query.value.star = undefined
-    userNoticeList.value = []
-    initNoticeList()
-  }
-
-  // 切换tab时查询不同数据
-  const handleChangeTabs = (key: string) => {
-    switch (key) {
-      case 'ALL': {
-        queryAll()
-        break
-      }
-      case 'STAR': {
-        queryStar()
-        break
-      }
+// 查询列表
+const initNoticeList = async () => {
+  const seq = listViewSeq
+  loading.value = true
+  try {
+    const resp = await userMessageList(query.value)
+    // 视图已被重置（重新打开/切换 tab），丢弃过期响应
+    if (seq !== listViewSeq) {
+      return
     }
-  }
-
-  // 查询列表
-  const initNoticeList = async () => {
-    loading.value = true
-    try {
-      const resp = await userMessageList(query.value)
-      if (resp.code === 200) {
-        total.value = resp.data.total
-        resp.data.records.forEach(item => {
-          // 处理标星回显
-          if (item.starFlag) {
-            item.starFlagNumber = Number.parseInt(item.starFlag)
-          }
-          // 向列表中push
-          userNoticeList.value.push(item)
-        })
-      } else {
-        message.error(resp.msg)
-      }
-    } finally {
+    if (resp.code === 200) {
+      total.value = resp.data.total
+      resp.data.records.forEach(item => {
+        // 处理标星回显
+        item.starFlagNumber = Number(item.starFlag ?? 0)
+        // 向列表中push
+        userNoticeList.value.push(item)
+      })
+    } else {
+      message.error(resp.msg)
+    }
+  } catch (e) {
+    message.error("通知列表查询失败")
+    console.error('查询通知列表出错:', e)
+  } finally {
+    if (seq === listViewSeq) {
       loading.value = false
     }
   }
+}
 
-  return {
-    open,
-    userNoticeList,
-    total,
-    loading,
-    handleChangeTabs,
-    handleChangeNoticeList,
-    queryMore
+// notice 详情 id
+const noticeId = ref<string>('')
+
+const readNoticeDetail = (readFlag: string, id: string) => {
+  // 显示详情
+  showNoticeDetail(id)
+  // 处理已读
+  if (readFlag === '0') {
+    handleRead(id)
   }
 }
-const {open, userNoticeList, total, loading, handleChangeTabs, handleChangeNoticeList, queryMore} = initList()
 
-// 初始化notice详情所需数据
-const initNoticeDetail = () => {
-  const noticeId = ref<string>('')
-
-  const readNoticeDetail = (readFlag: string, id: string) => {
-    // 显示详情
-    showNoticeDetail(id)
-    // 处理已读
-    if (readFlag === '0') {
-      handleRead(id)
-    }
-  }
-
-  // 显示消息详情
-  const showNoticeDetail = (id: string) => {
-    noticeId.value = id
-    previewModelOpen.value = true
-    open.value = false
-  }
-
-  return {
-    noticeId,
-    readNoticeDetail,
-    showNoticeDetail
-  }
+// 显示消息详情
+const showNoticeDetail = (id: string) => {
+  noticeId.value = id
+  previewModelOpen.value = true
+  open.value = false
 }
-const {noticeId, readNoticeDetail, showNoticeDetail} = initNoticeDetail()
 
 // 处理标星
 const handleStar = async (noticeId: string, value: number) => {
-  const resp = await star(noticeId, value.toString())
-  if (resp.code === 200) {
-    message.success(resp.msg)
-  } else {
-    message.error(resp.msg)
+  try {
+    const resp = await star(noticeId, value.toString())
+    if (resp.code === 200) {
+      message.success(resp.msg)
+      // 标星视图下取消标星：该条已不满足 star 过滤条件，直接移出列表并同步总数
+      if (value === 0 && query.value.star === '1') {
+        userNoticeList.value = userNoticeList.value.filter(item => item.noticeId !== noticeId)
+        total.value--
+      }
+    } else {
+      message.error(resp.msg)
+    }
+  } catch (e) {
+    message.error("标星操作失败")
+    console.error('处理标星出错:', e)
   }
 }
 // 处理已读
@@ -295,6 +300,9 @@ const handleRead = (id: string) => {
     } else {
       message.error(resp.msg)
     }
+  }).catch((e) => {
+    message.error("标记已读失败")
+    console.error('标记已读出错:', e)
   })
 }
 

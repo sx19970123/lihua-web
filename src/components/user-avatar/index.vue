@@ -20,34 +20,35 @@ import {ref, watch} from 'vue';
 import {useThemeStore} from "@/stores/theme.ts";
 
 const themeStore = useThemeStore();
-const { type, backgroundColor, value, size, url } = defineProps({
+// 接收的参数：
+// type 头像类型
+// backgroundColor 背景颜色
+// value 头像值（图标/文本）
+// size 头像尺寸
+// url 头像链接（图片）
+const {
   // 头像类型
-  type: {
-    type: String,
-    default: ''
-  },
+  type = '',
   // 背景颜色
-  backgroundColor: {
-    type: String,
-    default: ''
-  },
+  backgroundColor = '',
   // 头像值（图标/文本）
-  value: {
-    type: String,
-    default: ''
-  },
+  value = '',
   // 头像尺寸
-  size: {
-    type: Number,
-    default: 32
-  },
+  size = 32,
   // 头像链接（图片）
-  url: {
-    type: String,
-    default: ''
-  }
-});
-defineEmits(['update:type', 'update:backgroundColor', 'update:value', 'update:size', 'update:url']);
+  url = ''
+} = defineProps<{
+  // 头像类型
+  type?: string,
+  // 背景颜色
+  backgroundColor?: string,
+  // 头像值（图标/文本）
+  value?: string,
+  // 头像尺寸
+  size?: number,
+  // 头像链接（图片）
+  url?: string
+}>()
 
 // 当设置颜色为跟随系统时，获取colorPrimary设置为背景颜色
 const avatarBackgroundColor = ref<string>(backgroundColor)

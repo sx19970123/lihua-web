@@ -1,5 +1,5 @@
 <template>
-  <a-spin :spinning="spinning" tip="正在加载编辑器...">
+  <a-spin :spinning="spinning" description="正在加载编辑器...">
     <div :style="{height: height}" class="lihua-editor-container">
       <Editor :init="editorConfig"
               :key="editKey"

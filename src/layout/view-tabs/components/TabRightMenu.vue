@@ -32,12 +32,12 @@
                 <component :is="item.icon"/>
               </template>
               <a-flex :gap="40" align="space-between" justify="space-between" >
-              <span>
-                {{item.label}}
-              </span>
+                <span>
+                  {{item.label}}
+                </span>
                 <span>
                 {{ handleTime(item.openTime) }}
-              </span>
+                </span>
               </a-flex>
             </a-menu-item>
             <a-menu-item v-if="recentData.length > 0"  key="clear-recent" danger>

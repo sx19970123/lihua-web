@@ -87,8 +87,7 @@ watch(() =>[themeStore.isSmallWindow, themeStore.layoutType], () => {
 
 // 处理窗口拖动
 const handleResize = () => {
-  const isSmallWindow = document.body.offsetWidth < settings.menuToggleWidth
-  themeStore.$state.isSmallWindow = isSmallWindow
+  themeStore.$state.isSmallWindow = document.body.offsetWidth < settings.menuToggleWidth
 }
 
 // 函数防抖

@@ -22,7 +22,7 @@
       </transition>
       <!--   右侧head和content   -->
       <a-layout>
-        <a-layout-header class="drawer-navigation-header background-glass z-3"
+        <a-layout-header class="drawer-navigation-header background-glass z-10"
                          :class="{ 'sticky top-0': themeStore.affixHead }">
           <transition :name="themeStore.routeTransition" mode="out-in">
             <!--    菜单收缩-->

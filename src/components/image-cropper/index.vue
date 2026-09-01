@@ -1,27 +1,27 @@
 <template>
   <div>
     <a-flex vertical :gap="8">
-      <div :style="{ height: props.height,width: props.wight}" style="margin: auto;">
+      <div class="m-auto" :style="{height, width: wight}">
         <vue-cropper ref="cropperRef"
                      :img="img"
-                     :outputSize="props.outputSize"
-                     :outputType="props.outputType"
-                     :info="props.info"
-                     :canScale="props.canScale"
-                     :autoCrop="props.autoCrop"
-                     :autoCropWidth="props.autoCropWidth"
-                     :autoCropHeight="props.autoCropHeight"
-                     :fixedBox="props.fixedBox"
-                     :fixed="props.fixed"
-                     :fixedNumber="props.fixedNumber"
-                     :canMove="props.canMove"
-                     :canMoveBox="props.canMoveBox"
-                     :original="props.original"
-                     :centerBox="props.centerBox"
-                     :infoTrue="props.infoTrue"
-                     :full="props.full"
-                     :enlarge="props.enlarge"
-                     :mode="props.mode"
+                     :outputSize="outputSize"
+                     :outputType="outputType"
+                     :info="info"
+                     :canScale="canScale"
+                     :autoCrop="autoCrop"
+                     :autoCropWidth="autoCropWidth"
+                     :autoCropHeight="autoCropHeight"
+                     :fixedBox="fixedBox"
+                     :fixed="fixed"
+                     :fixedNumber="fixedNumber"
+                     :canMove="canMove"
+                     :canMoveBox="canMoveBox"
+                     :original="original"
+                     :centerBox="centerBox"
+                     :infoTrue="infoTrue"
+                     :full="full"
+                     :enlarge="enlarge"
+                     :mode="mode"
                      @realTime="handleRealTime"
         >
         </vue-cropper>
@@ -72,136 +72,138 @@ import {VueCropper} from "vue-cropper";
 import 'vue-cropper/dist/index.css'
 import {ref, useTemplateRef} from 'vue';
 import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
-import {message} from "@/antd-adapter";
-import type {UploadRequestOption} from "ant-design-vue/lib/vc-upload/interface";
+import {message, type UploadRequestOption} from "@/antd-adapter";
 
 const cropperRef = useTemplateRef<InstanceType<typeof VueCropper>>("cropperRef")
 
-const props = defineProps({
-  // v-modal:img 图片地址
-  img: {
-    type: String
-  },
+// 接收的参数：
+// img v-model:img 图片地址
+// outputSize 裁剪生成图片的质量
+// outputType 裁剪生成图片的格式 jpeg, png, webp
+// info 裁剪框的大小信息
+// canScale 图片是否允许滚轮缩放
+// autoCrop 是否默认生成截图框
+// autoCropWidth 默认生成截图框宽度
+// autoCropHeight 默认生成截图框高度
+// fixedBox 固定截图框大小 不允许改变
+// fixed 是否开启截图框宽高固定比例
+// fixedNumber 截图框的宽高比例 [ 宽度 , 高度 ]
+// canMove 上传图片是否可以移动
+// canMoveBox 截图框能否拖动
+// original 上传图片按照原始比例渲染
+// centerBox 截图框是否被限制在图片里面
+// infoTrue true 为展示真实输出图片宽高 false 展示看到的截图框宽高
+// full 是否输出原图比例的截图
+// enlarge 图片根据截图框输出比例倍数
+// mode 图片默认渲染方式 contain , cover, 100px, 100% auto
+// wight 画布宽度（历史拼写，对外 API 不改）
+// height 画布高度
+// realTime v-model:realTime 实时裁剪数据
+const {
+  img: imgProp,
+  outputSize = 1,
+  outputType = 'png',
+  info = true,
+  canScale = true,
+  autoCrop = true,
+  autoCropWidth = 200,
+  autoCropHeight = 200,
+  fixedBox = true,
+  fixed = true,
+  // 内联字面量：defineProps 解构默认值不能引用 script setup 局部变量（编译器提升到 setup 外会报错）
+  fixedNumber = [1, 1],
+  canMove = true,
+  canMoveBox = true,
+  original = false,
+  centerBox = true,
+  infoTrue = true,
+  full = false,
+  enlarge = 1,
+  mode = 'contain',
+  wight = '350px',
+  height = '350px',
+  realTime
+} = defineProps<{
+  // v-model:img 图片地址
+  img?: string,
   // 裁剪生成图片的质量
-  outputSize: {
-    type: Number,
-    default: 1
-  },
+  outputSize?: number,
   // 裁剪生成图片的格式 jpeg, png, webp
-  outputType: {
-    type: String,
-    default: 'png'
-  },
+  outputType?: string,
   // 裁剪框的大小信息
-  info: {
-    type: Boolean,
-    default: true
-  },
+  info?: boolean,
   // 图片是否允许滚轮缩放
-  canScale: {
-    type: Boolean,
-    default: true
-  },
+  canScale?: boolean,
   // 是否默认生成截图框
-  autoCrop: {
-    type: Boolean,
-    default: true
-  },
+  autoCrop?: boolean,
   // 默认生成截图框宽度
-  autoCropWidth: {
-    type: Number,
-    default: 200
-  },
+  autoCropWidth?: number,
   // 默认生成截图框高度
-  autoCropHeight: {
-    type: Number,
-    default: 200
-  },
+  autoCropHeight?: number,
   // 固定截图框大小 不允许改变
-  fixedBox: {
-    type: Boolean,
-    default: true
-  },
+  fixedBox?: boolean,
   // 是否开启截图框宽高固定比例
-  fixed: {
-    type: Boolean,
-    default: true
-  },
+  fixed?: boolean,
   // 截图框的宽高比例 [ 宽度 , 高度 ]
-  fixedNumber: {
-    type: Array,
-    default: () => [1, 1]
-  },
+  fixedNumber?: number[],
   // 上传图片是否可以移动
-  canMove: {
-    type: Boolean,
-    default: true
-  },
+  canMove?: boolean,
   // 截图框能否拖动
-  canMoveBox: {
-    type: Boolean,
-    default: true
-  },
+  canMoveBox?: boolean,
   // 上传图片按照原始比例渲染
-  original: {
-    type: Boolean,
-    default: false
-  },
+  original?: boolean,
   // 截图框是否被限制在图片里面
-  centerBox: {
-    type: Boolean,
-    default: true
-  },
+  centerBox?: boolean,
   // true 为展示真实输出图片宽高 false 展示看到的截图框宽高
-  infoTrue: {
-    type: Boolean,
-    default: true
-  },
+  infoTrue?: boolean,
   // 是否输出原图比例的截图
-  full: {
-    type: Boolean,
-    default: false
-  },
+  full?: boolean,
   // 图片根据截图框输出比例倍数
-  enlarge: {
-    type: Number,
-    default: 1
-  },
+  enlarge?: number,
   // 图片默认渲染方式 contain , cover, 100px, 100% auto
-  mode: {
-    type: String,
-    default: 'contain'
-  },
-  wight: {
-    type: String,
-    default: '350px'
-  },
-  height: {
-    type: String,
-    default: '350px'
-  },
-  // v-modal:realTime
-  realTime: {
-    type: Object
-  }
-});
+  mode?: string,
+  // 画布宽度（历史拼写，对外 API 不改）
+  wight?: string,
+  // 画布高度
+  height?: string,
+  // v-model:realTime 实时裁剪数据
+  realTime?: CropperDataType
+}>()
 
 /**
  * 上传的图片
  */
-const img = ref<string | null>(props.img as string)
+const img = ref<string | null>(imgProp ?? null)
+// 本组件创建的 blob URL；仅在该地址被替换/删除（父组件同步收到新值）时释放。
+// 卸载时不释放：v-model:img 下父组件仍持有该地址，本组件可能因 key 变化重建并以它为初始值。
+let ownObjectUrl: string | null = null
+
+/**
+ * 释放当前自建图片地址
+ */
+const revokeOwnObjectUrl = () => {
+  if (ownObjectUrl) {
+    URL.revokeObjectURL(ownObjectUrl)
+    ownObjectUrl = null
+  }
+}
 /**
  * 双向绑定
  */
-const emit = defineEmits(['update:realTime','update:img'])
+const emit = defineEmits<{
+  // v-model:realTime 实时裁剪数据
+  'update:realTime': [data: CropperDataType],
+  // v-model:img 图片地址（删除时为 null）
+  'update:img': [img: string | null]
+}>()
 /**
  * 供父组件获取二进制文件
  */
 defineExpose({
-  getBlob: () => {
-    return new Promise((resolve, reject)=> {
+  getBlob: (): Promise<Blob> => {
+    return new Promise<Blob>(resolve => {
       cropperRef.value.getCropBlob((data: Blob) => {
-          resolve(data)
+        resolve(data)
       })
     })
   }
@@ -224,6 +226,7 @@ const handleBeforeUpload = (file: File) => {
     message.warning("请上传图片类型文件")
     return false
   }
+  return true
 }
 
 /**
@@ -234,11 +237,12 @@ const handleCustomRequest = (uploadRequest: UploadRequestOption) => {
   if (uploadRequest) {
     const file = uploadRequest.file
     if (file instanceof Blob) {
-      const url = URL.createObjectURL(file)
-      img.value = url
-      emit('update:img', url)
+      revokeOwnObjectUrl()
+      ownObjectUrl = URL.createObjectURL(file)
+      img.value = ownObjectUrl
+      emit('update:img', ownObjectUrl)
     } else {
-      message.error("头像上传失败")
+      message.error("图片读取失败")
     }
   }
 
@@ -270,6 +274,7 @@ const changeScale = (scale: number) => {
  * 删除
  */
 const deleteImg = () => {
+  revokeOwnObjectUrl()
   img.value = null
   emit('update:img', null)
 }

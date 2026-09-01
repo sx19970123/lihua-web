@@ -114,7 +114,7 @@ import {
 } from "@/helpers/lock-screen.ts";
 import {message} from "@/antd-adapter";
 import {throttle} from 'lodash-es'
-import {disableOverflowY, enableOverflowY} from "@/utils/scrollbar.ts";
+import {hiddenOverflowY, showOverflowY} from "@/utils/scrollbar.ts";
 
 const userStore = useUserStore();
 const router = useRouter()
@@ -158,13 +158,13 @@ let startOffset = 0
 const preLock = () => {
   const lockScreen = getLockScreenInfo();
   if (!(lockScreen && lockScreen.password)) {
-    enableOverflowY()
+    showOverflowY()
     message.error("请先在个人中心配置锁屏密码")
     router.push({path: "/profile", query: {tab: "LockScreen"}})
     return;
   }
 
-  disableOverflowY()
+  hiddenOverflowY()
   openLock.value = true
   nextTick(() => {
     const element = lockMaskRef.value
@@ -257,7 +257,7 @@ const resetPreLock = () => {
 // 解锁
 const unlock = () => {
   stopBreathing()
-  enableOverflowY()
+  showOverflowY()
   const element = lockMaskRef.value
   // 播放关闭动画，关闭时移动到-120vh位置，防止快速滑动时阴影闪现
   const animation = element?.animate(
@@ -280,7 +280,7 @@ const unlock = () => {
 // 锁屏
 const lock = () => {
   stopBreathing()
-  disableOverflowY()
+  hiddenOverflowY()
   const element = lockMaskRef.value
   // 播放关闭动画
   const animate = element?.animate(
