@@ -325,7 +325,7 @@ const init = () => {
       spinStyle.value = {...spinStyle.value, opacity: 1}
     }
   }
-  // 关闭方向交接：detail/spin → overview
+  // 关闭方向交接：detail/spin → overview（重钉后的 overview 飞行像素即最终排版，直接淡入）
   const fadeCloseHandover = () => {
     overviewStyle.value = {...overviewStyle.value, opacity: 1}
     detailStyle.value = {...detailStyle.value, opacity: 0}
@@ -489,10 +489,28 @@ const init = () => {
     }
 
     const bounding = placeholderRef.value?.getBoundingClientRect()
-    // 采样两层当前缩放分量作为续降起点——须在 animateTo 取消旧动画之前读取
-    // （kill 打断的飞行中值、resize 后漂移的驻留值均自然衔接）
-    const overviewScaleNow = computedScale(overviewRef.value)
+    // 采样 detail 当前缩放分量作为续降起点——须在 animateTo 取消旧动画之前读取
+    // （kill 打断的飞行中值自然衔接）
     const detailScaleNow = computedScale(detailRef.value)
+    // 容器当前盒与占位盒同帧采样：overview 重钉后的飞行起点 = 前者 ÷ 后者（与 animateTo 的 from 值同一基准）
+    const box = containerRef.value?.getBoundingClientRect()
+    // overview 重钉成占位当前尺寸：内容按最终排版重排（complete 态它 opacity 0，跳变被交接时序遮住；
+    // kill 态占位尚未变动，重钉前后同布局，起点比例恰为当前视觉，同样无缝）。
+    // 终态即自然态：飞行落点恒为 scale(1,1)，落定帧与回流像素重合、复位零跳变——
+    // onfinish 写回的终值就是自然态，落点残留无从谈起
+    let overviewSx0 = 0
+    let overviewSy0 = 0
+    if (bounding && bounding.width > 0 && bounding.height > 0 && box && box.width > 0 && box.height > 0) {
+      overviewSx0 = box.width / bounding.width
+      overviewSy0 = props.overviewFit === 'four' ? box.height / bounding.height : overviewSx0
+      overviewStyle.value = {...overviewStyle.value, width: px(bounding.width), height: px(bounding.height)}
+      if (overviewRef.value) {
+        // 起始 transform 先行内持位（transformFlight 首帧即刻接管）
+        overviewRef.value.style.transform = props.overviewFit === 'four'
+            ? `scale(${overviewSx0}, ${overviewSy0})`
+            : `scale(${overviewSx0})`
+      }
+    }
     // 执行主要动画
     animateTo(containerRef.value, {
       width: px(bounding?.width),
@@ -512,16 +530,15 @@ const init = () => {
         emits('beforeCardClose')
         // 关闭遮罩
         showMask.value = false
-        // 内容层缩放续降（与容器同序列逐帧同步）：overview 按贴合配置（three 等比 / four 非等比），detail 恒四面贴合
+        // 内容层缩放续降（与容器同序列逐帧同步）：overview 自容器当前盒缩向占位盒，
+        // 终态即自然态 scale(1,1)（three 等比宽比驱动 / four 逐轴贴合）；detail 恒四面贴合
         // 容器圆角此刻仍在 inline（复位发生在动画结束），解析为反补偿基准
         const closeRadius = containerRef.value ? (parseFloat(getComputedStyle(containerRef.value).borderRadius) || 8) : 8
-        if (flightSrcW > 0) {
-          if (props.overviewFit === 'four' && flightSrcH > 0) {
-            transformFlight(overviewRef.value, overviewScaleNow.sx, (bounding?.width ?? flightSrcW) / flightSrcW,
-                overviewScaleNow.sy, (bounding?.height ?? flightSrcH) / flightSrcH, closeRadius)
+        if (overviewRef.value && overviewSx0 > 0) {
+          if (props.overviewFit === 'four') {
+            transformFlight(overviewRef.value, overviewSx0, 1, overviewSy0, 1, closeRadius)
           } else {
-            const overviewScaleTo = (bounding?.width ?? flightSrcW) / flightSrcW
-            transformFlight(overviewRef.value, overviewScaleNow.sx, overviewScaleTo, overviewScaleNow.sy, overviewScaleTo, closeRadius)
+            transformFlight(overviewRef.value, overviewSx0, 1, overviewSx0, 1, closeRadius)
           }
         }
         if (flightFinalW > 0 && flightFinalH > 0) {
@@ -539,9 +556,17 @@ const init = () => {
       onComplete: () => {
         // 关闭动画结束，解除关闭中标志
         closing.value = false
-        // 恢复 container 默认的静态布局；整体替换自动清除动画残留的定位/尺寸内联样式，表面与高度链由模板对象重申
+        // 恢复 container 默认的静态布局；表面与高度链由模板对象重申
         style.value = {position: 'static', ...SURFACE, height: '100%'}
-        // 各层复位：overview 回流内接管，detail/spin 层随 v-if 卸载（交接点已钳制，此刻 detail 已淡尽）
+        // 容器飞行终值（width/height/top/left/right）由 animateFromTo 的 onfinish 直写内联，
+        // :style 整体替换只回收绑定过的键、管不到这些直写值，须手动清空——
+        // 否则 ready 态卡片被钉死在关闭落点宽度，不再跟随窗口重排
+        if (containerRef.value) {
+          for (const key of ['width', 'height', 'left', 'top', 'right']) {
+            containerRef.value.style.setProperty(key, '')
+          }
+        }
+        // 各层复位：overview 回流内接管（落定帧像素与回流一致，零跳变），detail/spin 层随 v-if 卸载（交接点已钳制，此刻 detail 已淡尽）
         resetLayers()
         clearHandoverTimer()
         // 动画执行完成后，状态修改为就绪
