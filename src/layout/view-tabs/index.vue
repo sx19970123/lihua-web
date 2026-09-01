@@ -422,10 +422,8 @@ watch(() => route.path,() => {
   display: none;
 }
 
-/* 相邻卡之间 2px 缝隙分片（右卡画自己左侧的缝）。
-   排除"飞行中"的拖拽源（position:fixed 跟手，不排除缝会跟着卡片满天飞）；
-   保留占位克隆（data-dnd-placeholder）——它虽有同样的拖拽类，但槽位处的缝正由它承担 */
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab + .ant-tabs-tab:not(.view-tab-dragging:not([data-dnd-placeholder]))::before {
+/* 相邻卡之间 2px 缝隙分片（右卡画自己左侧的缝，静止态专用——拖拽期由整线接管，见下） */
+.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab + .ant-tabs-tab::before {
   content: "";
   position: absolute;
   right: calc(100% + 1px);
@@ -435,34 +433,19 @@ watch(() => route.path,() => {
   background: var(--ant-color-border-secondary);
 }
 
-/* 拖拽槽位闭合线：占位克隆被 dnd-kit 设为 visibility:hidden（槽位呈空），卡被拖走后
-   底行应补回基线（选中卡的窗口随卡闭合、线穿过原位置）；卡落回槽位时克隆移除、
-   不透明卡自然盖线，此条随之失效。
-   left/right:-1px 外扩到 border-box：克隆自身边框（与线同色，本可补位）也随 visibility
-   隐形，不外扩则左右边框列下方各留一个 1px 断点 */
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::after {
-  content: "";
-  position: absolute;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  height: 1px;
-  background: var(--ant-color-border-secondary);
+/* 拖拽期间整线顶上、分片熄灭（以占位克隆存在为界，覆盖落位飞回窗口）：
+   分片的槽位线随换位逐格跳动、缝隙片随换位 FLIP 滑行，观感嘈杂；整线是 nav 上的
+   单一静态元素，换位布局变化不影响它——全程纹丝不动。飞行卡由磨砂材质就地遮线，
+   落卡（克隆移除）瞬间切回分片、幽灵卡开窗。!important 压过缝隙片选择器的嵌套 :not 链 */
+.tab-none-padding .ant-tabs-nav:has([data-dnd-placeholder])::before {
+  display: block;
 }
-
-/* dnd-kit 给占位克隆设的是 visibility:hidden（槽位呈空），visibility 可继承——
-   克隆携带的缝隙片与上面的槽位线都会跟着隐形，须对其伪元素显式恢复可见 */
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::before,
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::after {
-  visibility: visible;
-}
-
-/* 松手闪线抑制：落位动画期间（~200ms）源卡已摘除拖拽类但占位克隆仍存续，玻璃模式下
-   飞回的透明幽灵卡会透出槽位线，形成"落卡瞬间横线一闪"。克隆的线仅在真实拖拽期间绘制——
-   判据：列表中存在"非占位的拖拽元素"（源卡），松手即消失、克隆移除前不再绘制 */
-.tab-none-padding .ant-tabs-nav-list:not(:has(.view-tab-dragging:not([data-dnd-placeholder]))) .ant-tabs-tab[data-dnd-placeholder]::before,
-.tab-none-padding .ant-tabs-nav-list:not(:has(.view-tab-dragging:not([data-dnd-placeholder]))) .ant-tabs-tab[data-dnd-placeholder]::after {
-  content: none;
+.tab-none-padding .ant-tabs-nav:has([data-dnd-placeholder]) .ant-tabs-nav-list::before,
+.tab-none-padding .ant-tabs-nav:has([data-dnd-placeholder]) .ant-tabs-nav-list::after,
+.tab-none-padding .ant-tabs-nav:has([data-dnd-placeholder]) .ant-tabs-tab::before,
+.tab-none-padding .ant-tabs-nav:has([data-dnd-placeholder]) .ant-tabs-nav-operations::before,
+.tab-none-padding .ant-tabs-nav:has([data-dnd-placeholder]) .ant-tabs-extra-content::before {
+  content: none !important;
 }
 
 /* 首尾长延伸挂在 nav-list 自身（list 左右缘即首尾卡外缘，越界部分由 wrap 裁掉）：
