@@ -437,12 +437,14 @@ watch(() => route.path,() => {
 
 /* 拖拽槽位闭合线：占位克隆被 dnd-kit 设为 visibility:hidden（槽位呈空），卡被拖走后
    底行应补回基线（选中卡的窗口随卡闭合、线穿过原位置）；卡落回槽位时克隆移除、
-   不透明卡自然盖线，此条随之失效 */
+   不透明卡自然盖线，此条随之失效。
+   left/right:-1px 外扩到 border-box：克隆自身边框（与线同色，本可补位）也随 visibility
+   隐形，不外扩则左右边框列下方各留一个 1px 断点 */
 .tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
+  left: -1px;
+  right: -1px;
   bottom: -1px;
   height: 1px;
   background: var(--ant-color-border-secondary);
