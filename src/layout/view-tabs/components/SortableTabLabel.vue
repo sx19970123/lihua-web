@@ -25,6 +25,7 @@ import {computed, onUnmounted, ref, watch} from 'vue';
 import {useSortable} from '@dnd-kit/vue/sortable';
 import type {StarViewType} from '@/api/system/view-tab/type/sys-view-tab.ts';
 import {trackModifiers} from '@/layout/view-tabs/composables/useTrackModifiers';
+import {useViewTabsStore} from '@/stores/view-tabs.ts';
 import TabPaneMenu from '@/layout/view-tabs/components/TabPaneMenu.vue';
 
 const props = defineProps<{
@@ -38,6 +39,8 @@ const emits = defineEmits<{
   cancelKeepAlive: [keys: Array<string>],
   closeViewTab: [key: string]
 }>()
+
+const viewTabsStore = useViewTabsStore()
 
 /**
  * 初始化 sortable 注册：注册权声明、页签容器解析、传感器注册与拖拽类切换
@@ -75,6 +78,8 @@ const initSortable = () => {
       index: () => props.index,
       element: tabEl,
       target: tabEl,
+      // 仅一个页签时无处可换，禁用拖拽激活（指针按下移动不进入拖拽态，点击/中键关闭不受影响）
+      disabled: () => viewTabsStore.viewTabs.length <= 1,
       // 轨道修饰器配到 sortable 级：dragOperation 的 modifiers 优先取 source.draggable 上的配置
       modifiers: trackModifiers,
       transition: {duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)'},

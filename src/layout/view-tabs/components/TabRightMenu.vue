@@ -130,7 +130,7 @@ interface RecentDataType {
   openTime: string
 }
 // 监听访问记录变化
-const recentData = ref<[RecentDataType] | []>([])
+const recentData = ref<RecentDataType[]>([])
 watch(() => viewTabsStore.viewTabs, (value) => {
   handleRecentList(value)
 },{ deep: true })
@@ -272,13 +272,6 @@ defineExpose({
   position: sticky;
   bottom: 0;
   z-index: 1;
-}
-
-/* 菜单 ul 自带 4px 边缘内边距（dropdownEdgeChildPadding）会垫在吸底项下方——
-   sticky 受包含块（ul 内容盒）钳制贴不到视口底边，滚动时列表从这 4px 缝里透出；
-   有吸底项时清掉 ul 底部内边距（顶部保留），空态 a-empty 的留白不受影响 */
-.view-tab-popup-scroll .ant-dropdown-menu:has(> .recent-clear-item) {
-  padding-bottom: 0;
 }
 
 /* 吸底遮底色用 inherit 跟随内层菜单（普通/玻璃/暗色自动匹配，弹层挂 body 下写实值不可靠），

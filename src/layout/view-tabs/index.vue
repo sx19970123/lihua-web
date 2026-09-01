@@ -1,10 +1,11 @@
 <template>
-  <DragDropProvider :sensors="sensors"
+  <DragDropProvider :manager="dndManager"
+                    :sensors="sensors"
                     @drag-start="onDragStart" @drag-end="onDragEnd"
                     @drag-over="onDragOver" @drag-move="onDragMove">
     <!--右侧留出滚动条槽安全间距（layout 满幅 100vw 后滚动条悬浮于应用右缘，约 0~17px），避免 extras 按钮被覆盖/裁切-->
     <a-tabs :activeKey="activeKey"
-            class="unselectable tab-none-padding enable-glass layout-soft-shadow"
+            class="unselectable tab-none-padding enable-glass"
             style="padding: var(--ant-padding-xs) 18px 0;"
             type="card"
             size="small"
@@ -37,7 +38,7 @@ import {computed, onMounted, ref, useTemplateRef, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import type {DragEndEvent, DragMoveEvent, DragOverEvent, DragStartEvent} from '@dnd-kit/vue'
-import {PointerActivationConstraints} from '@dnd-kit/dom'
+import {DragDropManager, PointerActivationConstraints, Scroller} from '@dnd-kit/dom'
 import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {isSortable} from '@dnd-kit/vue/sortable'
 import {isMobile} from 'is-mobile'
@@ -122,6 +123,17 @@ const routeSkip = (path: string, query?: string) => {
     router.push(path)
   }
 }
+
+/**
+ * 拖拽管理器：外部持有并禁用 Scroller（dnd-kit 拖拽自动滚动的执行方）——
+ * 页签栏恒处视口顶部 20% 的纵向滚动意图阈值带内（dnd-kit detectScrollIntent），
+ * 横向拖拽伴生的轻微纵向漂移一旦解锁 y 轴意图，页面就会被持续向上卷（左拖时尤明显）；
+ * 轨道的横向跟随由组件自身的 transform/滚轮机制负责，不需要 dnd 的 autoscroll。
+ * Scroller 是 CorePlugin：provider 重设插件表时不会注销它，disable 一次终身有效；
+ * 驱动方 AutoScroller 依赖 scroller.scroll() 的返回值，执行方失效即整链停摆
+ */
+const dndManager = new DragDropManager()
+dndManager.registry.plugins.get(Scroller)?.disable()
 
 /**
  * 初始化拖拽排序（@dnd-kit/vue）：集中定义拖拽相关的状态与方法，统一导出
@@ -377,9 +389,11 @@ watch(() => route.path,() => {
 }
 
 /* 玻璃主题把选中页签底色置透（与轨道玻璃底融合，ground-glass.css 带 !important），
-   拖拽浮层悬于任意内容之上会透底：拖拽期间以不透明容器底色压回（同 !important 下提高特异性决胜） */
+   拖拽浮层悬于任意内容之上会透底、也会透出轨道线片：拖拽期间改为玻璃材质压回——
+   半透明玻璃底 + backdrop 模糊，卡下线片被光学抹除，既非白色实底又保住线段逻辑 */
 .enable-glass .ant-tabs-tab.view-tab-dragging.ant-tabs-tab-active {
-  background: var(--ant-color-bg-container) !important;
+  background: var(--lihua-backdrop-filter-on-color) !important;
+  backdrop-filter: var(--lihua-backdrop-filter-sm);
 }
 
 /* 拖拽中的文本色钉住：不依赖 :active/:focus 伪类（换位重渲染会打断伪类导致掉色） */
@@ -400,20 +414,101 @@ watch(() => route.path,() => {
   margin-left: 0 !important;
 }
 
-/* 页签基线横线取消：header 底缘分层已由根节点投影（layout-soft-shadow）承担，再留基线会叠成双线；
-   选中页签开窗测量的配套脚本（--seg-l/--seg-r）已随之移除 */
+/* 基线分片：整线退役，线只在缝隙/首尾延伸/操作区生来画，卡片正下方不画——
+   普通模式不透明卡片盖线、视觉与整线时代一致；玻璃模式幽灵选中卡下方是真·空。
+   线行 = 卡片 border-box 底行 == nav 底行：缝隙片挂在卡上（bottom:-1px 落进底边框行），
+   首尾延伸挂 nav-list（bottom:0），越界部分由 nav-wrap overflow:hidden 裁掉正合所需 */
 .tab-none-padding .ant-tabs-nav::before {
   display: none;
+}
+
+/* 相邻卡之间 2px 缝隙分片（右卡画自己左侧的缝）。
+   排除"飞行中"的拖拽源（position:fixed 跟手，不排除缝会跟着卡片满天飞）；
+   保留占位克隆（data-dnd-placeholder）——它虽有同样的拖拽类，但槽位处的缝正由它承担 */
+.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab + .ant-tabs-tab:not(.view-tab-dragging:not([data-dnd-placeholder]))::before {
+  content: "";
+  position: absolute;
+  right: calc(100% + 1px);
+  bottom: -1px;
+  width: 2px;
+  height: 1px;
+  background: var(--ant-color-border-secondary);
+}
+
+/* 拖拽槽位闭合线：占位克隆被 dnd-kit 设为 visibility:hidden（槽位呈空），卡被拖走后
+   底行应补回基线（选中卡的窗口随卡闭合、线穿过原位置）；卡落回槽位时克隆移除、
+   不透明卡自然盖线，此条随之失效 */
+.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--ant-color-border-secondary);
+}
+
+/* dnd-kit 给占位克隆设的是 visibility:hidden（槽位呈空），visibility 可继承——
+   克隆携带的缝隙片与上面的槽位线都会跟着隐形，须对其伪元素显式恢复可见 */
+.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::before,
+.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::after {
+  visibility: visible;
+}
+
+/* 松手闪线抑制：落位动画期间（~200ms）源卡已摘除拖拽类但占位克隆仍存续，玻璃模式下
+   飞回的透明幽灵卡会透出槽位线，形成"落卡瞬间横线一闪"。克隆的线仅在真实拖拽期间绘制——
+   判据：列表中存在"非占位的拖拽元素"（源卡），松手即消失、克隆移除前不再绘制 */
+.tab-none-padding .ant-tabs-nav-list:not(:has(.view-tab-dragging:not([data-dnd-placeholder]))) .ant-tabs-tab[data-dnd-placeholder]::before,
+.tab-none-padding .ant-tabs-nav-list:not(:has(.view-tab-dragging:not([data-dnd-placeholder]))) .ant-tabs-tab[data-dnd-placeholder]::after {
+  content: none;
+}
+
+/* 首尾长延伸挂在 nav-list 自身（list 左右缘即首尾卡外缘，越界部分由 wrap 裁掉）：
+   与具体卡片解耦——不随拖拽源飞行、不依赖谁是首卡/尾卡（列表末尾恒跟 ink-bar，
+   :last-child 类选择器选不中卡），换位/滚轮/占位克隆全程稳定 */
+.tab-none-padding .ant-tabs-nav-list::before,
+.tab-none-padding .ant-tabs-nav-list::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  height: 1px;
+  width: 9999px;
+  background: var(--ant-color-border-secondary);
+}
+.tab-none-padding .ant-tabs-nav-list::before {
+  right: 100%;
+}
+.tab-none-padding .ant-tabs-nav-list::after {
+  left: 100%;
+}
+
+/* wrap 之后两区各自补线（原整线一直画到 nav 右缘）；
+   extra 需 stretch+flex 居中保持按钮竖直位置不变，同时盒子满高、线落位 nav 底行。
+   operations 的 position 必须让过 hidden 态：antd 靠 -hidden 类将其 absolute 脱流，
+   强设 relative 会让隐形盒子占位，其内不可见的 ::before 造成线段空缺 */
+.tab-none-padding .ant-tabs-nav .ant-tabs-nav-operations:not(.ant-tabs-nav-operations-hidden),
+.tab-none-padding .ant-tabs-nav .ant-tabs-extra-content {
+  position: relative;
+}
+.tab-none-padding .ant-tabs-nav .ant-tabs-extra-content {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+.tab-none-padding .ant-tabs-nav .ant-tabs-nav-operations:not(.ant-tabs-nav-operations-hidden)::before,
+.tab-none-padding .ant-tabs-nav .ant-tabs-extra-content::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--ant-color-border-secondary);
 }
 
 .tab-none-padding {
   .ant-tabs-tab {
     padding: 0 !important;
   }
-
-}
-
-.tab-none-padding .ant-tabs-ink-bar {
-  visibility: hidden !important;
 }
 </style>

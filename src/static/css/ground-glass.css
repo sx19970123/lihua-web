@@ -23,6 +23,19 @@
             background: var(--lihua-alpha-0) !important;
             border-bottom-color: var(--lihua-alpha-0) !important;
         }
+        /* 未选中页签仅在被拖拽期间加磨砂：底色保持组件原生 token（半透明 4% 白晕），
+           只在 .view-tab-dragging 存在时叠 backdrop 模糊，松手类摘除、磨砂即消除；
+           飞行时由模糊抹除卡下线片，与选中卡拖拽中的玻璃压回同一时序 */
+        .ant-tabs-tab.view-tab-dragging:not(.ant-tabs-tab-active) {
+            backdrop-filter: var(--lihua-backdrop-filter-sm);
+        }
+
+        /* 拖拽卡禁用过渡（!important 压过 dnd-kit 内联 --dnd-transition 派生的 all 过渡）：
+           all 会把 backdrop-filter 一并纳入，拖拽中每帧的样式重写使过渡永远停在起点，
+           磨砂形同未生效。落位动画在松手摘类之后发生，届时本规则不再命中、dnd 过渡接管，不受影响 */
+        .ant-tabs-tab.view-tab-dragging {
+            transition: none !important;
+        }
     }
 
     /* 下拉菜单虚化 */
