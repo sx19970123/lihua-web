@@ -16,10 +16,10 @@
       </div>
     </template>
     <template #detail>
-      <a-card class="scrollbar">
+      <div class="scrollbar" style="padding: var(--ant-padding-lg)">
         <a-typography-title :level="4">营业额明细</a-typography-title>
         <a-table :columns="columns" :data-source="dataSource" :pagination="false" size="middle"/>
-      </a-card>
+      </div>
     </template>
   </expandable-card>
 </template>
@@ -58,9 +58,8 @@ const dataSource = [
 
 <style scoped>
 .stat-card {
-  height: 110px;
-  padding: var(--ant-padding);
-  border-radius: var(--ant-border-radius-lg);
+  /* 高度由内容自然撑起；圆角/边框/阴影由 expandable-card 表面接管——插槽内容按契约不写这些 */
+  padding: var(--ant-padding-lg);
   color: #fff;
   display: flex;
   flex-direction: column;

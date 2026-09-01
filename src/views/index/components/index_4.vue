@@ -6,16 +6,16 @@
              :expanded-height="610"
   >
     <template #overview>
-      <a-card :body-style="{height: '100px'}" class="card-background">
+      <div class="card-background" style="height: 108px; padding: var(--ant-padding-lg); box-sizing: border-box">
         <a-typography-title :level="4" ellipsis>前端</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">当前Vue版本为 </a-typography-text>
           <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{versionInfo.vueVersion}}</a-typography-text>
         </a-typography-text>
-      </a-card>
+      </div>
     </template>
     <template #detail>
-      <a-card class="scrollbar card-background" id="test">
+      <div class="scrollbar card-background" style="padding: var(--ant-padding-lg)">
         <a-typography-title :level="4" ellipsis>前端</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">当前Vue版本为 </a-typography-text>
@@ -50,8 +50,7 @@
             <a-descriptions-item label="图片裁剪工具">vue-cropper</a-descriptions-item>
           </a-descriptions>
         </div>
-      </a-card>
-
+      </div>
     </template>
   </expandable-card>
 </template>

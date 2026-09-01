@@ -1,13 +1,13 @@
 <template>
   <expandable-card
-             style="width: 100%"
+             style="width: 100%; height: 100%"
              :hover-scale="1.01"
              :expanded-width="600"
              :expanded-height="610"
              @beforeCardClose="resetContent"
   >
     <template #overview>
-      <a-card :body-style="{height: '263px'}" class="card-background">
+      <div class="card-background" style="padding: var(--ant-padding-lg)">
         <a-typography-title :level="4" ellipsis>更新日志</a-typography-title>
         <a-flex vertical>
           <a-typography-text ellipsis type="secondary">
@@ -26,10 +26,10 @@
             ...
           </a-typography-text>
         </a-flex>
-      </a-card>
+      </div>
     </template>
     <template #detail>
-      <a-card class="card-background">
+      <div class="card-background scrollbar" style="padding: var(--ant-padding-lg)">
         <a-typography-title :level="4" ellipsis>更新日志</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">最新版本为：</a-typography-text>
@@ -61,7 +61,7 @@
             </a-button>
           </a-flex>
         </div>
-      </a-card>
+      </div>
     </template>
   </expandable-card>
 </template>

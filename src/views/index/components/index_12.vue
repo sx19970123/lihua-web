@@ -7,17 +7,17 @@
         :expanded-height="610"
     >
       <template #overview>
-        <a-card class="card-background" :body-style="{height: '124px'}">
+        <div class="card-background" style="height: 124px; padding: var(--ant-padding-lg); box-sizing: border-box">
           <a-typography-title :level="4" ellipsis style="margin-bottom: 10px">免费开源</a-typography-title>
           <a-typography-text ellipsis type="secondary">
             <a-typography-text type="secondary">基于</a-typography-text>
             <a-typography-text :style="{color:themeStore.getColorPrimary()}">MIT</a-typography-text>
             <a-typography-text type="secondary">开源协议</a-typography-text>
           </a-typography-text>
-        </a-card>
+        </div>
       </template>
       <template #detail>
-        <a-card class="scrollbar card-background" id="test">
+        <div class="scrollbar card-background" style="padding: var(--ant-padding-lg)">
           <a-typography-title :level="4" ellipsis>免费开源</a-typography-title>
           <a-typography-text ellipsis type="secondary">
             <a-typography-text type="secondary">基于</a-typography-text>
@@ -29,7 +29,7 @@
             <a-typography-text type="secondary">免费全开源且可商用，无版权问题</a-typography-text>
             <img src="../static/bq.png" style="width: 100%;border-radius: var(--ant-border-radius-lg);margin-top: var(--ant-margin-xs)" alt=""/>
           </div>
-        </a-card>
+        </div>
       </template>
     </expandable-card>
   </div>

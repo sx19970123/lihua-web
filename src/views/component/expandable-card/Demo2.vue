@@ -10,18 +10,18 @@
                      style="width: 300px"
     >
       <template #overview>
-        <a-card>
+        <div style="height: 108px; padding: var(--ant-padding-lg); box-sizing: border-box">
           <a-typography-title>
             这里是封面
           </a-typography-title>
-        </a-card>
+        </div>
       </template>
       <template #detail>
-        <a-card>
+        <div style="height: 108px; padding: var(--ant-padding-lg); box-sizing: border-box">
           <a-typography-title>
             这里是展开
           </a-typography-title>
-        </a-card>
+        </div>
       </template>
     </expandable-card>
 </template>

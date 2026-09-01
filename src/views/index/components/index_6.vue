@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <a-card title="后端相关依赖文档">
+  <div style="height: 100%">
+    <a-card title="后端相关依赖文档" style="height: 100%">
       <a-card-grid>
         <a-typography-link ellipsis href="https://spring.io/projects/spring-boot" target="_blank">
           <img src="../static/spring-boot.png" style="width: 16px;height: 16px;margin-right: var(--ant-margin-xxs)"/>

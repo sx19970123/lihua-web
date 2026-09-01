@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- 展示 overview 和 detail 的容器；overflow-hidden 使过渡期对最终尺寸的 detail 呈"揭示"效果 -->
+    <!-- 展示 overview 和 detail 的容器；表面（圆角/阴影/边框/底色）由组件常驻提供，overflow-hidden 裁切内容 -->
     <div class="z-1001 overflow-hidden"
          ref="containerRef"
          :style="style"
@@ -8,17 +8,16 @@
          @mouseover="handleMouseOverCard"
          @mouseleave="handleMouseLeaveCard"
     >
-      <!-- overview 层：ready 态在流内撑起卡片自然尺寸；过渡期钉源排版宽 + zoom 等比缩放，充当 middle 时内容不带外部边框/阴影 -->
+      <!-- overview 层：ready 态在流内撑起卡片自然尺寸；过渡期钉源排版尺寸 + 缩放飞行 -->
       <div ref="overviewRef"
            class="transition-opacity"
-           :class="showStatus === 'ready' ? '' : 'as-middle'"
            :style="overviewStyle">
         <slot name="overview"></slot>
       </div>
       <!-- detail 层：过渡期挂载，按最终尺寸渲染（显式宽高），被容器裁切，与 overview 相交渐变 -->
       <div v-if="showStatus !== 'ready'"
            ref="detailRef"
-           class="absolute top-0 left-0 transition-opacity as-middle"
+           class="absolute top-0 left-0 transition-opacity"
            :style="detailStyle">
         <slot name="detail"></slot>
       </div>
@@ -78,6 +77,17 @@ const TRANSITION = {
 
 // 数值转 px 字符串
 const px = (value?: number) => value === undefined ? undefined : value + 'px'
+
+// 组件表面：圆角 + 阴影 + 边框 + 底色，ready/飞行/落定全程常驻，零交接。
+// 契约：插槽内容只管满铺背景与排版，不写圆角/边框/阴影（写了展示异常自负）。
+// 边框用 outline：不占布局盒，宽高动画不因 1px 边框错位，且跟随圆角
+const SURFACE: CSSProperties = {
+  backgroundColor: 'var(--ant-color-bg-container)',
+  borderRadius: 'var(--ant-border-radius-lg)',
+  outline: '1px solid var(--ant-color-border-secondary)',
+  outlineOffset: '-1px',
+  boxShadow: 'var(--ant-box-shadow-tertiary)',
+}
 
 // 参与动画的 css 属性（gsap 的 scale 映射为 transform）
 const ANIMATE_PROPS = ['width', 'height', 'left', 'right', 'top', 'opacity', 'transform'] as const
@@ -188,7 +198,7 @@ const animateTo = (el: HTMLElement | null,
 // 内容横纵独立拉伸填满容器（旧版拉伸感来源）；transform-origin: 0 0
 // 已知代价（用户知情选择）：transform 走合成器栅格缓存，大倍率纵向缩放存在中段重采样闪烁风险（旧会话 index_8 雷区）
 // radius 为反补偿圆角：transform 会连带缩放 border-radius，每帧本地弧度取 R/sx、R/sy（x/y 分轴），
-// 被该帧缩放一乘后视觉弧度恒等于容器圆角——配合 as-middle 剥离内容自身圆角（内容方角），
+// 被该帧缩放一乘后视觉弧度恒等于容器圆角——插槽内容按契约为方角满铺背景，
 // 圆角完全由本层裁切承担，内容圆角的缩放漂移不再露底
 const transformFlight = (el: HTMLElement | null, sx0: number, sx1: number, sy0: number, sy1: number, radius: number) => {
   if (!el) return
@@ -295,8 +305,9 @@ const init = () => {
 
   // 展示的状态
   const showStatus = ref<StatusType>('ready')
-  // 展开后改变css定位布局
-  const style = ref<CSSProperties>({position: 'static'})
+  // 展开后改变css定位布局（表面由 SURFACE 常驻提供；height:100% 建立"根被拉伸场景"的高度链，
+  // 父级高度 auto 时百分比回退 auto，对未拉伸的消费方无影响）
+  const style = ref<CSSProperties>({position: 'static', ...SURFACE, height: '100%'})
   // 显示遮罩
   const showMask = ref<boolean>(false)
   // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
@@ -397,14 +408,12 @@ const init = () => {
         // 还原完成后采集卡片布局位置作为展开起点——点击瞬间 hover 缩放仍在生效，
         // 此时 getBoundingClientRect 返回的是放大后的包围盒（起点会偏大 hoverScale 倍）
         const bounding = containerRef.value?.getBoundingClientRect()
-        // container 设置为固定定位；过渡期提供卡片表面（与 detail 的 a-card 同底色）+ 悬浮阴影
-        //（阴影与 hover 态同源，起飞无闪变）；不整体淡入——起飞本身无缝，
-        // 且容器级淡入会淹没交接处的层间交叉淡化
+        // container 设置为固定定位；表面常驻（SURFACE），飞行悬浮态升一档阴影；
+        // 不整体淡入——起飞本身无缝，且容器级淡入会淹没交接处的层间交叉淡化
         style.value = {
           position: 'fixed',
-          backgroundColor: 'var(--ant-color-bg-container)',
-          borderRadius: 'var(--ant-border-radius-lg)',
-          boxShadow: 'var(--ant-box-shadow-tertiary)',
+          ...SURFACE,
+          boxShadow: 'var(--ant-box-shadow-secondary)',
         }
         // 获取展开后参数（宽度按视口收缩并水平居中，高度按视口适配并计算 top）
         const {width, height, top, left: side} = getExpandLayout()
@@ -420,7 +429,7 @@ const init = () => {
         const takeoffH = bounding?.height ?? srcH
         // overview 层钉源排版尺寸转为绝对定位（零重排）；detail 层以最终尺寸挂载（零重排）；
         // 两层均以 transform-origin 0 0 做缩放，视觉尺寸逐帧等于容器尺寸（几何逐帧重合）。
-        // 层带 overflow 裁切 + 每帧反补偿圆角（见 transformFlight）——配合 as-middle 剥离内容自身圆角，
+        // 层带 overflow 裁切 + 每帧反补偿圆角（见 transformFlight）——插槽内容按契约为方角满铺背景，
         // 圆角完全由层裁切承担，弧度逐帧贴合容器，内容圆角的缩放漂移不再露底
         overviewStyle.value = {
           position: 'absolute', top: '0', left: '0',
@@ -572,8 +581,8 @@ const init = () => {
         closing.value = false
         // 兜底复位展开中标志，保证回到就绪态时各标志归零
         expandPending.value = false
-        // 恢复 container 默认的静态布局，并清除展开动画残留的内联样式（含过渡期卡片表面）
-        style.value = {position: 'static', width: '', height: '', top: '', left: '', right: '', opacity: '', backgroundColor: '', borderRadius: ''}
+        // 恢复 container 默认的静态布局；整体替换自动清除动画残留的定位/尺寸内联样式，表面与高度链由模板对象重申
+        style.value = {position: 'static', ...SURFACE, height: '100%'}
         // 各层复位：overview 回流内接管，detail/spin 层随 v-if 卸载（交接点已钳制，此刻 detail 已淡尽）
         resetLayers()
         clearHandoverTimer()
@@ -700,20 +709,17 @@ const initHover = () => {
       })
     }
   }
-  // 添加 hover 样式
-  // 缩放大于1才添加缩放样式
+  // 添加 hover 样式（圆角/底色/边框由表面常驻，hover 只升一档阴影 + 指针）
   const handleAddHoverStyle = () => {
     if (props.hoverScale > 1) {
       style.value.cursor = 'pointer'
-      style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
-      style.value.borderRadius = 'var(--ant-border-radius-lg)'
+      style.value.boxShadow = 'var(--ant-box-shadow-secondary)'
     }
   }
-  // 移除 hover 样式
+  // 移除 hover 样式（阴影回落到表面常驻档）
   const handleRemoveHoverStyle = () => {
     style.value.cursor = ''
-    style.value.boxShadow = ''
-    style.value.borderRadius = ''
+    style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
   }
   return {
     hoverStatus,
@@ -811,17 +817,3 @@ watch(() => props.isComplete, (value) => {
   }
 })
 </script>
-
-<style scoped>
-/* 充当 middle 时去掉内容自带的外部边框/阴影（旧 middle 无边框特点）；
-   双写类名抬高优先级以压过 .ant-card:not(.ant-card-bordered) 的根级 boxShadowTertiary */
-.as-middle :deep(.ant-card.ant-card) {
-  border: none;
-  box-shadow: none;
-}
-/* 充当 middle 时剥离层第一个子元素的自身圆角：transform 会连带缩放圆角导致角部与容器弧度失配露底，
-   飞行期角部弧度完全由层的反补偿裁切承担（ready 态类移除，内容恢复自身圆角） */
-.as-middle > :deep(:first-child) {
-  border-radius: 0;
-}
-</style>

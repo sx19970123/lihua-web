@@ -6,16 +6,16 @@
              :expanded-height="610"
   >
     <template #overview>
-      <a-card :body-style="{height: '124px'}">
+      <div style="height: 124px; padding: var(--ant-padding-lg); box-sizing: border-box">
         <a-flex :gap="16"  align="center" style="margin-bottom: 10px">
           <img src="../static/icons8-java-logo-48.png">
           <a-typography-title :level="4" style="margin: 0" ellipsis>请作者喝一杯咖啡</a-typography-title>
         </a-flex>
         <a-typography-text type="secondary" ellipsis>如果这个项目对你有帮助，不妨支持一下作者吧~</a-typography-text>
-      </a-card>
+      </div>
     </template>
     <template #detail>
-      <a-card class="scrollbar" id="test">
+      <div class="scrollbar" style="padding: var(--ant-padding-lg)">
         <a-flex :gap="16"  align="center" style="margin-bottom: 10px">
           <img src="../static/icons8-java-logo-48.png">
           <a-typography-title :level="4" style="margin: 0" ellipsis>请作者喝一杯咖啡</a-typography-title>
@@ -26,7 +26,7 @@
           <img src="../static/wx.jpg" style="width: 250px;border-radius: var(--ant-border-radius-lg);margin-top: 30px">
           <img src="../static/zfb.jpg" style="width: 250px;border-radius: var(--ant-border-radius-lg)">
         </a-flex>
-      </a-card>
+      </div>
     </template>
   </expandable-card>
 </template>

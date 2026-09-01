@@ -7,7 +7,7 @@
       :expanded-height="610"
   >
     <template #overview>
-      <a-card :body-style="{height: '100px'}" class="card-background">
+      <div class="card-background" style="height: 108px; padding: var(--ant-padding-lg); box-sizing: border-box">
         <a-typography-title :level="4" ellipsis>关于狸花猫</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">狸花猫是一款基于</a-typography-text>
@@ -16,10 +16,10 @@
           <a-typography-text :style="{color:themeStore.getColorPrimary()}"> Vue </a-typography-text>
           <a-typography-text type="secondary">的权限管理系统</a-typography-text>
         </a-typography-text>
-      </a-card>
+      </div>
     </template>
     <template #detail>
-      <a-card class="card-background" id="test">
+      <div class="card-background scrollbar" style="padding: var(--ant-padding-lg)">
         <a-typography-title :level="4" ellipsis>关于狸花猫</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">狸花猫是一款基于</a-typography-text>
@@ -81,7 +81,7 @@
             </p>
           </a-typography-text>
         </div>
-      </a-card>
+      </div>
     </template>
   </expandable-card>
 </template>

@@ -7,7 +7,7 @@
              :expanded-height="600"
   >
     <template #overview>
-      <a-card>
+      <div style="padding: var(--ant-padding-lg)">
         <a-flex justify="space-between">
           <a-flex :gap="16">
             <user-avatar
@@ -30,12 +30,12 @@
             <a-typography-text :level="4" style="margin-top: var(--ant-margin-xxs);" type="secondary">{{daysOfWeek[new Date().getDay()]}}</a-typography-text>
           </a-flex>
         </a-flex>
-      </a-card>
+      </div>
     </template>
     <template #detail>
-      <a-card class="scrollbar" id="test" style="border: none;">
+      <div style="padding: var(--ant-padding-lg)">
 
-      </a-card>
+      </div>
     </template>
   </expandable-card>
 </template>
