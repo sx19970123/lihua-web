@@ -564,6 +564,40 @@ const init = () => {
     }
   }
 
+  // 展开（complete）态下按当前视口整体重同步展开布局——幂等：
+  // 容器四值 + detail 层钉扎 + overview 层落定 transform + 关闭飞行分母一次刷新，
+  // 消除 resize 后"层还钉着展开时刻旧尺寸"的贴边/内容不复原
+  // 仅 complete 态生效：ready 无展开态可同步，activity/kill 飞行中的值由打断续跑机制接管
+  const syncExpandedLayout = () => {
+    if (showStatus.value !== 'complete' || !containerRef.value) {
+      return
+    }
+    const {width, height, top, left} = getExpandLayout()
+    // 容器四值：left/top 走 style 绑定；width/height 直写
+    // （complete 态绑定对象无 height 键，直写不与 Vue patch 冲突，关闭复位时由模板对象重申 height）
+    style.value.left = left + 'px'
+    style.value.top = top + 'px'
+    containerRef.value.style.width = width + 'px'
+    containerRef.value.style.height = height + 'px'
+    // detail 层重钉宽高（spread 保留 opacity/transformOrigin/overflow/transitionDuration），
+    // firstChild 高度直写——普通赋值整体替换 setExpandHeight 的 !important 声明，有效
+    detailStyle.value = {...detailStyle.value, width: px(width), height: px(height)}
+    const firstChild = detailRef.value?.firstElementChild as HTMLElement | null
+    if (firstChild) {
+      firstChild.style.height = height + 'px'
+    }
+    // overview 层：钉宽 srcW 是排版身份不动，落定 transform 重算贴合新容器；
+    // 反补偿圆角不刷新——complete 态该层 opacity 0 不可见，且关闭飞行自第一帧起逐帧覆写 borderRadius
+    if (overviewRef.value && flightSrcW > 0) {
+      overviewRef.value.style.transform = props.overviewFit === 'four' && flightSrcH > 0
+          ? `scale(${width / flightSrcW}, ${height / flightSrcH})`
+          : `scale(${width / flightSrcW})`
+    }
+    // 关闭飞行的分母基准刷新为新布局值（handleClose 的兜底调用也依赖此处）
+    flightFinalW = width
+    flightFinalH = height
+  }
+
   // 处理展开完成
   const handleExpandComplete = () => {
     showStatus.value = 'complete'
@@ -589,10 +623,11 @@ const init = () => {
     keydownClose,
     handleClose,
     handleClickCard,
-    handleExpandComplete
+    handleExpandComplete,
+    syncExpandedLayout
   }
 }
-const {showStatus, showMask, closing, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
+const {showStatus, showMask, closing, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete, syncExpandedLayout} = init()
 
 
 // 悬停反馈：无缩放、无状态机——仅阴影升档 + 指针（mouseenter 不冒泡，进出各触发一次）
@@ -671,14 +706,7 @@ const windowWidthResize = () => {
     }
     // 展开状态下若 resize 引发页面回流出现滚动条，补充隐藏（Mask 打开时已隐藏过一次，此处幂等）
     hiddenOverflowY()
-    const {width, height, top, left} = getExpandLayout()
-    style.value.left = left + 'px'
-    style.value.top = top + 'px'
-    containerRef.value.style.width = width + 'px'
-    const firstChild = detailRef.value?.firstElementChild as HTMLElement | null
-    if (firstChild) {
-      firstChild.style.height = height + 'px'
-    }
+    syncExpandedLayout()
   })
 }
 
