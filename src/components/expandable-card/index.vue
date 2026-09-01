@@ -666,6 +666,13 @@ const init = () => {
         emits('afterCardClose')
         // 受控状态回写：关闭完成
         emits('update:expanded', false)
+        // 悬停态重放：Esc/受控关闭后鼠标可能仍停在卡片上（从未移出，mouseenter 不会再次派发），
+        // 依 :hover 命中补一次进入态——恢复小手、上浮与升档阴影；nextTick 等复位 patch 落地后再判定
+        nextTick(() => {
+          if (showStatus.value === 'ready' && containerRef.value?.matches(':hover')) {
+            handleMouseEnterCard()
+          }
+        })
       }
     })
   }
