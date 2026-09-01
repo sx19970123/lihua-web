@@ -1,7 +1,6 @@
 <template>
   <div>
-    <expandable-card
-               style="width: 100%"
+    <expandable-card :stretch="false" style="width: 100%"
                :expanded-width="600"
                :expanded-height="610"
     >

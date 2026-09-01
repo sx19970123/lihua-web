@@ -1,83 +1,81 @@
 <template>
-  <a-typography-title :level="4">数据卡片</a-typography-title>
-  <expandable-card
-      style="width: 300px"
-      overview-fit="four"
-      :expanded-width="720"
-      :expanded-height="600"
-  >
-    <template #overview>
-      <!-- 渐变数据卡：左上角小字指标名 + 加粗大数字 -->
-      <div class="stat-card" :style="{background: statGradient}">
-        <div class="stat-card-name">营业额</div>
-        <div class="stat-card-value">&yen; 128,430.00</div>
-        <div class="stat-card-trend">较上月 <span class="stat-card-up">&uarr; 12.6%</span></div>
-      </div>
-    </template>
-    <template #detail>
-      <div class="scrollbar" style="padding: var(--ant-padding-lg)">
-        <a-typography-title :level="4">营业额明细</a-typography-title>
-        <a-table :columns="columns" :data-source="dataSource" :pagination="false" size="middle"/>
-      </div>
-    </template>
-  </expandable-card>
+  <a-typography-title :level="4">受控展开</a-typography-title>
+  <a-typography-paragraph type="secondary">
+    v-model:expanded 由外部驱动开合（类似 Modal 的 open）：置 true 展开、置 false 关闭；点击/Esc/蒙版等内部触发同样会回写同步状态。
+  </a-typography-paragraph>
+  <a-flex :gap="16" wrap="wrap" align="flex-start">
+    <expandable-card style="width: 300px"
+                     v-model:expanded="expanded"
+                     :expanded-width="600"
+                     :expanded-height="400"
+    >
+      <template #overview>
+        <div class="stat-card" :style="{background: gradient}">
+          <div class="stat-card-name">内存占用</div>
+          <div class="stat-card-value">42%</div>
+          <div class="stat-card-trend">16.8 GB / 32 GB</div>
+        </div>
+      </template>
+      <template #detail>
+        <div class="scrollbar" style="padding: var(--ant-padding-lg)">
+          <a-typography-title :level="4">内存占用详情</a-typography-title>
+          <a-progress style="margin-top: var(--ant-margin)" :percent="42" :stroke-color="themeStore.getColorPrimary()"/>
+          <a-descriptions style="margin-top: var(--ant-margin)" :column="1" size="small" bordered>
+            <a-descriptions-item label="总计">32 GB</a-descriptions-item>
+            <a-descriptions-item label="已用">16.8 GB</a-descriptions-item>
+            <a-descriptions-item label="缓存">6.2 GB</a-descriptions-item>
+            <a-descriptions-item label="可用">15.2 GB</a-descriptions-item>
+          </a-descriptions>
+        </div>
+      </template>
+    </expandable-card>
+
+    <a-space direction="vertical" style="width: 200px">
+      <a-tag :color="expanded ? themeStore.getColorPrimary() : undefined">expanded = {{ expanded }}</a-tag>
+      <a-button type="primary" @click="expanded = true">展开</a-button>
+      <a-button @click="expanded = false">关闭</a-button>
+      <a-button @click="expanded = !expanded">切换</a-button>
+    </a-space>
+  </a-flex>
 </template>
 
 <script setup lang="ts">
 import ExpandableCard from '@/components/expandable-card/index.vue'
-import {computed} from "vue";
+import {computed, ref} from "vue";
 import {useThemeStore} from "@/stores/theme.ts";
 
-const themeStore = useThemeStore();
-// 渐变跟随主题主色，深色端点加深（明暗两套主题下文字都保持可读）
-const statGradient = computed(() => {
+const themeStore = useThemeStore()
+const gradient = computed(() => {
   const primary = themeStore.getColorPrimary()
   return `linear-gradient(135deg, ${primary}, color-mix(in srgb, ${primary} 45%, #101018))`
 })
 
-const columns = [
-  {title: '月份', dataIndex: 'month', key: 'month'},
-  {title: '订单数', dataIndex: 'orders', key: 'orders', align: 'right'},
-  {title: '营业额', dataIndex: 'amount', key: 'amount', align: 'right'},
-  {title: '环比', dataIndex: 'trend', key: 'trend', align: 'right'},
-]
-
-// 页面内 mock：近八个月营业额
-const dataSource = [
-  {key: '1', month: '2026-01', orders: 312, amount: '¥ 86,120.00', trend: '—'},
-  {key: '2', month: '2026-02', orders: 289, amount: '¥ 81,340.00', trend: '↓ 5.6%'},
-  {key: '3', month: '2026-03', orders: 356, amount: '¥ 98,740.00', trend: '↑ 21.4%'},
-  {key: '4', month: '2026-04', orders: 401, amount: '¥ 112,580.00', trend: '↑ 14.0%'},
-  {key: '5', month: '2026-05', orders: 388, amount: '¥ 108,920.00', trend: '↓ 3.2%'},
-  {key: '6', month: '2026-06', orders: 437, amount: '¥ 119,460.00', trend: '↑ 9.7%'},
-  {key: '7', month: '2026-07', orders: 462, amount: '¥ 114,070.00', trend: '↓ 4.5%'},
-  {key: '8', month: '2026-08', orders: 515, amount: '¥ 128,430.00', trend: '↑ 12.6%'},
-]
+// 受控状态：外部置 true/false 即可驱动卡片开合
+const expanded = ref(false)
 </script>
 
 <style scoped>
 .stat-card {
-  /* 高度由内容自然撑起；圆角/边框/阴影由 expandable-card 表面接管——插槽内容按契约不写这些 */
   padding: var(--ant-padding-lg);
   color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
+
 .stat-card-name {
   font-size: var(--ant-font-size-sm);
   opacity: .85;
 }
+
 .stat-card-value {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: .5px;
 }
+
 .stat-card-trend {
   font-size: var(--ant-font-size-sm);
   opacity: .85;
-}
-.stat-card-up {
-  font-weight: 600;
 }
 </style>
