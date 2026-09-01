@@ -97,6 +97,18 @@ const SURFACE: CSSProperties = {
 // 参与动画的 css 属性（gsap 的 scale 映射为 transform）
 const ANIMATE_PROPS = ['width', 'height', 'left', 'right', 'top', 'opacity', 'transform'] as const
 
+// ready 态样式（init 初值与关闭复位共用）：表面 + 高度链 + 悬停过渡。
+// 过渡只挂 box-shadow/transform——容器飞行的 onfinish 会直写布局内联值（width/height/top/left），
+// 挂到布局属性会让落定值被过渡拖出漂移尾
+const READY_STYLE: CSSProperties = {
+  position: 'static',
+  ...SURFACE,
+  height: '100%',
+  transitionProperty: 'box-shadow, transform',
+  transitionTimingFunction: 'ease-out',
+  transitionDuration: '180ms',
+}
+
 // 进行中的动画集合（容器主动画 + 内容层 zoom 动画），新飞行开始前全部取消
 // （对应 gsap 被 kill 后不再触发 onComplete；zoom 随容器一并取消，打断时由新飞行从计算值续跑）
 let activeAnimations: Animation[] = []
@@ -304,9 +316,9 @@ const init = () => {
 
   // 展示的状态
   const showStatus = ref<StatusType>('ready')
-  // 展开后改变css定位布局（表面由 SURFACE 常驻提供；height:100% 建立"根被拉伸场景"的高度链，
-  // 父级高度 auto 时百分比回退 auto，对未拉伸的消费方无影响）
-  const style = ref<CSSProperties>({position: 'static', ...SURFACE, height: '100%'})
+  // 展开后改变css定位布局（ready 态取 READY_STYLE：表面常驻、height:100% 建立"根被拉伸场景"
+  // 的高度链——父级高度 auto 时百分比回退 auto，对未拉伸的消费方无影响；悬停过渡见其定义）
+  const style = ref<CSSProperties>({...READY_STYLE})
   // 显示遮罩
   const showMask = ref<boolean>(false)
   // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
@@ -561,8 +573,9 @@ const init = () => {
       onComplete: () => {
         // 关闭动画结束，解除关闭中标志
         closing.value = false
-        // 恢复 container 默认的静态布局；表面与高度链由模板对象重申
-        style.value = {position: 'static', ...SURFACE, height: '100%'}
+        // 恢复 container 默认的静态布局（READY_STYLE：表面与高度链重申 + 悬停过渡恢复）；
+        // style 为全新对象，模板 diff 时旧绑定键（transform/cursor 等悬停残留）自动清除
+        style.value = {...READY_STYLE}
         // 容器飞行终值（width/height/top/left/right）由 animateFromTo 的 onfinish 直写内联，
         // :style 整体替换只回收绑定过的键、管不到这些直写值，须手动清空——
         // 否则 ready 态卡片被钉死在关闭落点宽度，不再跟随窗口重排
@@ -654,13 +667,25 @@ const init = () => {
 const {showStatus, showMask, closing, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete, syncExpandedLayout} = init()
 
 
-// 悬停反馈：无缩放、无状态机——仅阴影升档 + 指针（mouseenter 不冒泡，进出各触发一次）
+// 悬停上浮：位移 + 阴影升档，配 READY_STYLE 的 box-shadow/transform 过渡形成连续浮起感；
+// 仅 ready 态生效——展开后容器是覆盖层不动，门控顺带修复展开态移出鼠标会把悬浮卡阴影
+// 降到 tertiary 的旧问题（mouseenter 不冒泡，进出各触发一次）；进快出慢（过渡取目标态时长）
 const handleMouseEnterCard = () => {
+  if (showStatus.value !== 'ready') {
+    return
+  }
   style.value.cursor = 'pointer'
+  style.value.transitionDuration = '180ms'
+  style.value.transform = 'translateY(-3px)'
   style.value.boxShadow = 'var(--ant-box-shadow-secondary)'
 }
 const handleMouseLeaveCard = () => {
+  if (showStatus.value !== 'ready') {
+    return
+  }
   style.value.cursor = ''
+  style.value.transitionDuration = '240ms'
+  style.value.transform = ''
   style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
 }
 
