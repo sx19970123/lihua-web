@@ -1,14 +1,21 @@
 <template>
   <div>
     <!-- 展示 overview 和 detail 的容器；表面（圆角/阴影/边框/底色）由组件常驻提供，overflow-hidden 裁切内容 -->
+    <!-- 整卡可点：role=button + 键盘展开（Enter/Space）；展开态退出 tab 序（此时容器是承载 detail 的覆盖层，不再是按钮） -->
     <div class="z-1001 overflow-hidden"
          ref="containerRef"
+         role="button"
+         :tabindex="showStatus === 'ready' ? 0 : -1"
+         :aria-expanded="showStatus !== 'ready'"
          :style="style"
          @click="handleClickCard"
+         @keydown="handleKeydownCard"
+         @focus="handleFocusCard"
+         @blur="handleBlurCard"
          @mouseenter="handleMouseEnterCard"
          @mouseleave="handleMouseLeaveCard"
     >
-      <!-- overview 层：ready 态在流内撑起卡片自然尺寸；过渡期钉源排版尺寸 + 缩放飞行 -->
+      <!-- overview 层：ready 态在流内撑起卡片自然尺寸；展开期钉源排版尺寸、关闭期重钉占位尺寸 + 缩放飞行 -->
       <div ref="overviewRef"
            class="transition-opacity"
            :style="overviewStyle">
@@ -29,7 +36,7 @@
       </div>
     </div>
 
-    <!-- 占位元素，复刻slot:overview，会随着页面视口变化而变化，返回动画参数从该组建中获取 -->
+    <!-- 占位元素，复刻slot:overview，会随着页面视口变化而变化，返回动画参数从该组件中获取 -->
     <div v-if="showStatus !== 'ready'" class="opacity-0" ref="placeholderRef">
       <slot name="overview"></slot>
     </div>
@@ -247,14 +254,15 @@ const props = defineProps({
     type: String,
     default: 'three'
   },
-  // 自动完成，是否通过外部控制组件middle状态
-  // 设置为 false 时，可通过外部参数控制 isComplete 进行内容显示
-  // 比如异步调用时，在响应返回之前，可通过参数 将 isComplete 设置为false，这时当动画播放完成也不会显示展开后的内容
+  // 自动完成：展开动画结束后是否直接显示 detail
+  // 设置为 false 时走异步等待：动画播完停在 activity 态、居中播放 spin，
+  // 由外部通过 isComplete 控制内容显示（如异步响应返回后置 true）
   autoComplete: {
     type: Boolean,
     default: true
   },
-  // 当 autoComplete false 时，是用 isComplete 控制 middle 遮罩是否关闭
+  // 当 autoComplete 为 false 时，isComplete 置 true 触发 spin 渐隐、detail 渐显（即关闭 loading）；
+  // 关闭后应由外部在 afterCardClose 中复位为 false，供下一轮展开复用
   isComplete: {
     type: Boolean
   },
@@ -309,9 +317,7 @@ const init = () => {
   const detailStyle = ref<CSSProperties>({})
   // 异步等待层样式（透明度渐变）
   const spinStyle = ref<CSSProperties>({opacity: 0})
-  // 本次飞行的排版尺寸基准（缩放计算：内容视觉尺寸 = 排版尺寸 × scale）
-  let flightSrcW = 0
-  let flightSrcH = 0
+  // detail 关闭飞行的分母基准（缩放计算：内容视觉尺寸 = 排版尺寸 × scale；展开时随最终尺寸赋值，resize 时重同步）
   let flightFinalW = 0
   let flightFinalH = 0
   // 交接定时器（展开/关闭共用，新调度覆盖旧调度）
@@ -382,8 +388,6 @@ const init = () => {
     // 源排版尺寸（computed 布局值）——overview 钉宽高与缩放基准
     const srcW = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).width) : 0
     const srcH = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).height) : 0
-    flightSrcW = srcW
-    flightSrcH = srcH
     flightFinalW = width
     flightFinalH = height
     // 起飞视觉尺寸（bounding 实测）
@@ -494,6 +498,9 @@ const init = () => {
     const detailScaleNow = computedScale(detailRef.value)
     // 容器当前盒与占位盒同帧采样：overview 重钉后的飞行起点 = 前者 ÷ 后者（与 animateTo 的 from 值同一基准）
     const box = containerRef.value?.getBoundingClientRect()
+    // 容器圆角（inline 的 var 已解析为 px）——反补偿基准；与上面三个读取同批完成，
+    // 避免与后续样式直写交错、多付一次强制回流
+    const closeRadius = containerRef.value ? (parseFloat(getComputedStyle(containerRef.value).borderRadius) || 8) : 8
     // overview 重钉成占位当前尺寸：内容按最终排版重排（complete 态它 opacity 0，跳变被交接时序遮住；
     // kill 态占位尚未变动，重钉前后同布局，起点比例恰为当前视觉，同样无缝）。
     // 终态即自然态：飞行落点恒为 scale(1,1)，落定帧与回流像素重合、复位零跳变——
@@ -532,8 +539,6 @@ const init = () => {
         showMask.value = false
         // 内容层缩放续降（与容器同序列逐帧同步）：overview 自容器当前盒缩向占位盒，
         // 终态即自然态 scale(1,1)（three 等比宽比驱动 / four 逐轴贴合）；detail 恒四面贴合
-        // 容器圆角此刻仍在 inline（复位发生在动画结束），解析为反补偿基准
-        const closeRadius = containerRef.value ? (parseFloat(getComputedStyle(containerRef.value).borderRadius) || 8) : 8
         if (overviewRef.value && overviewSx0 > 0) {
           if (props.overviewFit === 'four') {
             transformFlight(overviewRef.value, overviewSx0, 1, overviewSy0, 1, closeRadius)
@@ -590,16 +595,17 @@ const init = () => {
   }
 
   // 展开（complete）态下按当前视口整体重同步展开布局——幂等：
-  // 容器四值 + detail 层钉扎 + overview 层落定 transform + 关闭飞行分母一次刷新，
+  // 容器四值 + detail 层钉扎 + detail 关闭飞行分母（flightFinalW/H）一次刷新，
   // 消除 resize 后"层还钉着展开时刻旧尺寸"的贴边/内容不复原
   // 仅 complete 态生效：ready 无展开态可同步，activity/kill 飞行中的值由打断续跑机制接管
+  // （overview 层无需同步：complete 态 opacity 0 不可见，关闭起点由"容器盒÷占位盒"当帧重算）
   const syncExpandedLayout = () => {
     if (showStatus.value !== 'complete' || !containerRef.value) {
       return
     }
     const {width, height, top, left} = getExpandLayout()
     // 容器四值：left/top 走 style 绑定；width/height 直写
-    // （complete 态绑定对象无 height 键，直写不与 Vue patch 冲突，关闭复位时由模板对象重申 height）
+    // （complete 态绑定对象无 height 键，直写不与 Vue patch 冲突，关闭复位时由模板对象重申）
     style.value.left = left + 'px'
     style.value.top = top + 'px'
     containerRef.value.style.width = width + 'px'
@@ -611,14 +617,7 @@ const init = () => {
     if (firstChild) {
       firstChild.style.height = height + 'px'
     }
-    // overview 层：钉宽 srcW 是排版身份不动，落定 transform 重算贴合新容器；
-    // 反补偿圆角不刷新——complete 态该层 opacity 0 不可见，且关闭飞行自第一帧起逐帧覆写 borderRadius
-    if (overviewRef.value && flightSrcW > 0) {
-      overviewRef.value.style.transform = props.overviewFit === 'four' && flightSrcH > 0
-          ? `scale(${width / flightSrcW}, ${height / flightSrcH})`
-          : `scale(${width / flightSrcW})`
-    }
-    // 关闭飞行的分母基准刷新为新布局值（handleClose 的兜底调用也依赖此处）
+    // detail 关闭飞行的分母基准刷新为新布局值
     flightFinalW = width
     flightFinalH = height
   }
@@ -663,6 +662,31 @@ const handleMouseEnterCard = () => {
 const handleMouseLeaveCard = () => {
   style.value.cursor = ''
   style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
+}
+
+// 键盘展开：div 加 role=button 浏览器不会自动合成 click，Enter/Space 手动触发
+// （Space 阻止默认滚动）；展开后焦点仍留容器上，Esc（window 级 keydownClose）关闭后可再次触发
+const handleKeydownCard = (event: KeyboardEvent) => {
+  if (event.key !== 'Enter' && event.key !== ' ') {
+    return
+  }
+  event.preventDefault()
+  handleClickCard()
+}
+
+// 键盘焦点环：SURFACE 的边框是内联 outline，优先级高于 UA 样式表的 :focus 默认描边，
+// 焦点环会被边框吞掉——:focus-visible 命中时临时换成 2px 主题色描边，失焦从 SURFACE 恢复；
+// 只对键盘聚焦生效（鼠标点击获得的焦点不画环），展开/关闭时 style 整体替换自动回到边框态
+const handleFocusCard = (event: FocusEvent) => {
+  if (!(event.target instanceof HTMLElement) || !event.target.matches(':focus-visible')) {
+    return
+  }
+  style.value.outline = '2px solid var(--ant-color-primary)'
+  style.value.outlineOffset = '0'
+}
+const handleBlurCard = () => {
+  style.value.outline = SURFACE.outline
+  style.value.outlineOffset = SURFACE.outlineOffset
 }
 
 // 依据当前视口（实时读取，无需缓存）与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
