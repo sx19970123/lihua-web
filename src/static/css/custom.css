@@ -1,4 +1,9 @@
-/* 滚动条 */
+/* 滚动条：对滚动条的干预仅限宽度与颜色，出现/消失/占位等行为完全交浏览器默认 */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--lihua-scrollbar-thumb-color);
+}
+
 .scrollbar, .sider-scrollbar {
     overflow: auto;
     scrollbar-width: thin !important;

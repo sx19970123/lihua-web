@@ -1,6 +1,7 @@
-/* layout */
+/* layout：对滚动条的干预最小化——不做恒宽 hack（100vw 含滚动条槽会向外溢出一个条宽，
+   还得配套裁剪），宽度完全随浏览器默认，滚动条出现/消失时内容自然横移（已接受） */
 .layout {
-    min-height: 100vh
+    min-height: 100vh;
 }
 
 /* content */
