@@ -229,6 +229,12 @@ const props = defineProps({
     type: Number,
     default: 1.05
   },
+  // overview 过渡期贴合方式：'three' 三面贴合（等比缩放，宽比驱动，底部按比例留白，适合内容卡片，默认）；
+  // 'four' 四面贴合（非等比拉伸填满容器，适合整面纯色/渐变背景的卡片）
+  overviewFit: {
+    type: String,
+    default: 'three'
+  },
   // 自动完成，是否通过外部控制组件middle状态
   // 设置为 false 时，可通过外部参数控制 isComplete 进行内容显示
   // 比如异步调用时，在响应返回之前，可通过参数 将 isComplete 设置为false，这时当动画播放完成也不会显示展开后的内容
@@ -298,6 +304,7 @@ const init = () => {
   const spinStyle = ref<CSSProperties>({opacity: 0})
   // 本次飞行的排版尺寸基准（缩放计算：内容视觉尺寸 = 排版尺寸 × scale）
   let flightSrcW = 0
+  let flightSrcH = 0
   let flightFinalW = 0
   let flightFinalH = 0
   // 交接定时器（展开/关闭共用，新调度覆盖旧调度）
@@ -394,6 +401,7 @@ const init = () => {
         const srcW = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).width) : 0
         const srcH = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).height) : 0
         flightSrcW = srcW
+        flightSrcH = srcH
         flightFinalW = width
         flightFinalH = height
         // 起飞视觉尺寸（bounding 实测）
@@ -439,11 +447,15 @@ const init = () => {
               // 内容按最终高度渲染（从动画第一帧起即最终布局，文本零重排）
               setExpandHeight(height)
               // 内容层缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
-              // overview 等比缩放（宽比驱动）：上/左/右三面贴合容器，底部按原比例留白（容器表面兜底）；
-              // detail 非等比：四面贴合容器
-              const scaleFrom = takeoffW / srcW
-              const scaleTo = width / srcW
-              transformFlight(overviewRef.value, scaleFrom, scaleTo, scaleFrom, scaleTo)
+              // overview 三面贴合：等比缩放（宽比驱动），底部按比例留白由容器表面兜底；
+              // overview 四面贴合：非等比拉伸填满；detail 恒为四面贴合
+              if (props.overviewFit === 'four') {
+                transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH)
+              } else {
+                const scaleFrom = takeoffW / srcW
+                const scaleTo = width / srcW
+                transformFlight(overviewRef.value, scaleFrom, scaleTo, scaleFrom, scaleTo)
+              }
               transformFlight(detailRef.value, takeoffW / width, 1, takeoffH / height, 1)
             })
             // 交接滑块：展开动画时间 handoverExpand 处 overview → detail/spin 相交渐变
@@ -513,10 +525,15 @@ const init = () => {
         emits('beforeCardClose')
         // 关闭遮罩
         showMask.value = false
-        // 内容层缩放续降（与容器同序列逐帧同步）：overview 等比（宽比驱动），detail 非等比四面贴合
+        // 内容层缩放续降（与容器同序列逐帧同步）：overview 按贴合配置（three 等比 / four 非等比），detail 恒四面贴合
         if (flightSrcW > 0) {
-          const overviewScaleTo = (bounding?.width ?? flightSrcW) / flightSrcW
-          transformFlight(overviewRef.value, overviewScaleNow.sx, overviewScaleTo, overviewScaleNow.sy, overviewScaleTo)
+          if (props.overviewFit === 'four' && flightSrcH > 0) {
+            transformFlight(overviewRef.value, overviewScaleNow.sx, (bounding?.width ?? flightSrcW) / flightSrcW,
+                overviewScaleNow.sy, (bounding?.height ?? flightSrcH) / flightSrcH)
+          } else {
+            const overviewScaleTo = (bounding?.width ?? flightSrcW) / flightSrcW
+            transformFlight(overviewRef.value, overviewScaleNow.sx, overviewScaleTo, overviewScaleNow.sy, overviewScaleTo)
+          }
         }
         if (flightFinalW > 0 && flightFinalH > 0) {
           transformFlight(detailRef.value, detailScaleNow.sx, (bounding?.width ?? flightFinalW) / flightFinalW,
