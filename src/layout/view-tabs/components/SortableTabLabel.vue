@@ -77,7 +77,10 @@ const initSortable = () => {
       target: tabEl,
       // 轨道修饰器配到 sortable 级：dragOperation 的 modifiers 优先取 source.draggable 上的配置
       modifiers: trackModifiers,
-      transition: {duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)'},
+      // 换位让位动画归零：FLIP 滑行是 WAAPI（element.animate），CSS transition 冻结管不到；
+      // 卡片滑行会携带缝隙分片一起飞（"线段向前渲染"动画）。归零后越卡瞬时落位，片不动。
+      // 仅影响拖拽中的换位补位动画，不触碰松手后的落位飞回（dropAnimation 另有配置）
+      transition: {duration: 0, easing: 'linear'},
     }).isDragging
   }
 

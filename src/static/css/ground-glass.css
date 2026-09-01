@@ -23,18 +23,14 @@
             background: var(--lihua-alpha-0) !important;
             border-bottom-color: var(--lihua-alpha-0) !important;
         }
-        /* 拖拽期（整线模式下）全部页签玻璃压回为磨砂芯片：玻璃下未选中卡仅 4% 白晕、
-           幽灵选中卡全透，nav 整线会从所有卡底透出（满条实线、窗口填线）——压成磨砂后
-           卡身遮线，整线只在缝隙/槽位处可见，与静止分片观感一致且整线静态无跳动。
-           以占位克隆存在为界（覆盖松手后的落位飞回窗口），飞行卡不依赖会被摘除的
-           .view-tab-dragging 类——磨砂保持到落卡当帧，随后恢复幽灵开窗，无闪线。
-           transition:none 让磨砂与整线同帧即挂：否则背景色走 antd 的 all 过渡渐入，
-           头两帧磨砂未起、整线已亮，会从幽灵窗口透出闪现；落卡时本规则失配、
-           过渡恢复，磨砂退场仍为柔和渐变（硬进软出） */
-        .ant-tabs-nav:has([data-dnd-placeholder]) .ant-tabs-tab {
-            background: var(--lihua-backdrop-filter-on-color) !important;
+        /* 拖拽期只磨砂"被拖动的那张卡"，纯 backdrop 模糊、不改背景色——
+           卡身保持原默认底色（未选中 4% 白晕 / 幽灵选中卡全透），其余静止卡零改动。
+           双钩子并用：.view-tab-dragging 类由拖起回调挂上（最早一帧即生效），
+           [data-dnd-dragging] 属性由 dnd 挂上并存续到落位（覆盖松手后的飞回段）。
+           磨砂同时柔化飞行卡身下掠过/落回的基线分片，落卡瞬间无线条闪变 */
+        .ant-tabs-tab.view-tab-dragging,
+        .ant-tabs-tab[data-dnd-dragging] {
             backdrop-filter: var(--lihua-backdrop-filter-sm);
-            transition: none;
         }
 
         /* 拖拽卡禁用过渡（!important 压过 dnd-kit 内联 --dnd-transition 派生的 all 过渡）：
