@@ -24,7 +24,7 @@
       <a-layout-header class="side-navigation-header background-glass z-10"
                        :class="{ 'sticky top-0': themeStore.affixHead }">
         <transition :name="themeStore.routeTransition" mode="out-in">
-          <a-flex class="side-navigation-header-inner shadow-ant-ter"
+          <a-flex class="side-navigation-header-inner layout-soft-shadow"
                   :style="{'padding-left': !showSider ? 'var(--lihua-layout-head-space)' : 0}"
                   align="center"
                   gap="middle"

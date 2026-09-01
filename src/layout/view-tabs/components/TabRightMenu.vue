@@ -40,7 +40,7 @@
                 </span>
               </a-flex>
             </a-menu-item>
-            <a-menu-item v-if="recentData.length > 0"  key="clear-recent" danger>
+            <a-menu-item v-if="recentData.length > 0"  key="clear-recent" class="recent-clear-item" danger>
               <div class="text-center">
                 <ClearOutlined /> 清空最近使用
               </div>
@@ -264,5 +264,26 @@ defineExpose({
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--lihua-scrollbar-thumb-color);
+}
+
+/* "清空最近使用"吸底常驻：菜单项必须保持为 a-sub-menu 直接子节点（见上），
+   无法另设滚动容器，用 sticky 把清空项钉在滚动视口底部，滚动只作用于其上方的最近列表 */
+.view-tab-popup-scroll .ant-dropdown-menu .ant-dropdown-menu-item.recent-clear-item {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* 菜单 ul 自带 4px 边缘内边距（dropdownEdgeChildPadding）会垫在吸底项下方——
+   sticky 受包含块（ul 内容盒）钳制贴不到视口底边，滚动时列表从这 4px 缝里透出；
+   有吸底项时清掉 ul 底部内边距（顶部保留），空态 a-empty 的留白不受影响 */
+.view-tab-popup-scroll .ant-dropdown-menu:has(> .recent-clear-item) {
+  padding-bottom: 0;
+}
+
+/* 吸底遮底色用 inherit 跟随内层菜单（普通/玻璃/暗色自动匹配，弹层挂 body 下写实值不可靠），
+   且只作用于非 hover 态，把 hover 让给组件库 danger 项原生的"实心红底 + 白字"悬停反馈 */
+.view-tab-popup-scroll .ant-dropdown-menu .ant-dropdown-menu-item.recent-clear-item:not(:hover) {
+  background-color: inherit;
 }
 </style>

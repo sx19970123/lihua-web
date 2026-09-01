@@ -11,6 +11,19 @@
 }
 
 /**
+   布局横向骨架（head 行 / 顶部 header / 页签栏）的轻量投影：亮色下 antd 阴影 token 在近白背景上
+   偏"成线"，手写一档更低的存在感；暗色下 token 值实测正合适，直接跟随（与侧栏一致）。
+   纵向侧栏两种模式均用 shadow-ant-ter，不在此列
+ */
+.layout-soft-shadow {
+    box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme = 'dark'] .layout-soft-shadow {
+    box-shadow: var(--ant-box-shadow-tertiary);
+}
+
+/**
    顶部导航菜单填充
    Menu 为多根（fragment）组件，scoped 样式无法作用于其根元素，故走全局类
    min-width: 0 解除 flex 项 min-width:auto 地板，溢出折叠（"..."）的宽度测量才能生效

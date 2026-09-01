@@ -4,7 +4,7 @@
          :class="{ 'sticky top-0': themeStore.affixHead,
                    'dark-header': themeStore.siderTheme === 'dark' && !themeStore.isSmallWindow }">
       <transition :name="themeStore.routeTransition" mode="out-in">
-        <a-layout-header class="top-navigation-layout-header relative z-10 shadow-ant-ter"
+        <a-layout-header class="top-navigation-layout-header relative z-10 layout-soft-shadow"
                          :class="{'top-navigation-header-transparent': themeStore.siderTheme !== 'dark'}"
                          v-show="props.showLayout">
           <a-flex class="top-navigation-head-inner" align="center" gap="middle">

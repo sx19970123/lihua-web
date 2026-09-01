@@ -26,7 +26,7 @@
                          :class="{ 'sticky top-0': themeStore.affixHead }">
           <transition :name="themeStore.routeTransition" mode="out-in">
             <!--    菜单收缩-->
-            <a-flex class="drawer-navigation-head shadow-ant-ter" justify="space-between" v-show="props.showLayout">
+            <a-flex class="drawer-navigation-head layout-soft-shadow" justify="space-between" v-show="props.showLayout">
               <a-flex align="center" :gap="16">
                 <!--菜单开关-->
                 <HeadCollapsed/>
