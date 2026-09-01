@@ -2,7 +2,6 @@
   <a-typography-title :level="4">数据卡片</a-typography-title>
   <expandable-card
       style="width: 300px"
-      :hover-scale="1.03"
       overview-fit="four"
       :expanded-width="720"
       :expanded-height="600"

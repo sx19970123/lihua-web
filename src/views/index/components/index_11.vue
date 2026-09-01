@@ -1,17 +1,16 @@
 <template>
   <expandable-card
-             style="width: 100%; cursor: pointer"
+             style="width: 100%"
              :is-detail-visible="false"
-             :hover-scale="1"
              :expanded-width="600"
              @card-click="handleClick"
              :expanded-height="610"
   >
     <template #overview>
-      <a-card :body-style="{height: '124px'}">
+      <div style="height: 124px; padding: var(--ant-padding-lg); box-sizing: border-box">
         <a-typography-title :level="4" ellipsis>开发文档</a-typography-title>
         <a-typography-text type="secondary" ellipsis>前端 后端 移动端</a-typography-text>
-      </a-card>
+      </div>
     </template>
   </expandable-card>
 </template>

@@ -2,7 +2,6 @@
   <a-typography-title :level="4">无middle插槽</a-typography-title>
   <expandable-card
       style="width: 300px"
-      :hover-scale="1.03"
       :expanded-width="600"
       :expanded-height="610"
   >

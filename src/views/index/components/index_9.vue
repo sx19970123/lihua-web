@@ -1,21 +1,20 @@
 <template>
   <expandable-card
-             style="width: 100%; cursor: pointer"
+             style="width: 100%"
              @card-click="handleClick"
              :is-detail-visible="false"
-             :hover-scale="1"
              :expanded-width="600"
              :expanded-height="610"
   >
     <template #overview>
-      <a-card :body-style="{height: '124px'}">
+      <div style="height: 124px; padding: var(--ant-padding-lg); box-sizing: border-box">
         <a-typography-title :level="4" ellipsis>
           <img src="https://gitee.com/static/images/logo.svg?t=158106664" alt="" style="height: 40px" v-if="themeStore.isDarkTheme">
           <img src="https://gitee.com/static/images/logo-black.svg?t=158106664" alt="" style="height: 40px" v-else>
           码云主页
         </a-typography-title>
         <a-typography-text type="secondary" ellipsis>Yukino/lihua & lihua-cloud</a-typography-text>
-      </a-card>
+      </div>
     </template>
   </expandable-card>
 </template>

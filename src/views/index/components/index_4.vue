@@ -1,7 +1,6 @@
 <template>
   <expandable-card
              style="width: 100%"
-             :hover-scale="1.03"
              :expanded-width="600"
              :expanded-height="610"
   >

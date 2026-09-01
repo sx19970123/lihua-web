@@ -5,7 +5,7 @@
          ref="containerRef"
          :style="style"
          @click="handleClickCard"
-         @mouseover="handleMouseOverCard"
+         @mouseenter="handleMouseEnterCard"
          @mouseleave="handleMouseLeaveCard"
     >
       <!-- overview 层：ready 态在流内撑起卡片自然尺寸；过渡期钉源排版尺寸 + 缩放飞行 -->
@@ -47,9 +47,7 @@ import {hiddenOverflowY} from "@/utils/scrollbar.ts";
 
 // ===== 用 Web Animations API 实现的动画时长与曲线，收拢一处便于统调 =====
 const TRANSITION = {
-  // 悬浮/缩放还原时长
-  hover: 100,
-  // 悬浮缓动
+  // 非弹簧动画的默认缓动
   easeOut: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   // 主动画弹簧参数（iPad 小组件展开手感：果断飞出、长尾滑行、无回弹）
   // 当前为临界阻尼（damping = 2√(stiffness·mass)）→ 无过冲的最快收敛曲线
@@ -169,7 +167,7 @@ const animateFromTo = (el: HTMLElement | null,
   const animation = el.animate(
       useSpring ? springFrames(fromKeyframe, toKeyframe) : [fromKeyframe, toKeyframe],
       {
-        duration: useSpring ? TRANSITION.spring.duration : (options.duration ?? TRANSITION.hover),
+        duration: useSpring ? TRANSITION.spring.duration : (options.duration ?? 0),
         easing: useSpring ? 'linear' : (options.ease ?? TRANSITION.easeOut),
       }
   )
@@ -243,11 +241,6 @@ const props = defineProps({
     type: Number,
     default: 100
   },
-  // 鼠标悬浮缩放倍率
-  hoverScale: {
-    type: Number,
-    default: 1.05
-  },
   // overview 过渡期贴合方式：'three' 三面贴合（等比缩放，宽比驱动，底部按比例留白，适合内容卡片，默认）；
   // 'four' 四面贴合（非等比拉伸填满容器，适合整面纯色/渐变背景的卡片）
   overviewFit: {
@@ -287,10 +280,8 @@ type StatusType = 'ready' | 'activity' | 'complete' | 'kill'
  * afterCardExpand    卡片展开前触后（卡片展开完成后触发）
  * beforeCardClose    卡片关闭前触发（卡片展开状态下触发关闭时触发）
  * afterCardClose     卡片关闭后触发（卡片关闭完成后触发）
- * onMouseEnter       鼠标移入卡片时触发
- * onMouseLeave       鼠标移出卡片时触发
  * */
-const emits = defineEmits(['cardClick','beforeCardExpand','afterCardExpand','beforeCardClose','afterCardClose','onMouseEnter','onMouseLeave'])
+const emits = defineEmits(['cardClick','beforeCardExpand','afterCardExpand','beforeCardClose','afterCardClose'])
 
 // 初始化ref
 const init = () => {
@@ -312,10 +303,6 @@ const init = () => {
   const showMask = ref<boolean>(false)
   // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
   const closing = ref<boolean>(false)
-  // 点击后缩放还原动画进行中标志——展开链挂在该动画的 onComplete 里，
-  // 期间禁止启动会将其取消的动画（如鼠标移出触发的缩离动画）
-  const expandPending = ref<boolean>(false)
-
   // overview 层样式：ready 态无定位（流内）；过渡期绝对定位 + 实测宽高 + 相交渐变透明度
   const overviewStyle = ref<CSSProperties>({})
   // detail 层样式：显式最终宽度（内容按最终尺寸渲染）+ 相交渐变透明度
@@ -379,122 +366,95 @@ const init = () => {
       return
     }
 
-    // 缩离动画进行中点击卡片：还原动画会取消缩离动画，其 onComplete 不再执行，
-    // 在此同步补执行移出完成逻辑，保证 onMouseEnter/onMouseLeave 严格成对
-    if (leavePending.value) {
-      leavePending.value = false
-      hoverStatus.value = 'ready'
-      handleRemoveHoverStyle()
-      emits('onMouseLeave')
-    }
-
     // 即将执行动画前触发
     emits('beforeCardExpand')
-    // 执行动画，先将缩放还原
-    animateTo(containerRef.value, {
-      transform: 'scale(1)',
+    // 采集卡片布局位置作为展开起点（无 hover 缩放，实测即精确布局盒）
+    const bounding = containerRef.value?.getBoundingClientRect()
+    // container 设置为固定定位；表面常驻（SURFACE），飞行悬浮态升一档阴影；
+    // 不整体淡入——起飞本身无缝，且容器级淡入会淹没交接处的层间交叉淡化
+    style.value = {
+      position: 'fixed',
+      ...SURFACE,
+      boxShadow: 'var(--ant-box-shadow-secondary)',
+    }
+    // 获取展开后参数（宽度按视口收缩并水平居中，高度按视口适配并计算 top）
+    const {width, height, top, left: side} = getExpandLayout()
+    // 源排版尺寸（computed 布局值）——overview 钉宽高与缩放基准
+    const srcW = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).width) : 0
+    const srcH = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).height) : 0
+    flightSrcW = srcW
+    flightSrcH = srcH
+    flightFinalW = width
+    flightFinalH = height
+    // 起飞视觉尺寸（bounding 实测）
+    const takeoffW = bounding?.width ?? srcW
+    const takeoffH = bounding?.height ?? srcH
+    // overview 层钉源排版尺寸转为绝对定位（零重排）；detail 层以最终尺寸挂载（零重排）；
+    // 两层均以 transform-origin 0 0 做缩放，视觉尺寸逐帧等于容器尺寸（几何逐帧重合）。
+    // 层带 overflow 裁切 + 每帧反补偿圆角（见 transformFlight）——插槽内容按契约为方角满铺背景，
+    // 圆角完全由层裁切承担，弧度逐帧贴合容器，内容圆角的缩放漂移不再露底
+    overviewStyle.value = {
+      position: 'absolute', top: '0', left: '0',
+      width: px(srcW), height: px(srcH),
+      transformOrigin: '0 0',
+      overflow: 'hidden',
+      opacity: 1,
+      transitionDuration: TRANSITION.fade.duration + 'ms',
+    }
+    detailStyle.value = {
+      width: px(width), height: px(height),
+      transformOrigin: '0 0',
+      overflow: 'hidden',
+      opacity: 0,
+      transitionDuration: TRANSITION.fade.duration + 'ms',
+    }
+    // spin 层无缩放，圆角直接取容器同款变量
+    spinStyle.value = {opacity: 0, borderRadius: 'var(--ant-border-radius-lg)', transitionDuration: TRANSITION.fade.duration + 'ms'}
+    // 执行主要动画（无整体淡入——层间交叉淡化是唯一的渐变，保持可感知）
+    animateFromTo(containerRef.value, {
+      width: px(bounding?.width),
+      left: px(bounding?.left),
+      right: px(bounding?.right),
+      top:  px(bounding?.top),
+    },{
+      left: px(side),
+      right: px(side),
+      top: px(top),
+      width: px(width),
+      height: px(height),
     }, {
-      duration: TRANSITION.hover,
+      spring: true,
       onStart: () => {
-        // 缩放状态设置为进行中
-        hoverStatus.value = 'activity'
-        // 标记还原动画进行中，保护其 onComplete 里的展开链不被后续动画取消
-        expandPending.value = true
-      },
-      // 缩放还原后再进行主要动画
-      onComplete: () => {
-        // 还原动画结束，展开链即将接管（主动画 onStart 会将 showStatus 置为 activity）
-        expandPending.value = false
-        // 还原完成后采集卡片布局位置作为展开起点——点击瞬间 hover 缩放仍在生效，
-        // 此时 getBoundingClientRect 返回的是放大后的包围盒（起点会偏大 hoverScale 倍）
-        const bounding = containerRef.value?.getBoundingClientRect()
-        // container 设置为固定定位；表面常驻（SURFACE），飞行悬浮态升一档阴影；
-        // 不整体淡入——起飞本身无缝，且容器级淡入会淹没交接处的层间交叉淡化
-        style.value = {
-          position: 'fixed',
-          ...SURFACE,
-          boxShadow: 'var(--ant-box-shadow-secondary)',
-        }
-        // 获取展开后参数（宽度按视口收缩并水平居中，高度按视口适配并计算 top）
-        const {width, height, top, left: side} = getExpandLayout()
-        // 源排版尺寸（computed 布局值，transform 不影响 computed 布局）——overview 钉宽高与缩放基准
-        const srcW = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).width) : 0
-        const srcH = containerRef.value ? parseFloat(getComputedStyle(containerRef.value).height) : 0
-        flightSrcW = srcW
-        flightSrcH = srcH
-        flightFinalW = width
-        flightFinalH = height
-        // 起飞视觉尺寸（bounding 实测）
-        const takeoffW = bounding?.width ?? srcW
-        const takeoffH = bounding?.height ?? srcH
-        // overview 层钉源排版尺寸转为绝对定位（零重排）；detail 层以最终尺寸挂载（零重排）；
-        // 两层均以 transform-origin 0 0 做缩放，视觉尺寸逐帧等于容器尺寸（几何逐帧重合）。
-        // 层带 overflow 裁切 + 每帧反补偿圆角（见 transformFlight）——插槽内容按契约为方角满铺背景，
-        // 圆角完全由层裁切承担，弧度逐帧贴合容器，内容圆角的缩放漂移不再露底
-        overviewStyle.value = {
-          position: 'absolute', top: '0', left: '0',
-          width: px(srcW), height: px(srcH),
-          transformOrigin: '0 0',
-          overflow: 'hidden',
-          opacity: 1,
-          transitionDuration: TRANSITION.fade.duration + 'ms',
-        }
-        detailStyle.value = {
-          width: px(width), height: px(height),
-          transformOrigin: '0 0',
-          overflow: 'hidden',
-          opacity: 0,
-          transitionDuration: TRANSITION.fade.duration + 'ms',
-        }
-        // spin 层无缩放，圆角直接取容器同款变量
-        spinStyle.value = {opacity: 0, borderRadius: 'var(--ant-border-radius-lg)', transitionDuration: TRANSITION.fade.duration + 'ms'}
-        // 执行主要动画（无整体淡入——层间交叉淡化是唯一的渐变，保持可感知）
-        animateFromTo(containerRef.value, {
-          width: px(bounding?.width),
-          left: px(bounding?.left),
-          right: px(bounding?.right),
-          top:  px(bounding?.top),
-        },{
-          left: px(side),
-          right: px(side),
-          top: px(top),
-          width: px(width),
-          height: px(height),
-        }, {
-          spring: true,
-          onStart: () => {
-            // 打开遮罩
-            showMask.value = true
-            // 状态修改为进行时
-            showStatus.value = 'activity'
-            // detail 层由 v-if 在本次状态变更后的微任务中挂载，nextTick 后才可操作其元素
-            nextTick(() => {
-              // 内容按最终高度渲染（从动画第一帧起即最终布局，文本零重排）
-              setExpandHeight(height)
-              // 容器圆角（此时 patch 已完成，var 解析为 px）——反补偿基准弧度
-              const radius = containerRef.value ? (parseFloat(getComputedStyle(containerRef.value).borderRadius) || 8) : 8
-              // 内容层缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
-              // overview 三面贴合：等比缩放（宽比驱动），底部按比例留白由容器表面兜底；
-              // overview 四面贴合：非等比拉伸填满；detail 恒为四面贴合
-              if (props.overviewFit === 'four') {
-                transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH, radius)
-              } else {
-                const scaleFrom = takeoffW / srcW
-                const scaleTo = width / srcW
-                transformFlight(overviewRef.value, scaleFrom, scaleTo, scaleFrom, scaleTo, radius)
-              }
-              transformFlight(detailRef.value, takeoffW / width, 1, takeoffH / height, 1, radius)
-            })
-            // 交接滑块：展开动画时间 handoverExpand 处 overview → detail/spin 相交渐变
-            handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handoverExpand * TRANSITION.spring.duration)
-          },
-          onComplete: () => {
-            // 展开完成：仅在 activity 状态放行（kill=被关闭打断，complete=watch 已处理过 isComplete）
-            if ((props.autoComplete || props.isComplete) && showStatus.value === 'activity') {
-              handleExpandComplete()
-            }
+        // 打开遮罩
+        showMask.value = true
+        // 状态修改为进行时
+        showStatus.value = 'activity'
+        // detail 层由 v-if 在本次状态变更后的微任务中挂载，nextTick 后才可操作其元素
+        nextTick(() => {
+          // 内容按最终高度渲染（从动画第一帧起即最终布局，文本零重排）
+          setExpandHeight(height)
+          // 容器圆角（此时 patch 已完成，var 解析为 px）——反补偿基准弧度
+          const radius = containerRef.value ? (parseFloat(getComputedStyle(containerRef.value).borderRadius) || 8) : 8
+          // 内容层缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
+          // overview 三面贴合：等比缩放（宽比驱动），底部按比例留白由容器表面兜底；
+          // overview 四面贴合：非等比拉伸填满；detail 恒为四面贴合
+          if (props.overviewFit === 'four') {
+            transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH, radius)
+          } else {
+            const scaleFrom = takeoffW / srcW
+            const scaleTo = width / srcW
+            transformFlight(overviewRef.value, scaleFrom, scaleTo, scaleFrom, scaleTo, radius)
           }
+          transformFlight(detailRef.value, takeoffW / width, 1, takeoffH / height, 1, radius)
         })
+        // 交接滑块：展开动画时间 handoverExpand 处 overview → detail/spin 相交渐变
+        handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handoverExpand * TRANSITION.spring.duration)
+      },
+      onComplete: () => {
+        // 展开完成：仅在 activity 状态放行（kill=被关闭打断，complete=watch 已处理过 isComplete）
+        if ((props.autoComplete || props.isComplete) && showStatus.value === 'activity') {
+          handleExpandComplete()
+        }
       }
     })
   }
@@ -579,8 +539,6 @@ const init = () => {
       onComplete: () => {
         // 关闭动画结束，解除关闭中标志
         closing.value = false
-        // 兜底复位展开中标志，保证回到就绪态时各标志归零
-        expandPending.value = false
         // 恢复 container 默认的静态布局；整体替换自动清除动画残留的定位/尺寸内联样式，表面与高度链由模板对象重申
         style.value = {position: 'static', ...SURFACE, height: '100%'}
         // 各层复位：overview 回流内接管，detail/spin 层随 v-if 卸载（交接点已钳制，此刻 detail 已淡尽）
@@ -588,7 +546,6 @@ const init = () => {
         clearHandoverTimer()
         // 动画执行完成后，状态修改为就绪
         showStatus.value = 'ready'
-        hoverStatus.value = 'complete'
         // 卡片关闭动画完成后抛出
         emits('afterCardClose')
       }
@@ -610,7 +567,6 @@ const init = () => {
   // 处理展开完成
   const handleExpandComplete = () => {
     showStatus.value = 'complete'
-    hoverStatus.value = 'complete'
     emits('afterCardExpand')
     // 动画结束/数据就绪时切换内容：overview/spin 渐隐，detail 渐显
     overviewStyle.value = {...overviewStyle.value, opacity: 0}
@@ -622,7 +578,6 @@ const init = () => {
     showStatus,
     showMask,
     closing,
-    expandPending,
     style,
     overviewStyle,
     detailStyle,
@@ -637,100 +592,18 @@ const init = () => {
     handleExpandComplete
   }
 }
-const {showStatus, showMask, closing, expandPending, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
+const {showStatus, showMask, closing, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete} = init()
 
 
-// 加载鼠标在卡片悬浮相关逻辑
-const initHover = () => {
-  // 缩放状态分为 ready就绪 activity活动中 complete已完成
-  const hoverStatus = ref<StatusType>('ready')
-  // 缩离动画进行中标志——缩离动画被移入动画/点击还原动画取消时，其 onComplete
-  // （hoverStatus 复位、移除 hover 样式、抛出 onMouseLeave）不会再执行，
-  // 由取消方同步补执行该逻辑，保证 onMouseEnter/onMouseLeave 严格成对
-  const leavePending = ref<boolean>(false)
-  // 鼠标悬浮于卡片
-  const handleMouseOverCard = () => {
-    // 动画在下面三种状态时，不会触发卡片悬浮
-    if (showStatus.value === 'activity' || showStatus.value === 'kill' || showStatus.value === 'complete') {
-      return
-    }
-
-    if (hoverStatus.value === 'ready' || hoverStatus.value === 'complete') {
-      // 缩离动画进行中再次移入：移入动画会取消缩离动画，其 onComplete（含 onMouseLeave 抛出）
-      // 不再执行——在此同步补执行移出完成逻辑，保证 onMouseEnter/onMouseLeave 严格成对
-      if (leavePending.value) {
-        leavePending.value = false
-        hoverStatus.value = 'ready'
-        handleRemoveHoverStyle()
-        emits('onMouseLeave')
-      }
-      animateTo(containerRef.value, {
-        transform: `scale(${props.hoverScale})`,
-      }, {
-        duration: TRANSITION.hover,
-        onStart: () => {
-          // 鼠标悬浮时抛出方法
-          emits('onMouseEnter')
-          handleAddHoverStyle()
-          hoverStatus.value = 'activity'
-        },
-        onComplete: () => {
-          hoverStatus.value = 'complete'
-        }
-      })
-    }
-  }
-  // 鼠标从卡片移出
-  const handleMouseLeaveCard = () => {
-    if (showStatus.value === 'ready') {
-      // 点击后的缩放还原动画正在奔向 scale(1)——不可再启动缩离动画，那会取消还原动画、
-      // 中断其 onComplete 里的展开链；还原动画的终点即移出想要的视觉结果，这里仅同步完成移出逻辑
-      // （hoverStatus 保持 activity，防止窗口期内 mouseover 再次取消还原动画）
-      if (expandPending.value) {
-        handleRemoveHoverStyle()
-        emits('onMouseLeave')
-        return
-      }
-      animateTo(containerRef.value, {
-        transform: 'scale(1)',
-      }, {
-        duration: TRANSITION.hover,
-        onStart: () => {
-          // 标记缩离动画进行中（若被移入动画/点击还原动画取消，由对方同步补执行完成逻辑）
-          leavePending.value = true
-        },
-        onComplete: () => {
-          leavePending.value = false
-          hoverStatus.value = 'ready'
-          handleRemoveHoverStyle()
-          // 鼠标悬浮结束后抛出
-          emits('onMouseLeave')
-        }
-      })
-    }
-  }
-  // 添加 hover 样式（圆角/底色/边框由表面常驻，hover 只升一档阴影 + 指针）
-  const handleAddHoverStyle = () => {
-    if (props.hoverScale > 1) {
-      style.value.cursor = 'pointer'
-      style.value.boxShadow = 'var(--ant-box-shadow-secondary)'
-    }
-  }
-  // 移除 hover 样式（阴影回落到表面常驻档）
-  const handleRemoveHoverStyle = () => {
-    style.value.cursor = ''
-    style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
-  }
-  return {
-    hoverStatus,
-    leavePending,
-    handleMouseOverCard,
-    handleMouseLeaveCard,
-    handleRemoveHoverStyle
-  }
+// 悬停反馈：无缩放、无状态机——仅阴影升档 + 指针（mouseenter 不冒泡，进出各触发一次）
+const handleMouseEnterCard = () => {
+  style.value.cursor = 'pointer'
+  style.value.boxShadow = 'var(--ant-box-shadow-secondary)'
 }
-
-const {hoverStatus, leavePending, handleMouseOverCard, handleMouseLeaveCard, handleRemoveHoverStyle } = initHover()
+const handleMouseLeaveCard = () => {
+  style.value.cursor = ''
+  style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
+}
 
 // 依据当前视口（实时读取，无需缓存）与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
 // 宽度：视口容不下（展开宽度 + 两侧最小间距）时按视口收缩，之后水平居中（收缩时居中即为最小间距）

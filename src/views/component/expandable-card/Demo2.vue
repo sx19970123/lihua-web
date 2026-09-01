@@ -2,7 +2,6 @@
   <a-typography-title :level="4">异步展开</a-typography-title>
     <expandable-card :expanded-height="600"
                      :expanded-width="600"
-                     :hover-scale="1.01"
                      :auto-complete="false"
                      :is-complete="loadSuccess"
                      @before-card-expand="handleCardClick"
