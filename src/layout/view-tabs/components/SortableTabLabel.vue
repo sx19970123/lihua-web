@@ -15,13 +15,21 @@
 </template>
 
 <script lang="ts">
+import {ref} from 'vue';
+
 /** sortable 注册权声明表（模块级）：#labelRender 产物会同时流入"…"下拉（挂出同 key 的重复实例，
  *  同 id 注册互踩会使导航条页签永久失去拖拽），故先挂载的导航条实例认领 key，重复实例不注册 */
 const sortableOwners = new Map<string, object>()
+
+/** 当前拖拽源 key（模块级，index.vue 拖拽回调写入/清除）：源 sortable 的让位动画归零依据。
+ *  dnd 把源 sortable 的元素引用代理到占位克隆（ProxiedElements），换位时源 index 同步变化、
+ *  animate() 便把让位 FLIP 打在克隆身上——槽位线随换位滑行；源侧归零后克隆瞬移落位、
+ *  槽位线只随换位瞬跳，非源卡的滑行让位不受影响 */
+export const activeDragKey = ref<string | null>(null)
 </script>
 
 <script lang="ts" setup>
-import {computed, onUnmounted, ref, watch} from 'vue';
+import {computed, onUnmounted, watch} from 'vue';
 import {useSortable} from '@dnd-kit/vue/sortable';
 import type {StarViewType} from '@/api/system/view-tab/type/sys-view-tab.ts';
 import {trackModifiers} from '@/layout/view-tabs/composables/useTrackModifiers';
@@ -77,10 +85,13 @@ const initSortable = () => {
       target: tabEl,
       // 轨道修饰器配到 sortable 级：dragOperation 的 modifiers 优先取 source.draggable 上的配置
       modifiers: trackModifiers,
-      // 换位让位动画归零：FLIP 滑行是 WAAPI（element.animate），CSS transition 冻结管不到；
-      // 卡片滑行会携带缝隙分片一起飞（"线段向前渲染"动画）。归零后越卡瞬时落位，片不动。
-      // 仅影响拖拽中的换位补位动画，不触碰松手后的落位飞回（dropAnimation 另有配置）
-      transition: {duration: 0, easing: 'linear'},
+      // 换位让位滑行动画：唯一"自由飞行"的线片（被越卡携带的缝隙分片）由 index.vue
+      // 换位时点挂 view-tab-sliding 熄灭；源卡拖拽期间归零（见 activeDragKey 注释）——
+      // 克隆瞬移、槽位线只随换位瞬跳，不再滑行。
+      // 仅影响拖拽中的换位补位，不触碰松手后的落位飞回（dropAnimation 另有配置）
+      transition: () => activeDragKey.value === props.item.key
+          ? {duration: 0, easing: 'linear'}
+          : {duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)'},
     }).isDragging
   }
 

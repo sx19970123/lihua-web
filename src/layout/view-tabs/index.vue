@@ -43,7 +43,7 @@ import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {isSortable} from '@dnd-kit/vue/sortable'
 import {isMobile} from 'is-mobile'
 import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composables/useTrackModifiers";
-import SortableTabLabel from "@/layout/view-tabs/components/SortableTabLabel.vue";
+import SortableTabLabel, {activeDragKey} from "@/layout/view-tabs/components/SortableTabLabel.vue";
 import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
 
 const tabRightMenuRef = useTemplateRef<typeof TabRightMenu>('tabRightMenuRef')
@@ -188,14 +188,14 @@ const initDrag = () => {
   /** 边缘换位：被拖元素同侧边缘越过紧邻页签的布局中心线才换位（盖过一半即让位），阈值随邻居宽度缩放；
    *  边缘参考在轨道钳制下仍可达窄页签中心（中心参考下宽页签中心够不着窄页签，首尾换位死区）。
    *  槽位中心取 offsetLeft/offsetWidth 布局值——getBoundingClientRect 含轨道平移 transform，
-   *  视觉矩形随平移漂移会污染换位判定（历史版本另有让位 FLIP 中间矩形问题，该动画已归零）。
+   *  且让位滑行中的视觉矩形恰好落进边缘规则死区（历史版换位⇄回换振荡的根机），布局值两者皆免疫。
    *  每步至多换一格，换位后追帧重评至稳态——drag-move 只随指针移动触发，快速甩动后停住时
    *  未追平的换位会滞留（滞后阻尼感）；占位克隆（data-dnd-placeholder）即被拖页签的槽位 */
   const evaluateEdgeSwap = () => {
     if (!dragOrder.value || !dragSourceEl || !dragNavList || !dragSourceKey) return
     const ghostRect = dragSourceEl.getBoundingClientRect()
     const listLeft = dragNavList.getBoundingClientRect().left
-    const slots: Array<{ key: string, center: number }> = []
+    const slots: Array<{ key: string, center: number, el: HTMLElement }> = []
     for (const el of dragNavList.children) {
       if (!(el instanceof HTMLElement)) continue
       let key: string | undefined
@@ -205,7 +205,7 @@ const initDrag = () => {
         key = el.getAttribute('data-node-key') ?? undefined
       }
       if (key) {
-        slots.push({key, center: listLeft + el.offsetLeft + el.offsetWidth / 2})
+        slots.push({key, center: listLeft + el.offsetLeft + el.offsetWidth / 2, el})
       }
     }
     const srcIdx = slots.findIndex(slot => slot.key === dragSourceKey)
@@ -214,12 +214,30 @@ const initDrag = () => {
     const right = slots[srcIdx + 1]
     if (left && ghostRect.left < left.center) {
       dragOrder.value = arrayMove(dragOrder.value, srcIdx, srcIdx - 1)
+      markSliding(left.el)
     } else if (right && ghostRect.right > right.center) {
       dragOrder.value = arrayMove(dragOrder.value, srcIdx, srcIdx + 1)
+      markSliding(right.el)
     } else {
       return
     }
     requestAnimationFrame(evaluateEdgeSwap)
+  }
+
+  /** 熄片窗口计时按元素记账：连续换位时重置续期，末次滑行结束后恢复 */
+  const slideTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>()
+
+  /** 换位时点给被越邻居挂滑行标记：其缝隙分片随卡滑行会呈"线段向前渲染"（伪元素与宿主
+   *  的 WAAPI transform 一体，CSS 无法解耦）——飞行窗口内由样式规则就地熄灭。
+   *  只此一处：卡底边框与槽位线属随体运动（读作卡边缘/空位在挪），保留；
+   *  content 不走过渡，落位复位即时、无接缝。240ms = 200ms 动画 + 起帧余量 */
+  const markSliding = (el: HTMLElement) => {
+    el.classList.add('view-tab-sliding')
+    clearTimeout(slideTimers.get(el))
+    slideTimers.set(el, setTimeout(() => {
+      el.classList.remove('view-tab-sliding')
+      slideTimers.delete(el)
+    }, 240))
   }
 
   const onDragMove = (event: DragMoveEvent) => {
@@ -295,10 +313,12 @@ const initDrag = () => {
     trackReleaseTimer = setTimeout(releaseTrack, TRACK_GRACE_MS)
   }
 
-  /** 拖拽开始：快照轨道边界、上轨道锁、一次性锚定换位上下文，初始化本地顺序覆盖 */
+  /** 拖拽开始：快照轨道边界、上轨道锁、一次性锚定换位上下文，初始化本地顺序覆盖。
+   *  activeDragKey 置源 key：源 sortable 让位动画归零（占位克隆瞬移、槽位线不滑行），见 SortableTabLabel */
   const onDragStart = (event: DragStartEvent) => {
     const source = event.operation.source
     const tabEl = source?.element as HTMLElement | undefined
+    activeDragKey.value = source?.id === undefined ? null : String(source.id)
     if (tabEl) {
       // 快照轨道边界（水平 clamp 依据）
       snapshotTrackBounds(tabEl)
@@ -314,6 +334,7 @@ const initDrag = () => {
   const onDragEnd = (event: DragEndEvent) => {
     unlockTrack()
     resetTrackBounds()
+    activeDragKey.value = null
     dragOrder.value = null
     dragSourceEl = undefined
     dragNavList = undefined
@@ -445,10 +466,14 @@ watch(() => route.path,() => {
   background: var(--ant-color-border-secondary);
 }
 
-/* 换位让位动画已在 SortableTabLabel.vue 的 sortable transition 配置（duration: 0）归零：
-   卡片瞬时落位，缝隙分片/底边框/槽位线全程静止。其 FLIP 走 WAAPI（element.animate），
-   CSS transition 冻结对它无效，故不在此设规则。曾试过的"滑行熄片+三路补线"调和方案
-   见 stash（让位动画全套实验），最终因落位边框淡入无法与补线无缝衔接而整体回退 */
+/* 让位滑行熄片：换位时唯一"自由飞行"的线片是被越卡携带的缝隙分片（伪元素随宿主的
+   WAAPI 一体，CSS 无法解耦）——由 evaluateEdgeSwap 挂 view-tab-sliding 类（240ms 自摘）
+   在飞行窗口内就地熄灭；卡底边框与槽位线属随体运动，保留。
+   更彻底的调和方案（底边框置透+三路静态补线）见 stash（让位动画全套实验），
+   因落位边框 0.3s 淡入无法与补线无缝衔接而弃用 */
+.ant-tabs-tab.view-tab-sliding::before {
+  content: none !important;
+}
 
 /* dnd-kit 给占位克隆设的是 visibility:hidden（槽位呈空），visibility 可继承——
    克隆携带的缝隙片与上面的槽位线都会跟着隐形，须对其伪元素显式恢复可见 */
