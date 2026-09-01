@@ -2,15 +2,6 @@
 #nprogress .bar {
     background: var(--colorPrimary) !important;
 }
-#nprogress .spinner-icon {
-    border-top-color: var(--colorPrimary) !important;
-    border-left-color: var(--colorPrimary) !important;
-}
 #nprogress .peg {
     box-shadow: 0 0 10px var(--colorPrimary), 0 0 5px var(--colorPrimary) !important;
-}
-#nprogress .spinner {
-    /* 18px 为 spinner-icon 默认尺寸：在头部右侧留白内水平居中、头行内垂直居中 */
-    top: calc((var(--lihua-layout-height) - 18px) / 2) !important;
-    right: calc((var(--lihua-layout-head-space) - 18px) / 2) !important;
 }

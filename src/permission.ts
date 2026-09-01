@@ -9,6 +9,9 @@ import {initApp} from "@/app-init.ts";
 import {hasRouteRole} from "@/helpers/auth.ts";
 import {closeConnect, connect} from "@/utils/web-socket.ts";
 
+// 关闭右上角 spinner，只保留顶部进度条
+NProgress.configure({showSpinner: false})
+
 // 路由前置守卫（返回值风格：true 放行 / 目标位置重定向）
 router.beforeEach(async (to, from) => {
     NProgress.start()
