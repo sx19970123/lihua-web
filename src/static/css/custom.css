@@ -1,7 +1,12 @@
-/* 滚动条：对滚动条的干预仅限宽度与颜色，出现/消失/占位等行为完全交浏览器默认 */
+/* 页面滚动条隐藏：S=0 后，滚动锁定（Mask 开关时 body overflowY 切换）不再引起任何布局横移——
+   修复关闭卡片"先量落点、后复原滚动条"导致的落定向左顿挫（越靠右越明显）；
+   滚轮/触控板/键盘滚动不受影响；内部容器滚动条仍为 thin + 主题色（见下） */
 html {
-    scrollbar-width: thin;
-    scrollbar-color: var(--lihua-scrollbar-thumb-color);
+    scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+    display: none;
 }
 
 .scrollbar, .sider-scrollbar {
