@@ -1,12 +1,13 @@
 <template>
   <div>
     <!-- 展示 overview 和 detail 的容器；表面（圆角/阴影/边框/底色）由组件常驻提供，overflow-hidden 裁切内容 -->
-    <!-- 整卡可点：role=button + 键盘展开（Enter/Space）；展开态退出 tab 序（此时容器是承载 detail 的覆盖层，不再是按钮） -->
+    <!-- 整卡可点：role=button + 键盘展开（Enter/Space）；展开态退出 tab 序（此时容器是承载 detail 的覆盖层，不再是按钮）；
+         非浮起卡（elevated 判定失败，即不可展开的静态卡）无按钮语义、不进 tab 序 -->
     <div class="z-1001 overflow-hidden"
          ref="containerRef"
-         role="button"
-         :tabindex="showStatus === 'ready' ? 0 : -1"
-         :aria-expanded="showStatus !== 'ready'"
+         :role="isElevated ? 'button' : undefined"
+         :tabindex="isElevated && showStatus === 'ready' ? 0 : -1"
+         :aria-expanded="isElevated ? showStatus !== 'ready' : undefined"
          :style="style"
          @click="handleClickCard"
          @keydown="handleKeydownCard"
@@ -49,7 +50,7 @@
 <script setup lang="ts">
 import Mask from "@/components/mask/index.vue"
 import type {CSSProperties} from 'vue';
-import {nextTick, onUnmounted, ref, useTemplateRef, watch} from "vue";
+import {computed, nextTick, onUnmounted, ref, useTemplateRef, watch} from "vue";
 import {hiddenOverflowY} from "@/utils/scrollbar.ts";
 
 // ===== 用 Web Animations API 实现的动画时长与曲线，收拢一处便于统调 =====
@@ -98,16 +99,18 @@ const SURFACE: CSSProperties = {
 const ANIMATE_PROPS = ['width', 'height', 'left', 'right', 'top', 'opacity', 'transform'] as const
 
 // ready 态样式（init 初值与关闭复位共用）：表面 + 高度链 + 悬停过渡。
+// 非浮起（elevated 判定失败，即不可展开的静态卡）去阴影——底色/圆角/边框保留，卡片身份仍在。
 // 过渡只挂 box-shadow/transform——容器飞行的 onfinish 会直写布局内联值（width/height/top/left），
 // 挂到布局属性会让落定值被过渡拖出漂移尾
-const READY_STYLE: CSSProperties = {
+const readyStyle = (elevated: boolean): CSSProperties => ({
   position: 'static',
   ...SURFACE,
+  ...(elevated ? {} : {boxShadow: undefined}),
   height: '100%',
   transitionProperty: 'box-shadow, transform',
   transitionTimingFunction: 'ease-out',
   transitionDuration: '180ms',
-}
+})
 
 // 进行中的动画集合（容器主动画 + 内容层 zoom 动画），新飞行开始前全部取消
 // （对应 gsap 被 kill 后不再触发 onComplete；zoom 随容器一并取消，打断时由新飞行从计算值续跑）
@@ -287,8 +290,18 @@ const props = defineProps({
   minWindowSpace: {
     type: Number,
     default: 16
+  },
+  // 卡片浮起外观（阴影 + 悬停上浮 + 可聚焦的按钮语义）：默认跟随 isDetailVisible——
+  // 可展开的卡才有"点我展开"的浮起邀请，不可展开的静态卡平面呈现；显式传入可解耦覆盖
+  // （如可展开但不浮起、或静态卡仍要浮起）
+  elevated: {
+    type: Boolean,
+    default: undefined
   }
 })
+
+// 浮起判定：显式 elevated 优先，缺省跟随 isDetailVisible
+const isElevated = computed(() => props.elevated ?? props.isDetailVisible)
 
 // 动画状态类型
 type StatusType = 'ready' | 'activity' | 'complete' | 'kill'
@@ -316,9 +329,9 @@ const init = () => {
 
   // 展示的状态
   const showStatus = ref<StatusType>('ready')
-  // 展开后改变css定位布局（ready 态取 READY_STYLE：表面常驻、height:100% 建立"根被拉伸场景"
+  // 展开后改变css定位布局（ready 态取 readyStyle()：表面常驻、height:100% 建立"根被拉伸场景"
   // 的高度链——父级高度 auto 时百分比回退 auto，对未拉伸的消费方无影响；悬停过渡见其定义）
-  const style = ref<CSSProperties>({...READY_STYLE})
+  const style = ref<CSSProperties>(readyStyle(isElevated.value))
   // 显示遮罩
   const showMask = ref<boolean>(false)
   // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
@@ -573,9 +586,9 @@ const init = () => {
       onComplete: () => {
         // 关闭动画结束，解除关闭中标志
         closing.value = false
-        // 恢复 container 默认的静态布局（READY_STYLE：表面与高度链重申 + 悬停过渡恢复）；
-        // style 为全新对象，模板 diff 时旧绑定键（transform/cursor 等悬停残留）自动清除
-        style.value = {...READY_STYLE}
+        // 恢复 container 默认的静态布局（readyStyle()：表面与高度链重申 + 悬停过渡恢复，
+        // 非浮起卡无阴影）；style 为全新对象，模板 diff 时旧绑定键（transform/cursor 等悬停残留）自动清除
+        style.value = readyStyle(isElevated.value)
         // 容器飞行终值（width/height/top/left/right）由 animateFromTo 的 onfinish 直写内联，
         // :style 整体替换只回收绑定过的键、管不到这些直写值，须手动清空——
         // 否则 ready 态卡片被钉死在关闭落点宽度，不再跟随窗口重排
@@ -667,11 +680,12 @@ const init = () => {
 const {showStatus, showMask, closing, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleExpandComplete, syncExpandedLayout} = init()
 
 
-// 悬停上浮：位移 + 阴影升档，配 READY_STYLE 的 box-shadow/transform 过渡形成连续浮起感；
-// 仅 ready 态生效——展开后容器是覆盖层不动，门控顺带修复展开态移出鼠标会把悬浮卡阴影
-// 降到 tertiary 的旧问题（mouseenter 不冒泡，进出各触发一次）；进快出慢（过渡取目标态时长）
+// 悬停上浮：位移 + 阴影升档，配 readyStyle 的 box-shadow/transform 过渡形成连续浮起感；
+// 仅浮起卡（elevated 判定）的 ready 态生效——静态卡无"点我"暗示（无指针手势/无位移/无阴影），
+// 展开后容器是覆盖层同样不动，门控顺带修复展开态移出鼠标会把悬浮卡阴影降到 tertiary 的旧问题
+// （mouseenter 不冒泡，进出各触发一次）；进快出慢（过渡取目标态时长）
 const handleMouseEnterCard = () => {
-  if (showStatus.value !== 'ready') {
+  if (showStatus.value !== 'ready' || !isElevated.value) {
     return
   }
   style.value.cursor = 'pointer'
@@ -680,7 +694,7 @@ const handleMouseEnterCard = () => {
   style.value.boxShadow = 'var(--ant-box-shadow-secondary)'
 }
 const handleMouseLeaveCard = () => {
-  if (showStatus.value !== 'ready') {
+  if (showStatus.value !== 'ready' || !isElevated.value) {
     return
   }
   style.value.cursor = ''
