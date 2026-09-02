@@ -784,19 +784,24 @@ const handleKeydownCard = (event: KeyboardEvent) => {
 }
 
 // 键盘焦点环：表面边框是内联 outline，优先级高于 UA 样式表的 :focus 默认描边，
-// 焦点环会被边框吞掉——:focus-visible 命中时临时换成 2px 主题色描边，失焦从 surface 恢复
-// （无边框卡恢复为无描边；焦点环与边框独立，bordered=false 不影响键盘可见性）；
+// 焦点环会被边框吞掉——:focus-visible 命中时把 outline 让位给焦点环并外移 3px 画在卡外一圈
+// （与贴边边框拉开区分，不似边框加粗），原 1px 边框由 inset box-shadow 顶替（跟随圆角），卡面观感不变；
+// 失焦从 surface 恢复（无边框卡恢复为无描边；bordered=false 不影响键盘可见性）；
 // 只对键盘聚焦生效（鼠标点击获得的焦点不画环），展开/关闭时 style 整体替换自动回到边框态
 const handleFocusCard = (event: FocusEvent) => {
   if (!(event.target instanceof HTMLElement) || !event.target.matches(':focus-visible')) {
     return
   }
   style.value.outline = '2px solid var(--ant-color-primary)'
-  style.value.outlineOffset = '0'
+  style.value.outlineOffset = '3px'
+  if (props.bordered) {
+    style.value.boxShadow = 'var(--ant-box-shadow-tertiary), inset 0 0 0 1px var(--ant-color-border-secondary)'
+  }
 }
 const handleBlurCard = () => {
   style.value.outline = surface.value.outline
   style.value.outlineOffset = surface.value.outlineOffset
+  style.value.boxShadow = surface.value.boxShadow
 }
 
 // 依据当前视口（实时读取，无需缓存）与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
