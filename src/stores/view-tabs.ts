@@ -21,6 +21,8 @@ export const useViewTabsStore = defineStore('viewTabs',{
         const activeKey: string = ''
         // 最近使用缓存key
         const tabCacheKey: string = ''
+        // 打开标签缓存key
+        const viewTabsCacheKey: string = ''
         // layout中content组件key值，修改以重新加载组件
         const contentComponentKey: string = ''
         // 显示layout
@@ -30,6 +32,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
             totalViewTabs,
             activeKey,
             tabCacheKey,
+            viewTabsCacheKey,
             componentAlive,
             contentComponentKey,
             showLayout
@@ -137,25 +140,53 @@ export const useViewTabsStore = defineStore('viewTabs',{
         getTabByIndex(index: number) {
             return this.$state.viewTabs[index]
         },
-        // 根据routerPathKey重置viewTabs
-        resetViewTabsByPathKeys(routerPathKeyList: Array<string>) {
-            if (routerPathKeyList && routerPathKeyList.length > 0) {
-                this.$state.viewTabs = []
-                routerPathKeyList.forEach(key => {
-                    const target = this.totalViewTabs.filter(tab => tab.routerPathKey === key)
-                    if (target && target.length > 0) {
-                        this.addViewTab(target[0])
-                    }
-                })
+        // 打开标签持久化到 localStorage（刷新后由 restoreViewTabsFromCache 恢复）
+        persistViewTabs() {
+            if (this.$state.viewTabsCacheKey) {
+                localStorage.setItem(this.$state.viewTabsCacheKey, JSON.stringify(this.$state.viewTabs.map(tab => tab.routerPathKey)))
             }
+        },
+        // 从 localStorage 恢复上次打开的标签：按缓存顺序重建，totalViewTabs 匹配不到的 key（权限变更/菜单删除）静默丢弃
+        restoreViewTabsFromCache() {
+            if (!this.$state.viewTabsCacheKey) {
+                return
+            }
+            let cacheKeys: Array<string> = []
+            try {
+                const parsed = JSON.parse(localStorage.getItem(this.$state.viewTabsCacheKey) || '[]')
+                if (Array.isArray(parsed)) {
+                    cacheKeys = parsed
+                }
+            } catch {
+                cacheKeys = []
+            }
+            // 固定标签兜底前置：缓存早于新固定的标签时补齐
+            const affixKeys = this.$state.totalViewTabs.filter(tab => tab.affix).map(tab => tab.routerPathKey)
+            const mergedKeys = [...affixKeys.filter(key => !cacheKeys.includes(key)), ...cacheKeys]
+            const restored: Array<StarViewType> = []
+            mergedKeys.forEach(key => {
+                if (restored.some(tab => tab.routerPathKey === key)) {
+                    return
+                }
+                // getTotalTabByKey 返回克隆，避免 viewTabs 与 totalViewTabs 共享引用
+                const tab = this.getTotalTabByKey(key)
+                if (tab) {
+                    restored.push(tab)
+                }
+            })
+            this.$state.viewTabs = restored
+            // 回写过滤后的列表，被丢弃的 key 不再残留缓存
+            this.persistViewTabs()
         },
         // 新开tab页
         addViewTab(tab: StarViewType) {
             this.$state.viewTabs.push(tab)
+            this.persistViewTabs()
         },
         // 关闭tab页
         closeViewTab(key: string) {
             this.$state.viewTabs = this.$state.viewTabs.filter(viewTab => viewTab.routerPathKey !== key)
+            this.persistViewTabs()
         },
         // 关闭左边
         closeLeft(key: string): Array<string> {
@@ -168,6 +199,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 }
             }
             this.$state.viewTabs = viewTabs.filter((tab:StarViewType) => !removeArray.includes(tab.routerPathKey))
+            this.persistViewTabs()
             return removeArray
         },
         // 关闭右边
@@ -181,6 +213,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 }
             }
             this.$state.viewTabs = viewTabs.filter((tab:StarViewType) => !removeArray.includes(tab.routerPathKey))
+            this.persistViewTabs()
             return removeArray
         },
         // 关闭其他
@@ -194,12 +227,14 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 }
             }
             this.$state.viewTabs = viewTabs.filter((tab:StarViewType) => !removeArray.includes(tab.routerPathKey))
+            this.persistViewTabs()
             return removeArray
         },
         // 关闭全部
         closeAll(): Array<string> {
             const removeArray = this.$state.viewTabs.filter(tab => !tab.affix).map(tab => tab.routerPathKey)
             this.$state.viewTabs = this.$state.viewTabs.filter(tab => tab.affix)
+            this.persistViewTabs()
             return removeArray
         },
         // 传入tab元素，与集合中的元素进行替换
@@ -226,6 +261,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 viewTabs.splice(index,1)
             }
             this.$state.viewTabs.splice(targetIndex,0,tab)
+            this.persistViewTabs()
         },
         // 取消固定，移动到最后
         unAffix(tab: StarViewType) {
@@ -235,6 +271,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 viewTabs.splice(index,1)
             }
             viewTabs.splice(viewTabs.length,0,tab)
+            this.persistViewTabs()
         },
         // 移动元素
         move(fromIndex: number, toIndex: number) {
@@ -245,10 +282,12 @@ export const useViewTabsStore = defineStore('viewTabs',{
             }
             const item = viewTabs.splice(fromIndex, 1)[0] // 取出元素
             viewTabs.splice(toIndex, 0, item)            // 插入到目标位置
+            this.persistViewTabs()
         },
-        // 设置缓存viewCache key
+        // 设置缓存key：最近使用列表与打开标签列表
         setViewCacheKey(username:string): void {
             this.$state.tabCacheKey = 'recent-tabs-' + username
+            this.$state.viewTabsCacheKey = 'cacheViewTabs-' + username
         },
         // 设置组件缓存
         setComponentsKeepAlive(name: string) {

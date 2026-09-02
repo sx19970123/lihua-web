@@ -27,7 +27,7 @@
       <!--view-tabs 右侧下拉菜单-->
       <template #rightExtra>
         <a-space :size="0">
-          <tab-right-menu ref="tabRightMenuRef" @route-skip="routeSkip" @cancel-keep-alive="cancelKeepAliveCache"/>
+          <tab-right-menu @route-skip="routeSkip" @cancel-keep-alive="cancelKeepAliveCache"/>
         </a-space>
       </template>
     </a-tabs>
@@ -35,7 +35,7 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, onMounted, ref, useTemplateRef, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import type {DragEndEvent, DragMoveEvent, DragOverEvent, DragStartEvent} from '@dnd-kit/vue'
@@ -47,7 +47,6 @@ import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composab
 import SortableTabLabel, {activeDragKey} from "@/layout/view-tabs/components/SortableTabLabel.vue";
 import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
 
-const tabRightMenuRef = useTemplateRef<typeof TabRightMenu>('tabRightMenuRef')
 const viewTabsStore = useViewTabsStore()
 const route = useRoute()
 const router = useRouter()
@@ -368,10 +367,6 @@ const initDrag = () => {
     if (initialIndex !== index) {
       // 修改store中viewTabs中的位置
       viewTabsStore.move(initialIndex, index)
-      // 子组件刷新缓存
-      if (tabRightMenuRef.value) {
-        tabRightMenuRef.value.setCache()
-      }
     }
   }
 
@@ -387,10 +382,6 @@ const initDrag = () => {
 const {sensors, tabItems, onDragStart, onDragEnd, onDragOver, onDragMove} = initDrag()
 
 onMounted(() => {
-  // 调用子组件方法
-  if (tabRightMenuRef.value) {
-    tabRightMenuRef.value.checkCache()
-  }
   // 错落开场窗口期满关闭（末张延迟 + 动画时长 + 余量）
   setTimeout(() => {
     bootStagger.value = false
@@ -405,10 +396,6 @@ watch(() => route.path,() => {
   viewTabsStore.init(route)
   // 添加keepalive缓存
   addKeepAliveCache()
-  // 子组件刷新缓存
-  if (tabRightMenuRef.value) {
-    tabRightMenuRef.value.setCache()
-  }
 })
 
 </script>

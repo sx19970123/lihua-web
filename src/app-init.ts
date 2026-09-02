@@ -54,6 +54,8 @@ export const initApp = async (): Promise<void> => {
   viewTabsStore.initTotalViewTabs(resp.data?.viewTabs || [], router.options.routes)
   // 设置最近使用组件的缓存key值
   viewTabsStore.setViewCacheKey(userStore.$state.username)
+  // 恢复上次打开的标签：组件挂载前完成，标签栏直接以完整列表渲染
+  viewTabsStore.restoreViewTabsFromCache()
   // 清空字典store
   dictStore.clearDict()
   // 清空组件keep-alive
