@@ -2,7 +2,7 @@
   <a-flex class="login-background relative w-full h-screen overflow-hidden" justify="center" align="center">
     <a-flex align="center" :gap="208" v-if="!showUserSetup">
 <!--      主题切换开关-->
-      <theme-switch class="absolute top-4 right-6" translucent/>
+      <theme-mode-segmented class="absolute top-4 right-6" translucent/>
 <!--        左侧标题-->
       <div class="title">
         <transition name="fade" mode="out-in">
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import {markRaw, onMounted, provide, ref} from "vue"
-import ThemeSwitch from "@/components/light-dark-switch/index.vue"
+import ThemeModeSegmented from "@/components/theme-mode-segmented/index.vue"
 import UserSetupIndex from "@/components/user-setup/index.vue"
 import UserRegister from "@/views/login/components/Register.vue"
 import UserLogin from "@/views/login/components/Login.vue"

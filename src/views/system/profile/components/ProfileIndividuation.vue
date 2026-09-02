@@ -4,7 +4,7 @@
       <!-- 主题设置 -->
       <a-typography-title :level="5">主题设置</a-typography-title>
       <a-form-item>
-        <head-theme-switch/>
+        <theme-mode-segmented/>
       </a-form-item>
       <a-form-item label="主题颜色">
         <color-select :dataSource="colorList" v-model:color="themeStore.colorPrimary" @click="themeStore.changeColorPrimary()"/>
@@ -67,7 +67,7 @@
 
 </template>
 <script setup lang="ts">
-import HeadThemeSwitch from "@/components/light-dark-switch/index.vue";
+import ThemeModeSegmented from "@/components/theme-mode-segmented/index.vue";
 import ColorSelect from "@/components/color-select/index.vue"
 import NavSelect from "@/components/nav-type-select/index.vue"
 import settings from "@/settings";
