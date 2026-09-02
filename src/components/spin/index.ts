@@ -25,7 +25,9 @@ export function createSpinComponent(options: SpinConfig) {
             root: {
               zIndex: 2000,
               backdropFilter: themeStore.$state.groundGlass ? 'var(--lihua-backdrop-filter-sm)' : ''
-            }
+            },
+            section: {color: 'var(--colorPrimary)'},
+            description: {color: 'var(--colorPrimary)', textShadow: 'none'}
           }
         });
       };
