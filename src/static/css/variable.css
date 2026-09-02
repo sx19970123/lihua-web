@@ -24,7 +24,8 @@
     --lihua-sider-dark-color: rgba(0,21,41);
 
     /* ===============================页脚=============================== */
-    --footer-height: 24px;
+    /* 显示页脚时兼任内容区底部留白（融合公式见 layout.css .layout-content），取值即底部总留白 */
+    --footer-height: 32px;
 
     /* ====================内容区高度状态（store 切换时直写覆盖）=================== */
     --footer-display-height: var(--footer-height);

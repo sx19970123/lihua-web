@@ -245,7 +245,7 @@ export const useThemeStore = defineStore('theme',{
         changeShowViewTabs() {
             document.documentElement.style.setProperty('--tab-display-height', this.$state.showViewTabs ? '54px' : '0px')
         },
-        // 显示页脚（高度变量由 iframe/监控页的内容区高度公式消费）
+        // 显示页脚（高度变量由 iframe 高度公式与内容区底 padding 融合公式消费）
         changeFooter() {
             document.documentElement.style.setProperty('--footer-display-height', this.$state.showFooter ? 'var(--footer-height)' : '0px')
         },

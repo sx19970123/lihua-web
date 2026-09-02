@@ -52,10 +52,6 @@
         <!--内容-->
         <div id="lihua-layout-content" class="layout-content"/>
       </a-layout-content>
-      <!--页脚-->
-      <a-layout-footer class="layout-footer" v-if="themeStore.$state.showFooter">
-        <page-footer/>
-      </a-layout-footer>
     </a-layout>
   </a-layout>
 </template>
@@ -69,7 +65,6 @@ import {useThemeStore} from "@/stores/theme";
 import {cloneDeep} from 'lodash-es'
 import type {ItemType} from "@/antd-adapter";
 import {computed, nextTick, ref, useTemplateRef} from "vue";
-import PageFooter from "@/layout/footer/index.vue";
 
 const themeStore = useThemeStore()
 const permissionStore = usePermissionStore()

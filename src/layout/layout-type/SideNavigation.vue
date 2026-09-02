@@ -43,10 +43,6 @@
         <!--内容-->
         <div id="lihua-layout-content" class="layout-content" />
       </a-layout-content>
-      <!--页脚-->
-      <a-layout-footer class="layout-footer" v-if="themeStore.$state.showFooter">
-        <page-footer/>
-      </a-layout-footer>
     </a-layout>
   </a-layout>
 </template>
@@ -59,7 +55,6 @@ import {usePermissionStore} from "@/stores/permission";
 import {useThemeStore} from "@/stores/theme";
 import HeadCollapsed from "@/layout/head/components/collapsed/index.vue";
 import Breadcrumb from "@/layout/head/components/breadcrumb/index.vue";
-import PageFooter from "@/layout/footer/index.vue";
 
 const themeStore = useThemeStore()
 const permissionStore = usePermissionStore()

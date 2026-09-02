@@ -7,6 +7,11 @@
 /* content */
 .layout-content {
     padding: var(--ant-padding);
+    /* 页脚行兼任底部留白：显示页脚时（--footer-display-height 24px > padding 16px）钳到 0，
+       隐藏页脚时（0px）恢复默认 padding，页脚开关经变量联动、无 JS */
+    padding-bottom: max(0px, calc(var(--ant-padding) - var(--footer-display-height)));
+    /* 撑满被 flex 拉伸的内容区，为 content 组件内页脚钉底（section min-height:100%）提供高度上下文 */
+    height: 100%;
     overflow-x: hidden;
 }
 
@@ -31,15 +36,6 @@
 .header-menu-fill {
     width: 100%;
     min-width: 0;
-}
-
-/* 页脚 */
-.layout-footer {
-    height: var(--footer-height) !important;
-    padding: 0 !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /**
