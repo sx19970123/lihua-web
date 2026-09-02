@@ -432,6 +432,17 @@ watch(() => route.path,() => {
   color: var(--ant-tabs-item-selected-color);
 }
 
+/* 非玻璃模式的飞行未选中卡：静止底色 cardBg 是半透明 fill token，飞行悬浮于任意
+   内容之上会透底。以 bg-container 打底、同款 cardBg 渐变层叠顶——色相与静止态
+   完全一致但彻底不透明（玻璃模式不命中，保留半透明+磨砂的玻璃芯片观感）。
+   按 [data-dnd-dragging] 属性键控而非拖拽类：属性存续到落位，松手飞回段同样不透底 */
+html:not([ground-glass='enable']) .ant-tabs-tab[data-dnd-dragging]:not(.ant-tabs-tab-active) {
+  background-color: var(--ant-color-bg-container);
+  background-image: linear-gradient(var(--ant-tabs-card-bg), var(--ant-tabs-card-bg));
+  /* 拖起瞬间底色即挂：antd 对 background-color 有 0.3s 过渡，不禁则白底迟滞渐入 */
+  transition: none !important;
+}
+
 /* 玻璃主题下飞行卡的磨砂（纯 backdrop 模糊、不动底色）在 ground-glass.css：
    以 .view-tab-dragging 类 + [data-dnd-dragging] 属性双钩子命中，存续到落位 */
 
