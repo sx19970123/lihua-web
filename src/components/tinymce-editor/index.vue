@@ -98,8 +98,11 @@ const editorConfig = computed(() => ({
   // 主题可在：https://skin.tiny.cloud/t5/ 进行编辑，之后复制到public/tinymce/skins/ui/
   skin: themeStore.isDarkTheme ? 'custom-dark' : 'custom',
   content_css: themeStore.isDarkTheme ? 'dark' : 'default',
-  // 自定义编辑区背景颜色
-  content_style: themeStore.isDarkTheme ? "body {background-color: #1f1f1f !important;}" : 'body {background-color: #fff !important;}',
+  // 自定义编辑区背景颜色与滚动条（iframe 是独立文档，主文档的滚动条变量不可达，色值须内联；
+  // 档位对齐全站内滚容器：thin + 主题 thumb 色 + 透明轨道，暗色沿用深色 thumb）
+  content_style: themeStore.isDarkTheme
+      ? 'html {scrollbar-width: thin; scrollbar-color: rgb(66,66,66) transparent;} body {background-color: #1f1f1f !important;}'
+      : 'html {scrollbar-width: thin; scrollbar-color: rgb(227,227,227) transparent;} body {background-color: #fff !important;}',
   // 免费插件
   plugins: 'link image media table lists code emoticons fullscreen preview searchreplace',
   // 工具栏配置
@@ -307,13 +310,21 @@ watch(() => modelValue, () => {
 })
 </script>
 <style lang="scss">
+/* 编辑器容器圆角跟随主题「界面圆角」token（皮肤内置 6px 固定值，此处覆盖）；
+   tox 与 tox-tinymce 是根节点上的同类名，须复合选择器（后代写法匹配不到）；
+   弹层渲染在独立的 tox-tinymce-aux 容器，不受本容器 overflow:hidden 裁切；
+   全屏态排除——铺满视口保持直角 */
+.tox.tox-tinymce:not(.tox-fullscreen) {
+  border-radius: var(--ant-border-radius);
+}
 /* 覆盖dialog遮罩颜色*/
 .tox .tox-dialog-wrap__backdrop {
   background-color: rgba(0, 0, 0, 0.3) !important;
 }
-/* 覆盖dialog阴影*/
+/* 覆盖dialog阴影与圆角（圆角取大一档 token，与编辑器主体同源跟随）*/
 .tox .tox-dialog {
   box-shadow: var(--ant-box-shadow-tertiary)!important;
+  border-radius: var(--ant-border-radius-lg);
 }
 /* 覆盖源码预览，高度撑满容器*/
 .tox .tox-textarea-wrap {
@@ -321,6 +332,15 @@ watch(() => modelValue, () => {
   textarea {
     height: 100% !important;
   }
+}
+/* chrome/弹层滚动条对齐全站内滚容器规格（thin + 主题 thumb 色 + 透明轨道）；
+   .tox 同挂两处根节点（编辑器容器与 tox-tinymce-aux 弹层容器），scrollbar-color 可继承到内部滚动区 */
+.tox {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lihua-scrollbar-thumb-color);
+}
+[data-theme='dark'] .tox {
+  scrollbar-color: var(--lihua-sider-scrollbar-thumb-color);
 }
 /* 隐藏编辑器未加载完成时的textarea */
 .lihua-editor-container {
