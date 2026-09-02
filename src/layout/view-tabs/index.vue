@@ -6,6 +6,7 @@
     <!--右侧留出滚动条槽安全间距（layout 满幅 100vw 后滚动条悬浮于应用右缘，约 0~17px），避免 extras 按钮被覆盖/裁切-->
     <a-tabs :activeKey="activeKey"
             class="unselectable tab-none-padding enable-glass"
+            :class="{'tab-boot-stagger': bootStagger}"
             style="padding: var(--ant-padding-xs) 18px 0;"
             type="card"
             size="small"
@@ -51,6 +52,10 @@ const viewTabsStore = useViewTabsStore()
 const route = useRoute()
 const router = useRouter()
 
+/** 启动错落窗口：挂载起短暂开启，入场动画按页签序号递进 35ms 逐张浮现（开场感）；
+ *  期满移除，会话期间新增的页签零延迟直接入场 */
+const bootStagger = ref(true)
+
 /**
  * 初始化数据及变量
  */
@@ -64,31 +69,44 @@ const init = () => {
 }
 const {activeKey} = init()
 
-/**
- * 删除标签，根据情况进行路由切换
- * @param key
- */
+/** 关闭标签：淡出退场后再提交——所有关闭路径（卡片按钮/中键/右键菜单）汇拢于此，
+ *  先挂 view-tab-closing 播退场动画，期满再执行路由切换与 store/缓存清理；
+ *  拖拽进行中、固定页签或节点解析失败（异常路径）跳过动画直接关闭 */
 const closeTab = (key: string) => {
-  if (key === activeKey.value) {
-    const index = viewTabsStore.getIndex(key)
-    // 删除的第一个元素，跳转到下一个
-    let tab
-    if (index === 0) {
-      tab = viewTabsStore.getTabByIndex(index + 1)
+  const commitClose = () => {
+    if (key === activeKey.value) {
+      const index = viewTabsStore.getIndex(key)
+      // 删除的第一个元素，跳转到下一个
+      let tab
+      if (index === 0) {
+        tab = viewTabsStore.getTabByIndex(index + 1)
+      }
+      // 删除的不是第一个元素，跳转到前一个
+      else {
+        tab = viewTabsStore.getTabByIndex(index - 1)
+      }
+      // 返回元素不为空则跳转路由
+      if (tab) {
+        routeSkip(tab.routerPathKey, tab.query)
+      }
     }
-    // 删除的不是第一个元素，跳转到前一个
-    else {
-      tab = viewTabsStore.getTabByIndex(index - 1)
-    }
-    // 返回元素不为空则跳转路由
-    if (tab) {
-      routeSkip(tab.routerPathKey, tab.query)
-    }
+    // 关闭标签
+    viewTabsStore.closeViewTab(key)
+    // 卸载组件
+    cancelKeepAliveCache([key])
   }
-  // 关闭标签
-  viewTabsStore.closeViewTab(key)
-  // 卸载组件
-  cancelKeepAliveCache([key])
+  const closable = viewTabsStore.viewTabs.some(tab => tab.routerPathKey === key && !tab.affix)
+  const tabEl = document.querySelector<HTMLElement>(
+      `.tab-none-padding .ant-tabs-tab[data-node-key="${CSS.escape(key)}"]`)
+  if (!closable || !tabEl || document.querySelector('.tab-none-padding [data-dnd-dragging]')) {
+    commitClose()
+    return
+  }
+  // 退场动画（收宽+淡出）：起始宽度 JS 量取写入变量（纯 CSS 拿不到自身宽度），
+  // 收宽驱动真实布局，右侧页签随之后连续滑动补位而非瞬跳
+  tabEl.style.setProperty('--closing-w', `${tabEl.offsetWidth}px`)
+  tabEl.classList.add('view-tab-closing')
+  setTimeout(commitClose, 190)
 };
 
 /**
@@ -373,6 +391,10 @@ onMounted(() => {
   if (tabRightMenuRef.value) {
     tabRightMenuRef.value.checkCache()
   }
+  // 错落开场窗口期满关闭（末张延迟 + 动画时长 + 余量）
+  setTimeout(() => {
+    bootStagger.value = false
+  }, Math.min(viewTabsStore.viewTabs.length, 12) * 35 + 450)
 })
 
 /**
@@ -391,7 +413,9 @@ watch(() => route.path,() => {
 
 </script>
 <style>
-.ant-tabs-nav {
+/* 页签栏与内容区的间距（收紧至 8px）。必须带 .tab-none-padding 前缀：
+   无前缀会波及全项目所有 a-tabs 的下边距 */
+.tab-none-padding .ant-tabs-nav {
   margin-bottom: var(--ant-margin-xs) !important;
 }
 
@@ -537,6 +561,79 @@ watch(() => route.path,() => {
 .tab-none-padding {
   .ant-tabs-tab {
     padding: 0 !important;
+  }
+}
+
+/* 页签入场/退场动画（淡入淡出+轻位移，纯合成层不动布局）。
+   位移语义：从哪儿来、回哪儿去——入场自左侧 -10px 滑入，退场向左侧 -10px 滑出（镜像反转）。
+   关键约束：位移只能落在内层 .ant-tabs-tab-btn 上——antd 的溢出判定用 getBoundingClientRect
+   量 .ant-tabs-tab 本体的 left/right（可见区间→"…"收纳），本体带 transform 会让测量值
+   偏移（单卡也能被判出视野，且动画结束无 resize 触发重测、"…"滞留）；本体只动 opacity，
+   矩形纹丝不动，antd 测量全程干净。
+   入场随节点插入自动播；启动错落由根节点 tab-boot-stagger 类 + --tab-in-i 序号
+   （SortableTabLabel 挂载时写入）组合出每张 35ms 递进延迟，开场窗口后根类移除 */
+@keyframes view-tab-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes view-tab-in-slide {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* 退场：收宽 + 淡出（手风琴）。宽度是布局属性——收窄驱动真实布局，右侧页签随之后
+   连续滑动补位（"右边滑过来"），与基线系统天然兼容（所有线片随各自的盒连续移动）。
+   终态几何精确对账：max-width 0 + 边框归零 + margin-inline -1px×2，让收完的卡在
+   双侧 2px 缝隙中净占 2px——恰等于摘除后左右邻居间的缝隙，落刀零跳动。
+   --closing-w 起始宽度由 closeTab 量取写入；overflow hidden 防内容在收窄中折行；
+   pointer-events 隔离防动画期间重复触发；!important 压过入场播完后钉死的内联值 */
+@keyframes view-tab-out {
+  from {
+    opacity: 1;
+    max-width: var(--closing-w, 200px);
+    margin-inline: 0;
+    border-inline-width: 1px;
+  }
+  to {
+    opacity: 0;
+    max-width: 0;
+    margin-inline: -1px;
+    border-inline-width: 0;
+  }
+}
+
+.tab-none-padding .ant-tabs-tab.view-tab-closing {
+  animation: view-tab-out 180ms ease-in both !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tab-none-padding .ant-tabs-tab {
+  animation: view-tab-in 200ms ease-out both;
+}
+
+.tab-none-padding .ant-tabs-tab > .ant-tabs-tab-btn {
+  animation: view-tab-in-slide 200ms ease-out both;
+}
+
+.tab-none-padding.tab-boot-stagger .ant-tabs-tab,
+.tab-none-padding.tab-boot-stagger .ant-tabs-tab > .ant-tabs-tab-btn {
+  animation-delay: calc(var(--tab-in-i, 0) * 35ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-none-padding .ant-tabs-tab,
+  .tab-none-padding .ant-tabs-tab > .ant-tabs-tab-btn {
+    animation: none;
   }
 }
 </style>

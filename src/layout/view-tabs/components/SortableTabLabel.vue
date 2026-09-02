@@ -100,6 +100,24 @@ const initSortable = () => {
     el?.classList.toggle('view-tab-dragging', dragging)
   }, {flush: 'post'})
 
+  // 入场动画配套：给宿主页签挂序号变量（启动错落 stagger 的延迟基数，挂载期序号即初始位次；
+  // data 标记防"…"下拉重复实例或重解析重复挂），入场动画播完后钉死内外两层的 animation-name
+  // （本体淡入 + 内层滑入）——防 antd 溢出收纳/放回等场景的节点重挂导致入场动画重播。
+  // 位移在内层、本体只动 opacity：antd 溢出判定以本体 rect 为准，带 transform 会污染测量
+  watch(tabEl, (el) => {
+    if (!el || el.dataset.tabInWired) return
+    el.dataset.tabInWired = '1'
+    el.style.setProperty('--tab-in-i', String(props.index))
+    const onTabInEnd = (event: AnimationEvent) => {
+      // 内层滑入的 animationend 会冒泡上来，只认本体自身的淡入事件
+      if (event.target !== el || event.animationName !== 'view-tab-in') return
+      el.style.setProperty('animation-name', 'none')
+      el.querySelector<HTMLElement>(':scope > .ant-tabs-tab-btn')?.style.setProperty('animation-name', 'none')
+      el.removeEventListener('animationend', onTabInEnd)
+    }
+    el.addEventListener('animationend', onTabInEnd)
+  }, {immediate: true})
+
   return {anchorRef}
 }
 const {anchorRef} = initSortable()
