@@ -51,7 +51,7 @@ const info = ref<ServerInfo>()
 // 初始化服务器信息
 const init = async () => {
   const spinInstance = Spin.service({
-    tip: '服务数据加载中...'
+    description: '服务数据加载中...'
   });
 
  try {

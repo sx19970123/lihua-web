@@ -1022,7 +1022,7 @@ const initExcel = () => {
   // 下载excel模板
   const handleDownloadExcelTemplate = async () => {
     const spinInstance = Spin.service({
-      tip: '努力加载中...'
+      description: '努力加载中...'
     });
     const blob = await excelTemplate()
     download(blob, "用户导入模板")
@@ -1032,7 +1032,7 @@ const initExcel = () => {
   // 导出excel
   const handleExportExcel = async () => {
     const spinInstance = Spin.service({
-      tip: '努力加载中...'
+      description: '努力加载中...'
     });
     try {
       // blob转为url后进行下载
@@ -1060,7 +1060,7 @@ const initExcel = () => {
       return
     }
     const spinInstance = Spin.service({
-      tip: '数据处理中，请稍等...'
+      description: '数据处理中，请稍等...'
     })
     // 将文件上传至后端
     try {

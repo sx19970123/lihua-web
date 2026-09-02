@@ -6,11 +6,5 @@ export type SpinConfig = SpinProps & {
   target?: HTMLElement | string;
 };
 
-/** 简单Spin配置 **/
-export type SimpleSpinConfig = {
-  tip?: string;
-  target?: HTMLElement | string;
-}
-
 /** @name 获取createSpinComponent函数的返回值类型 **/
 export type SpinInstance = ReturnType<typeof createSpinComponent>;

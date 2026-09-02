@@ -589,7 +589,7 @@ const {openDeletePopconfirm,closePopconfirm,handleDelete,openPopconfirm} = initD
 // 导出excel
 const handleExportExcel = async () => {
   const spinInstance = Spin.service({
-    tip: '努力加载中...'
+    description: '努力加载中...'
   });
 
   try {

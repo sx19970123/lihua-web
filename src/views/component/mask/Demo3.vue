@@ -19,7 +19,7 @@ const indicator = h(LoadingOutlined, {
 // 打开全屏加载并在1.5s后关闭
 const openSpin = () => {
   const spin = Spin.service({
-    tip: '1.5秒后关闭',
+    description: '1.5秒后关闭',
     indicator: indicator,
   })
   setTimeout(() => {

@@ -495,7 +495,7 @@ const { countdown, startClearCountdown, handleClear} = initClear()
 // 处理excel 导出
 const handleExportExcel = async () => {
   const spinInstance = Spin.service({
-    tip: '努力加载中...'
+    description: '努力加载中...'
   });
   const blob = await excelOperateExport(logQuery.value)
   download(blob, "操作日志")
