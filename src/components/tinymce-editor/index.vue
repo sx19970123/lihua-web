@@ -12,8 +12,9 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, watch} from 'vue'
+import {computed, onUnmounted, ref, watch} from 'vue'
 import Editor from '@tinymce/tinymce-vue'
+import type {Editor as TinyMceEditor} from 'tinymce'
 import {useThemeStore} from "@/stores/theme.ts";
 import {v4 as uuidv4} from "uuid";
 import {useRoute} from "vue-router";
@@ -23,7 +24,7 @@ import {message} from "@/antd-adapter";
 import {attachmentUrl} from "@/utils/attachment-url.ts";
 
 const themeStore = useThemeStore();
-const router = useRoute()
+const route = useRoute()
 // 上传默认大小
 const defaultSize = 1024 * 1024 * 2
 const {modelValue, autoDownloadPasteImg = true, height = '50vh', businessCode, imageType = [], mediaType = [], fileType = [], imageMaxSize = defaultSize, mediaMaxSize = defaultSize, fileMaxSize = defaultSize} = defineProps<{
@@ -46,15 +47,37 @@ const {modelValue, autoDownloadPasteImg = true, height = '50vh', businessCode, i
   fileMaxSize?: number
 }>()
 
-const emits = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  'update:modelValue': [value?: string]
+}>()
 
-// 附件业务编码
-const bCode = businessCode ?? router.name?.toString()
+// 附件业务编码（computed：未显式传 businessCode 时跟随当前路由名，keep-alive 复用切路由后不过期）
+const bCode = computed(() => businessCode ?? route.name?.toString())
 
 // 切换主题重新加载组件
 const editKey = ref<string>(uuidv4())
 // 加载中
 const spinning = ref<boolean>(true)
+
+// 加载失败兜底：tinymce-vue 的 ScriptLoader 只监听 load 无 error 通道（dist 源码实证），
+// 引擎脚本加载失败须自行在捕获阶段监听（资源错误不冒泡）；超时兜底其余未预期失败，防 spin 永久转圈
+const loadingFailed = () => {
+  spinning.value = false
+  message.error("编辑器加载失败，请刷新重试")
+  cleanupLoadingGuards()
+}
+const handleScriptError = (event: ErrorEvent) => {
+  if (event.target instanceof HTMLScriptElement && event.target.src.includes('/tinymce/')) {
+    loadingFailed()
+  }
+}
+const loadingTimeout = window.setTimeout(loadingFailed, 20000)
+const cleanupLoadingGuards = () => {
+  window.clearTimeout(loadingTimeout)
+  window.removeEventListener('error', handleScriptError, true)
+}
+window.addEventListener('error', handleScriptError, true)
+onUnmounted(cleanupLoadingGuards)
 
 // 附件上传回调类型
 type FilePickerCallback = (url: string, meta?: { title?: string; text?: string; alt?: string }) => void
@@ -95,6 +118,7 @@ const editorConfig = computed(() => ({
    */
   init_instance_callback: () => {
     spinning.value = false
+    cleanupLoadingGuards()
   },
   /**
    * 附件上传，拿到附件后进行处理，处理完成后调用callback
@@ -127,7 +151,7 @@ const editorConfig = computed(() => ({
    * 处理粘贴的文本
    * 过滤img标签拿到url将图片保存到服务器
    */
-  paste_postprocess: async (editor: any, args: { node: HTMLElement }) => {
+  paste_postprocess: async (editor: TinyMceEditor, args: { node: HTMLElement }) => {
     if (!autoDownloadPasteImg) return;
 
     const notif = editor.notificationManager.open({
@@ -158,6 +182,9 @@ const editorConfig = computed(() => ({
           }
         }
       });
+    } catch {
+      // TinyMCE 不 await async 处理器，异常须自行收口，否则通知不关且成为未处理 rejection
+      message.error("粘贴内容处理失败")
     } finally {
       notif.close();
     }
@@ -175,18 +202,23 @@ const handleLinkImageUpload = async (url?: string): Promise<SysAttachmentUrl | f
   if (!url) {
     return false
   }
-  // 拿到url对应的二进制附件
-  const resp = await fetch(url)
-  const blob = await resp.blob()
-  const file = new File([blob], `editor_${uuidv4()}.png`, {type: blob.type})
-  const fileResp = await handleUpload(file, 'image');
-  if (fileResp) {
-    return {
-      url: fileResp.url,
-      originalURL: url
+  // 拿到url对应的二进制附件；外链图片可能跨域拒绝或已失效，失败提示后放弃转存（保留原 src）
+  try {
+    const resp = await fetch(url)
+    const blob = await resp.blob()
+    const file = new File([blob], `editor_${uuidv4()}.png`, {type: blob.type})
+    const fileResp = await handleUpload(file, 'image');
+    if (fileResp) {
+      return {
+        url: fileResp.url,
+        originalURL: url
+      }
     }
+    return false;
+  } catch {
+    message.error("粘贴图片转存失败")
+    return false
   }
-  return false;
 }
 
 /**
@@ -222,8 +254,9 @@ const handleUpload = async (files: FileList | File | null, type: "file" | "image
     return false
   }
 
-  // 附件类型不匹配
-  const filter = fileTypes.filter(type => file.name.endsWith(type))
+  // 附件类型不匹配（后缀白名单忽略大小写，.PNG 与 .png 等价）
+  const lowerName = file.name.toLowerCase()
+  const filter = fileTypes.filter(type => lowerName.endsWith(type.toLowerCase()))
   if (filter.length === 0 && fileTypes.length > 0) {
     message.error("附件类型不匹配")
     return false
@@ -236,14 +269,14 @@ const handleUpload = async (files: FileList | File | null, type: "file" | "image
   }
 
   // 业务参数不存在
-  if (!bCode) {
+  if (!bCode.value) {
     message.error("业务编码不存在")
     return false
   }
 
   try {
     // 进行附件上传
-    const resp = await publicUpload(file, bCode)
+    const resp = await publicUpload(file, bCode.value)
     // 上传成功
     if (resp.code === 200) {
       return {
@@ -254,7 +287,8 @@ const handleUpload = async (files: FileList | File | null, type: "file" | "image
       message.error(resp.msg)
       return false
     }
-  } catch (error) {
+  } catch {
+    message.error("附件上传失败")
     return false
   }
 }
@@ -265,7 +299,7 @@ watch(() => themeStore.isDarkTheme, () => {
 })
 // 双向绑定
 watch(() => content.value, () => {
-  emits("update:modelValue", content.value)
+  emit("update:modelValue", content.value)
 })
 // 监听外部组件变化
 watch(() => modelValue, () => {
