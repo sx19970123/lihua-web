@@ -1,12 +1,15 @@
-/* 页面滚动条隐藏：S=0 后，滚动锁定（Mask 开关时 body overflowY 切换）不再引起任何布局横移——
-   修复关闭卡片"先量落点、后复原滚动条"导致的落定向左顿挫（越靠右越明显）；
-   滚轮/触控板/键盘滚动不受影响；内部容器滚动条仍为 thin + 主题色（见下） */
-html {
-    scrollbar-width: none;
-}
-
-html::-webkit-scrollbar {
-    display: none;
+/* 页面滚动条：OverlayScrollbars 悬浮式接管（body 级，见 utils/scrollbar.ts initPageScrollbar）——
+   滚动条零布局占位，出现/消失不再引起 header/view-tabs/内容横移；
+   原生滚动行为不变；内部容器滚动条仍为 thin + 主题色（见下） */
+.os-theme-lihua {
+    --os-size: 10px;
+    --os-padding-perpendicular: 2px;
+    --os-padding-axis: 2px;
+    --os-handle-border-radius: 10px;
+    --os-handle-bg: var(--lihua-overlay-scrollbar-thumb-bg);
+    --os-handle-bg-hover: var(--lihua-overlay-scrollbar-thumb-bg-hover);
+    --os-handle-bg-active: var(--lihua-overlay-scrollbar-thumb-bg-active);
+    --os-handle-interactive-area-offset: 4px;
 }
 
 .scrollbar, .sider-scrollbar {

@@ -36,6 +36,7 @@ import {onMounted, onUnmounted, ref, useTemplateRef, watch, computed} from "vue"
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';
 import {bindAppApi, type AppApi} from "@/antd-adapter";
+import {initPageScrollbar} from "@/utils/scrollbar.ts";
 
 const themeStore = useThemeStore()
 const permissionStore = usePermissionStore()
@@ -140,6 +141,8 @@ watch(() => settingStore.enableGrayMode, () => {
 })
 
 onMounted(() => {
+  // 页面级悬浮滚动条接管（含 antd 弹层滚动锁桥接），登录页同样生效
+  initPageScrollbar()
   // 注入上下文内实例，使静态形式的 message/notification/Modal 应用当前主题
   if (appApiRef.value) bindAppApi(appApiRef.value)
   // 初始化基础设置

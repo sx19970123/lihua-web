@@ -31,6 +31,7 @@
     "jsencrypt": "^3.3.2",
     "lodash-es": "4.18.1",
     "nprogress": "^0.2.0",
+    "overlayscrollbars": "^2.16.0",
     "pinia": "^3.0.4",
     "tinymce": "^8.6.0",
     "uuid": "14.0.1",

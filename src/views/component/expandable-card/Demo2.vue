@@ -1,7 +1,7 @@
 <template>
   <a-typography-title :level="4">异步加载</a-typography-title>
   <a-typography-paragraph type="secondary">
-    auto-complete 关闭后由 is-complete 控制内容就绪。左卡模拟 50ms 响应：展开动画（340ms）未播完数据已就绪，交接滑块处直接淡入 detail，等待层不会出现；右卡模拟 1.5s 响应：动画播完后停在等待层，并透传 loading 插槽自定义等待内容（默认为居中 a-spin）。
+    auto-complete 关闭后由 is-complete 控制内容就绪。左卡模拟 250ms 响应：等待层先出现，数据在展开动画（340ms）结束前就绪，飞行途中即换上详情——动画播完时内容已就位；右卡模拟 1.5s 响应：动画播完后停在等待层，并透传 loading 插槽自定义等待内容（默认为居中 a-spin）。
   </a-typography-paragraph>
   <a-flex :gap="16" wrap="wrap" align="flex-start">
     <div>
@@ -31,7 +31,7 @@
               <a-statistic title="退款" :value="140"/>
             </a-flex>
             <a-alert style="margin-top: var(--ant-margin-lg)" type="success" show-icon
-                     message="数据在展开动画完成前就已返回，等待层未出现，内容直接就位"/>
+                     message="数据在展开动画结束前返回：等待层先出现、飞行途中换上详情，动画播完时内容已就位"/>
           </div>
         </template>
       </expandable-card>

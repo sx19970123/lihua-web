@@ -1,22 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- data-overlayscrollbars-initialize：OverlayScrollbars 预初始化标记，消除首帧原生滚动条闪烁 -->
+<html lang="en" data-overlayscrollbars-initialize>
   <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/src/assets/images/logo.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiHua</title>
   </head>
-  <body>
+  <body data-overlayscrollbars-initialize>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
     <script src="/tac/js/load.min.js"></script>
   </body>
 
   <style>
-    /* 网页外层滚动条和背景颜色 */
-    html {
+    /* 网页外层背景颜色（页面滚动条由 OverlayScrollbars 接管，见 utils/scrollbar.ts）；
+       overscroll-behavior 同步给 body：body 成为滚动容器后生效位置在视口元素 */
+    html,
+    body {
         overscroll-behavior: none;
-        scrollbar-color: var(--lihua-scrollbar-thumb-color);
+    }
+
+    html {
         background-color: var(--lihua-background-color-level-1);
     }
   </style>

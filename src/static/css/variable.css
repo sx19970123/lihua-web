@@ -34,6 +34,10 @@
     /* ==============================滚动条============================== */
     --lihua-scrollbar-thumb-color: rgb(227,227,227) transparent;
     --lihua-sider-scrollbar-thumb-color: rgb(66,66,66) transparent;
+    /* 页面悬浮滚动条（OverlayScrollbars os-theme-lihua，见 custom.css） */
+    --lihua-overlay-scrollbar-thumb-bg: rgba(0, 0, 0, 0.35);
+    --lihua-overlay-scrollbar-thumb-bg-hover: rgba(0, 0, 0, 0.5);
+    --lihua-overlay-scrollbar-thumb-bg-active: rgba(0, 0, 0, 0.6);
 
     /* ============页面底色（供 index.html 预渲染引用，--ant-* 由 JS 挂载后注入，首屏不可用）============ */
     --lihua-background-color-level-1: #f5f5f5;
@@ -56,6 +60,10 @@
     /* ==============================滚动条============================== */
     --lihua-scrollbar-thumb-color: rgb(66,66,66) transparent;
     --lihua-sider-scrollbar-thumb-color: rgb(66,66,66) transparent;
+    /* 页面悬浮滚动条（OverlayScrollbars os-theme-lihua，见 custom.css） */
+    --lihua-overlay-scrollbar-thumb-bg: rgba(255, 255, 255, 0.35);
+    --lihua-overlay-scrollbar-thumb-bg-hover: rgba(255, 255, 255, 0.5);
+    --lihua-overlay-scrollbar-thumb-bg-active: rgba(255, 255, 255, 0.6);
 
     /* ============页面底色（供 index.html 预渲染引用）============ */
     --lihua-background-color-level-1: #000000;
