@@ -11,6 +11,7 @@ import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 import type {SysPost} from "@/api/system/post/type/sys-post.ts";
 import type {StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";
 import {closeConnect} from "@/utils/web-socket.ts";
+import {useDictStore} from "@/stores/dict.ts";
 import router from "@/router";
 import {attachmentUrl, getTemporaryPath} from "@/utils/attachment-url.ts";
 import {createWindowGuard} from "@/utils/window-guard.ts";
@@ -128,6 +129,8 @@ export const useUserStore = defineStore('user', {
          * 清空用户信息
          */
         clearUserInfo() {
+            // 登出卫生：字典为全局公开数据，清理仅为不留会话残留（登录时 initApp 亦会清空）
+            useDictStore().clearDict()
             const userState = this.$state
 
             // 用户相关赋值

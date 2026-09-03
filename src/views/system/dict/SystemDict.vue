@@ -224,7 +224,8 @@ import {deleteData, queryById, queryPage, reloadCache, save, updateStatus} from 
 import dayjs from "dayjs";
 import {message, type Rule, type TableColumnsType} from "@/antd-adapter";
 import DictData from "./dictData/index.vue"
-import {initDict} from "@/helpers/dict.ts";
+import {initDict, reLoadDict} from "@/helpers/dict.ts";
+import {useDictStore} from "@/stores/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"
 import TableSetting from "@/components/table-setting/index.vue";
 
@@ -612,6 +613,8 @@ const initLoadCache = () => {
       const resp = await reloadCache()
       if (resp.code === 200) {
         message.success(resp.msg)
+        // 后端缓存已重建，前端 store 原地重载，在线消费页经 computed 即时更新
+        useDictStore().getDictCodes().forEach(code => reLoadDict(code))
       } else {
         message.error(resp.msg)
       }

@@ -204,7 +204,6 @@ import {cloneDeep} from 'lodash-es';
 import {initDict, reLoadDict} from "@/helpers/dict.ts";
 import dictTag from "@/components/dict-tag/index.vue"
 import TableSetting from "@/components/table-setting/index.vue";
-import {ResponseError} from "@/api/global/type.ts";
 import type {SysDictDataType, SysDictDataTypeDTO} from "@/api/system/dict/type/sys-dict-data-type.ts";
 import {v4 as uuidv4} from "uuid";
 
@@ -488,8 +487,6 @@ const initSave = () => {
         handleCancel(id, false)
         // 重新排序
         handleSort(dictDataList.value)
-        // 重载字典数据
-        handleReloadDictData(data.dictTypeCode)
         return resp.msg
       }
       message.error(resp.msg)
@@ -516,6 +513,8 @@ const initSave = () => {
       const msg = await saveRow(id)
       if (msg !== null) {
         message.success(msg)
+        // 字典数据已变更，刷新 store 缓存使消费页即时更新
+        reLoadDict(props.typeCode)
       }
     } finally {
       tableLoading.value = false
@@ -549,23 +548,12 @@ const initSave = () => {
       } else {
         message.error(`保存成功 ${successCount} 条，失败 ${ids.length - successCount} 条，失败项保留编辑状态`)
       }
+      if (successCount > 0) {
+        // 字典数据已变更，刷新 store 缓存使消费页即时更新（按字典类型只刷一次）
+        reLoadDict(props.typeCode)
+      }
     } finally {
       tableLoading.value = false
-    }
-  }
-
-  // 保存时，当修改的字典数据为当前用到的字典数据（sys_dict_tag_style）时，重新加载字典数据
-  const handleReloadDictData = (dictTypeCode?: string) => {
-    if (dictTypeCode === "sys_dict_tag_style") {
-      reLoadDict(dictTypeCode).then(resp => {
-        sys_dict_tag_style.value = resp as Array<SysDictDataType>
-      }).catch(e => {
-        if (e instanceof ResponseError) {
-          message.error(e.msg)
-        } else {
-          console.error(e)
-        }
-      })
     }
   }
 
