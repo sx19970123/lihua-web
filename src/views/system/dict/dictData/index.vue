@@ -159,7 +159,7 @@
                 <a-button type="link" size="small" html-type="submit" @click="handleSave(record.id)">
                   保存
                 </a-button>
-                <a-divider type="vertical"/>
+                <a-divider :vertical="true"/>
                 <a-button type="link" size="small" danger @click="handleCancel(record.id, true)">
                   取消
                 </a-button>
@@ -169,12 +169,12 @@
                   编辑
                 </a-button>
                 <template v-if="props.type === '1'">
-                  <a-divider type="vertical"/>
+                  <a-divider :vertical="true"/>
                   <a-button type="link" size="small" @click="handleAddChildren(record)">
                     添加下级
                   </a-button>
                 </template>
-                <a-divider type="vertical"/>
+                <a-divider :vertical="true"/>
                 <a-popconfirm title="删除后不可恢复，是否删除？"
                               ok-text="确 定"
                               cancel-text="取 消"
