@@ -655,11 +655,6 @@ const handleSort = (list: SysDictDataType[]) => {
 </script>
 
 <style>
-/* 抽屉体滚动条：套用全站内滚容器约定（thin + 主题色变量），暗色自动跟随 */
-.ant-drawer-body {
-    scrollbar-width: thin;
-    scrollbar-color: var(--lihua-scrollbar-thumb-color);
-}
 .err-placeholder {
   .ant-input-number-input::placeholder,
   .ant-input::placeholder {

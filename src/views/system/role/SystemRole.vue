@@ -50,7 +50,7 @@
             :row-selection="roleRowSelectionType"
             row-class-name="hover-cursor-pointer"
             :on-row="handleRowClick"
-            :scroll="{x: 1000}"
+            :scroll="{x: 1120}"
             row-key="id"
         >
           <template #title>
@@ -111,6 +111,13 @@
                   <EditOutlined />
                 </template>
                 编辑
+              </a-button>
+              <a-divider :vertical="true"/>
+              <a-button type="link" size="small" @click="(event: MouseEvent) => openUserDrawer(event, record)">
+                <template #icon>
+                  <UserAddOutlined />
+                </template>
+                分配用户
               </a-button>
               <a-divider :vertical="true"/>
               <a-popconfirm title="删除后不可恢复，是否删除？"
@@ -184,6 +191,14 @@
         </a-flex>
       </a-form>
     </a-modal>
+    <!--    分配用户抽屉-->
+    <a-drawer v-model:open="userDrawer.open"
+              :width="900"
+              :destroyOnClose="true"
+              :title="userDrawer.roleName"
+              :styles="{body: {'padding-top': '0'}}">
+      <role-user :role-id="userDrawer.roleId"/>
+    </a-drawer>
   </div>
 </template>
 
@@ -201,6 +216,7 @@ import type {SysRole, SysRoleDTO, SysRoleVO} from "@/api/system/role/type/sys-ro
 import {type BaseModalActiveType} from "@/api/global/type.ts";
 import {useThemeStore} from "@/stores/theme.ts";
 import TableSetting from "@/components/table-setting/index.vue";
+import RoleUser from "./user/index.vue"
 
 const {sys_status,sys_menu_type} = initDict("sys_status","sys_menu_type")
 const easyTreeSelectRef = useTemplateRef<InstanceType<typeof EasyTreeSelect>>("easyTreeSelectRef")
@@ -282,7 +298,7 @@ const initSearch = () => {
       title: '操作',
       align: 'center',
       key: 'action',
-      width: '182px',
+      width: '292px',
       fixed: 'right',
     },
   ])
@@ -529,4 +545,30 @@ const initDelete = () => {
   }
 }
 const {openDeletePopconfirm,closePopconfirm,handleDelete,openPopconfirm} = initDelete()
+
+// 分配用户抽屉
+const initUserDrawer = () => {
+  type UserDrawerType = {
+    open: boolean,
+    roleId: string,
+    roleName: string
+  }
+  const userDrawer = reactive<UserDrawerType>({
+    open: false,
+    roleId: '',
+    roleName: ''
+  })
+  const openUserDrawer = (event: MouseEvent, role: SysRoleVO) => {
+    event.stopPropagation()
+    userDrawer.roleId = role.id ?? ''
+    userDrawer.roleName = role.name ?? ''
+    userDrawer.open = true
+  }
+
+  return {
+    userDrawer,
+    openUserDrawer
+  }
+}
+const {userDrawer, openUserDrawer} = initUserDrawer()
 </script>

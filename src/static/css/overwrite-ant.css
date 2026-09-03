@@ -6,10 +6,11 @@
 }
 
 /**
-    table 页脚圆角
+    table 四角圆角：vnext 默认只圆容器顶部两角（header 方向），项目列表页的 footer（外置分页）
+    在底部会露出直角，此处补全四角；LG 档 token（默认 8px）随「界面圆角」slider 联动
  */
 .ant-table-wrapper .ant-table {
-    border-radius: 8px !important;
+    border-radius: var(--ant-border-radius-lg) !important;
 }
 
 /**
@@ -32,3 +33,14 @@
     text-align: center !important;
 }
 
+
+/**
+    弹层滚动容器：套用全站内滚容器约定（thin + 主题色变量），暗色自动跟随。
+    全局化（原为 dictData 组件内定义，未访问字典页的会话中样式不注入，其余抽屉为白色默认滚动条）；
+    modal 的滚动容器是 wrap（dist 源码：.ant-modal-wrap 为 fixed + overflow:auto，内容超高时整个弹窗在其内滚动）
+ */
+.ant-drawer-body,
+.ant-modal-wrap {
+    scrollbar-width: thin;
+    scrollbar-color: var(--lihua-scrollbar-thumb-color);
+}
