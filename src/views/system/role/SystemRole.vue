@@ -2,7 +2,7 @@
   <div>
     <a-flex vertical :gap="16">
 <!--      查询条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -17,9 +17,7 @@
             </a-col>
             <a-col>
               <a-form-item label="状态">
-                <a-select placeholder="请选择" allowClear v-model:value="roleQuery.status">
-                  <a-select-option v-for="item in sys_status" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择" allowClear v-model:value="roleQuery.status" :options="sys_status"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -51,7 +49,7 @@
             :loading="tableLoad"
             :row-selection="roleRowSelectionType"
             row-class-name="hover-cursor-pointer"
-            :custom-row="handleRowClick"
+            :on-row="handleRowClick"
             :scroll="{x: 1000}"
             row-key="id"
         >
@@ -76,7 +74,7 @@
                     <DeleteOutlined />
                   </template>
                   删 除
-                  <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+                  <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
                 </a-button>
               </a-popconfirm>
 
@@ -114,7 +112,7 @@
                 </template>
                 编辑
               </a-button>
-              <a-divider type="vertical"/>
+              <a-divider :vertical="true"/>
               <a-popconfirm title="删除后不可恢复，是否删除？"
                             placement="bottomRight"
                             ok-text="确 定"
@@ -146,7 +144,7 @@
 <!--    角色模态框-->
     <a-modal v-model:open="modalActive.open" :footer="null">
       <template #title>
-        <div style="margin-bottom: var(--ant-margin-lg)">
+        <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>
@@ -190,15 +188,13 @@
 </template>
 
 <script setup lang="ts">
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {computed, reactive, ref, useTemplateRef} from "vue";
 import {deleteData, queryById, queryPage, save, updateStatus} from "@/api/system/role/role.ts";
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue";
 import EasyTreeSelect from "@/components/easy-tree-select/index.vue"
 import {queryMenuTreeOption} from "@/api/system/menu/menu.ts";
-import type {Rule} from "ant-design-vue/es/form";
-import {message} from "@/antd-adapter";
+import {message, type Rule, type TableColumnsType} from "@/antd-adapter";
 import dayjs from "dayjs";
 import type {SysMenu} from "@/api/system/menu/type/sys-menu.ts";
 import type {SysRole, SysRoleDTO, SysRoleVO} from "@/api/system/role/type/sys-role.ts";
@@ -251,7 +247,7 @@ const initSearch = () => {
   }
 
   // 列表列定义
-  const roleColumn = ref<ColumnsType>([
+  const roleColumn = ref<TableColumnsType>([
     {
       title: '角色名称',
       dataIndex: 'name',

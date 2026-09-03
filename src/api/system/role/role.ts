@@ -31,8 +31,8 @@ export const save = (data: SysRole) => {
 // 修改角色状态
 export const updateStatus = (id: string, status: string) => {
   return request<string>({
-    url: 'system/role/updateStatus/' + id + '/' + status,
-    method: 'post'
+    url: 'system/role/status/' + id + '/' + status,
+    method: 'put'
   })
 }
 
