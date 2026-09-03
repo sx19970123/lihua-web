@@ -36,18 +36,6 @@ export const deleteData = (ids: Array<string>) => {
 
 }
 
-/**
- * 根据字典类型编码获取字典数据
- * @param dictTypeCode
- */
-export const getDictDataOption = (dictTypeCode: string) => {
-  return request<Array<SysDictDataType>>({
-    url: 'system/dictData/option/' + dictTypeCode,
-    method: 'get'
-  })
-}
-
-
 export const getDictDataOptionByCodeList = (dictTypeCodeList: string[]) => {
   return request<MapResponseType<string, SysDictDataType>>({
     url: 'system/dictData/option',
