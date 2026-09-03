@@ -13,6 +13,10 @@ import type {StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";
 import {closeConnect} from "@/utils/web-socket.ts";
 import router from "@/router";
 import {attachmentUrl, getTemporaryPath} from "@/utils/attachment-url.ts";
+import {createWindowGuard} from "@/utils/window-guard.ts";
+
+// 认证失效联动（清用户态+跳转+提示）的单飞窗：token 过期时并发 401 只执行一次，窗口自动复位
+const authFailureGuard = createWindowGuard(5000)
 
 export const useUserStore = defineStore('user', {
     state: () => {
@@ -111,8 +115,11 @@ export const useUserStore = defineStore('user', {
                 this.clearUserInfo()
             }
         },
-        // 认证失效
+        // 认证失效（窗口内重复触发直接忽略，见 authFailureGuard）
         authenticationFailure(msg: string) {
+            if (!authFailureGuard('authentication-failure')) {
+                return
+            }
             this.clearUserInfo()
             router.push("/authentication")
             message.error(msg)

@@ -26,6 +26,11 @@ export interface SysDictType {
   type?: string;
 
   /**
+   * 业务域（取值 sys_dict_business_domain 字典）。
+   */
+  businessDomain?: string;
+
+  /**
    * 关于字典类型的额外备注或注释。
    */
   remark?: string;
@@ -79,6 +84,11 @@ export interface SysDictTypeDTO {
    * 字典类型编码。
    */
   code?: string;
+
+  /**
+   * 业务域（取值 sys_dict_business_domain 字典）。
+   */
+  businessDomain?: string;
 
   /**
    * 字典类型状态

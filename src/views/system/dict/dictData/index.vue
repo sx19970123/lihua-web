@@ -1,6 +1,6 @@
 <template>
   <a-flex vertical :gap="16">
-    <a-card style="margin-top: var(--ant-margin-lg);" :body-style="{'padding-bottom': '0'}">
+    <a-card class="mt-ant-lg" :styles="{body: {'padding-bottom': '0'}}">
       <a-form :colon="false">
         <a-row :gutter="16">
           <a-col>
@@ -15,10 +15,7 @@
           </a-col>
           <a-col>
             <a-form-item label="状态">
-              <a-select v-model:value="dictDataQuery.status" allow-clear placeholder="请选择">
-                <a-select-option value="0">正常</a-select-option>
-                <a-select-option value="1">停用</a-select-option>
-              </a-select>
+              <a-select v-model:value="dictDataQuery.status" allow-clear placeholder="请选择" :options="sys_status"/>
             </a-form-item>
           </a-col>
           <a-col>
@@ -47,25 +44,34 @@
         </a-row>
       </a-form>
     </a-card>
-    <a-card :body-style="{padding: 0}" :style="{'border-bottom': 'none'}">
+    <a-card :styles="{body: {padding: 0}}">
         <a-table
-            :scroll="{ x: 1050 }"
+            :scroll="{ x: 1000 }"
             :columns="dictDataColumn"
             :data-source="dictDataList"
             :loading="tableLoading"
             :pagination="false"
             v-model:expandedRowKeys="expandedRowKeys"
-            @resizeColumn="handleResizeColumn"
             rowKey="id"
             sticky
         >
           <template #title>
-            <a-button type="primary" @click="handleAdd">
-              <template #icon>
-                <PlusOutlined />
-              </template>
-              新 增
-            </a-button>
+            <a-flex :gap="8">
+              <a-button type="primary" @click="handleAdd">
+                <template #icon>
+                  <PlusOutlined />
+                </template>
+                新 增
+              </a-button>
+              <a-button v-if="editingCount >= 2" @click="handleBatchSave" :loading="tableLoading">
+                <template #icon>
+                  <SaveOutlined />
+                </template>
+                批量保存
+              </a-button>
+              <!-- settingKey 用于和同路由的主表设置隔离存储 -->
+              <table-setting v-model="dictDataColumn" setting-key="dictData"/>
+            </a-flex>
           </template>
 
           <template #bodyCell="{column,text,record}">
@@ -104,14 +110,10 @@
             <template v-if="'tagStyle' === column.dataIndex">
               <!--当编辑字典为标签样式时，不展示选择框，进行标签样式预览-->
               <template v-if="editableData[record.id] && editableData[record.id].dictTypeCode === 'sys_dict_tag_style'">
-                <a-tag :color="editableData[record.id].value">{{editableData[record.id].label}}</a-tag>
+                <a-tag :color="editableData[record.id].value" variant="outlined">{{editableData[record.id].label}}</a-tag>
               </template>
               <template v-else-if="editableData[record.id] && editableData[record.id].dictTypeCode !== 'sys_dict_tag_style'">
-                <a-select v-model:value="editableData[record.id].tagStyle" placeholder="请选择">
-                  <a-select-option :value="item.value" v-for="item in sys_dict_tag_style">
-                    <a-tag :color="item.value" :bordered="false">{{item.label}}</a-tag>
-                  </a-select-option>
-                </a-select>
+                <a-select v-model:value="editableData[record.id].tagStyle" placeholder="请选择" :options="tagStyleOptions"/>
               </template>
               <template v-else>
                 <dict-tag :dict-data-value="text" :dict-data-option="sys_dict_tag_style"/>
@@ -119,9 +121,7 @@
             </template>
             <!--          状态-->
             <template v-if="'status' === column.dataIndex">
-              <a-select v-if="editableData[record.id]"  v-model:value="editableData[record.id].status">
-                <a-select-option :value="item.value" v-for="item in sys_status">{{item.label}}</a-select-option>
-              </a-select>
+              <a-select v-if="editableData[record.id]"  v-model:value="editableData[record.id].status" :options="sys_status"/>
               <template v-else>
                 <dict-tag :dict-data-value="text" :dict-data-option="sys_status"/>
               </template>
@@ -161,9 +161,6 @@
                 </a-button>
                 <a-divider type="vertical"/>
                 <a-button type="link" size="small" danger @click="handleCancel(record.id, true)">
-                  <template #icon>
-
-                  </template>
                   取消
                 </a-button>
               </template>
@@ -198,14 +195,16 @@
 
 <script setup lang="ts">
 // 接收父组件传入的typeId
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {deleteData, queryList, save} from "@/api/system/dict/dict-data.ts";
 import type {UnwrapRef} from 'vue';
-import {nextTick, reactive, ref} from "vue";
-import {message} from "@/antd-adapter";
+import {computed, h, nextTick, reactive, ref} from "vue";
+import {Tag} from "antdv-next";
+import {message, type TableColumnsType} from "@/antd-adapter";
 import {cloneDeep} from 'lodash-es';
 import {initDict, reLoadDict} from "@/helpers/dict.ts";
 import dictTag from "@/components/dict-tag/index.vue"
+import TableSetting from "@/components/table-setting/index.vue";
+import {ResponseError} from "@/api/global/type.ts";
 import type {SysDictDataType, SysDictDataTypeDTO} from "@/api/system/dict/type/sys-dict-data-type.ts";
 import {v4 as uuidv4} from "uuid";
 
@@ -216,18 +215,21 @@ const props = defineProps<{
 
 const {sys_status,sys_dict_tag_style} = initDict("sys_status","sys_dict_tag_style")
 
+// 标签样式选项以彩色 tag 作为选项内容，选中回显同样渲染 tag
+const tagStyleOptions = computed(() => sys_dict_tag_style.value.map(item => ({
+  value: item.value,
+  label: h(Tag, {color: item.value, variant: 'filled'}, () => item.label)
+})))
+
 // 查询
 const initSearch = () => {
   // 定义表头
-  const dictDataColumn = ref<ColumnsType>([
+  const dictDataColumn = ref<TableColumnsType>([
     {
       title: '标签',
       dataIndex: 'label',
       key: 'label',
-      resizable: true,
-      width: 200,
-      maxWidth: 300,
-      minWidth: 150
+      width: 200
     },
     {
       title: '值',
@@ -300,9 +302,6 @@ const initSearch = () => {
     handleQueryList()
   }
 
-  const handleResizeColumn = (w: number, col: { width: number }) => {
-    col.width = w;
-  }
   handleQueryList()
   return {
     dictDataQuery,
@@ -311,11 +310,10 @@ const initSearch = () => {
     handleQueryList,
     resetList,
     tableLoading,
-    expandedRowKeys,
-    handleResizeColumn
+    expandedRowKeys
   }
 }
-const {dictDataQuery, dictDataColumn, dictDataList, handleQueryList, resetList, tableLoading, expandedRowKeys,handleResizeColumn} = initSearch()
+const {dictDataQuery, dictDataColumn, dictDataList, handleQueryList, resetList, tableLoading, expandedRowKeys} = initSearch()
 
 // 新增/新增下级
 const initAdd = () => {
@@ -323,9 +321,8 @@ const initAdd = () => {
   const editableData:UnwrapRef<Record<string, SysDictDataType>> = reactive({})
 
   // 处理新增
-  const handleAdd = async () => {
+  const handleAdd = () => {
     const tempId = generateTempId()
-    console.log(tempId)
     // 新增默认数据
     const item: SysDictDataType = {
       id: tempId,
@@ -338,12 +335,10 @@ const initAdd = () => {
     // 添加到集合
     dictDataList.value.push(item)
     handleEdit(item)
-    // 自动滚动
-    await autoRoll(tempId)
   }
 
   // 处理新增子集
-  const handleAddChildren = async (data: SysDictDataType) => {
+  const handleAddChildren = (data: SysDictDataType) => {
     if (!data.children) {
       data.children = []
     }
@@ -363,21 +358,6 @@ const initAdd = () => {
     if (data.id) {
       expandedRowKeys.value.push(data.id)
     }
-    // 自动滚动
-    await autoRoll(tempId)
-  }
-
-  /**
-   * 点击新增自动滚动到执行输入框
-   * @param targetClass
-   */
-  const autoRoll = async (targetClass: string) => {
-    await nextTick(() => {
-      const doc = document.querySelector('.' + targetClass)
-      if (doc) {
-        doc.scrollIntoView({behavior: 'smooth',block: 'nearest'})
-      }
-    })
   }
 
   // 处理点击编辑
@@ -477,63 +457,114 @@ const initAdd = () => {
 const {editableData,handleAdd,handleEdit,handleCancel,checkIsTempId,handleAddChildren} = initAdd()
 // 保存方法
 const initSave = () => {
-  // 保存数据
-  const handleSave = async (id: string) => {
-    // 检查是否存在可编辑的数据
-    if (!editableData[id]) {
-      message.error("没有可编辑的数据");
-      return;
-    }
-
-    const data = editableData[id];
-
-    // 确保有有效的 label 和 value
-    if (!data?.label || !data?.value || !data?.sort) {
-      message.error("请将数据填写完整");
-      return;
+  // 校验编辑数据完整性，返回错误提示（空串表示通过；sort 允许为 0，仅排除空值）
+  const checkRowValid = (data: SysDictDataType) => {
+    if (!data?.label || !data?.value || data?.sort == null) {
+      return '请将数据填写完整'
     }
     if (!data?.dictTypeCode) {
-      message.error("数据类型编码为空");
-      return;
+      return '数据类型编码为空'
     }
+    return ''
+  }
 
+  // 保存单条编辑数据：提交并合并列表、关闭编辑态，返回成功提示文案，失败返回 null（单条/批量保存共用）
+  const saveRow = async (id: string): Promise<string | null> => {
+    const data = editableData[id]
+    if (!data) {
+      return null
+    }
+    // 临时 id 置空，由后端生成正式 id
+    if (data.id && checkIsTempId(data.id)) {
+      data.id = undefined
+    }
     try {
-      // 如果是临时ID，将其设置为undefined
-      if (data.id && checkIsTempId(data.id)) {
-        data.id = undefined;
-      }
-
-      tableLoading.value = true;
-
-      // 保存数据
-      const resp = await save(data);
-
+      const resp = await save(data)
       if (resp.code === 200) {
-        // 保存成功的处理
-        data.id = resp.data;
-        // 新增的数据保存到列表
-        handleDeepSave(id, dictDataList.value, data);
+        data.id = resp.data
+        // 保存的数据合并回列表
+        handleDeepSave(id, dictDataList.value, data)
         // 关闭编辑框
-        handleCancel(id,false)
+        handleCancel(id, false)
         // 重新排序
         handleSort(dictDataList.value)
         // 重载字典数据
         handleReloadDictData(data.dictTypeCode)
-        message.success(resp.msg);
-      } else {
-        // 保存失败的处理
-        message.error(resp.msg);
+        return resp.msg
+      }
+      message.error(resp.msg)
+      return null
+    } catch {
+      // 请求异常已由拦截器统一提示，返回 null 让批量流程继续处理下一行
+      return null
+    }
+  }
+
+  // 单条保存（行内保存按钮）
+  const handleSave = async (id: string) => {
+    if (!editableData[id]) {
+      message.error("没有可编辑的数据")
+      return
+    }
+    const invalidMsg = checkRowValid(editableData[id])
+    if (invalidMsg) {
+      message.error(invalidMsg)
+      return
+    }
+    tableLoading.value = true
+    try {
+      const msg = await saveRow(id)
+      if (msg !== null) {
+        message.success(msg)
       }
     } finally {
-      tableLoading.value = false;
+      tableLoading.value = false
     }
-  };
+  }
+
+  // 批量保存所有编辑中的数据：先整体校验，再逐条提交，全部完成后统一提示
+  const handleBatchSave = async () => {
+    const ids = Object.keys(editableData)
+    if (ids.length === 0) {
+      message.warning("没有正在编辑的数据")
+      return
+    }
+    for (const id of ids) {
+      const invalidMsg = checkRowValid(editableData[id])
+      if (invalidMsg) {
+        message.error("存在未填写完整的数据，请补全后重试")
+        return
+      }
+    }
+    tableLoading.value = true
+    let successCount = 0
+    try {
+      for (const id of ids) {
+        if (await saveRow(id) !== null) {
+          successCount++
+        }
+      }
+      if (successCount === ids.length) {
+        message.success(`批量保存成功（${successCount} 条）`)
+      } else {
+        message.error(`保存成功 ${successCount} 条，失败 ${ids.length - successCount} 条，失败项保留编辑状态`)
+      }
+    } finally {
+      tableLoading.value = false
+    }
+  }
 
   // 保存时，当修改的字典数据为当前用到的字典数据（sys_dict_tag_style）时，重新加载字典数据
-  const handleReloadDictData = (dictTypeCode: string) => {
+  const handleReloadDictData = (dictTypeCode?: string) => {
     if (dictTypeCode === "sys_dict_tag_style") {
       reLoadDict(dictTypeCode).then(resp => {
         sys_dict_tag_style.value = resp as Array<SysDictDataType>
+      }).catch(e => {
+        if (e instanceof ResponseError) {
+          message.error(e.msg)
+        } else {
+          console.error(e)
+        }
       })
     }
   }
@@ -557,10 +588,11 @@ const initSave = () => {
 
 
   return {
-    handleSave
+    handleSave,
+    handleBatchSave
   }
 }
-const { handleSave } = initSave()
+const { handleSave, handleBatchSave } = initSave()
 // 删除方法
 const initDelete = () => {
   // 处理删除
@@ -583,19 +615,20 @@ const initDelete = () => {
     handleSort(list)
   }
 
-  // 处理删除集合中的数据
+  // 处理删除集合中的数据（id 唯一，命中即返回，避免 splice 后数组移位跳过兄弟项的子树检查）
   const handleDeleteTableData = (id: string, list: SysDictDataType[]) => {
     for (let i = 0; i < list.length; i++) {
       const item = list[i];
       if (item.id === id) {
         list.splice(i, 1);
-        // i--; // 减小 i 因为数组长度已经减小了
-      } else if (item.children && item.children.length > 0) {
-        handleDeleteTableData(id, item.children);
+        return;
       }
-      // 递归回调如果没有子集的话设置子集为 undefined
-      if (item.children && item.children.length === 0) {
-        item.children = undefined;
+      if (item.children && item.children.length > 0) {
+        handleDeleteTableData(id, item.children);
+        // 递归回调后子集删空则置 undefined
+        if (item.children.length === 0) {
+          item.children = undefined;
+        }
       }
     }
   };
@@ -605,6 +638,10 @@ const initDelete = () => {
   }
 }
 const { handleDelete } = initDelete()
+
+// 正在编辑的行数（两行及以上展示批量保存入口）
+const editingCount = computed(() => Object.keys(editableData).length)
+
 // 处理排序
 const handleSort = (list: SysDictDataType[]) => {
   if (list) {
@@ -629,10 +666,11 @@ const handleSort = (list: SysDictDataType[]) => {
 
 </script>
 
-<!--suppress CssUnresolvedCustomProperty -->
 <style>
-.ant-table-tbody > tr.target > td {
-  border-top: 2px var(--colorPrimary) solid !important;
+/* 抽屉体滚动条：套用全站内滚容器约定（thin + 主题色变量），暗色自动跟随 */
+.ant-drawer-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--lihua-scrollbar-thumb-color);
 }
 .err-placeholder {
   .ant-input-number-input::placeholder,

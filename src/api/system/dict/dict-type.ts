@@ -43,8 +43,8 @@ export const save = (data: SysDictType) => {
  */
 export const updateStatus = (id: string, status: string) => {
   return request<string>({
-    url: 'system/dictType/updateStatus/' + id + '/' + status,
-    method: 'post'
+    url: 'system/dictType/status/' + id + '/' + status,
+    method: 'put'
   })
 }
 

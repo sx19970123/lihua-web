@@ -2,7 +2,7 @@
   <div>
     <a-flex vertical :gap="16">
       <!--    检索条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -16,10 +16,13 @@
               </a-form-item>
             </a-col>
             <a-col>
+              <a-form-item label="业务域">
+                <a-select style="width: 160px" v-model:value="dictTypeQuery.businessDomain" placeholder="请选择" allowClear :options="sys_dict_business_domain" show-search option-filter-prop="label"/>
+              </a-form-item>
+            </a-col>
+            <a-col>
               <a-form-item label="状态">
-                <a-select v-model:value="dictTypeQuery.status" placeholder="清选择" allowClear>
-                  <a-select-option v-for="item in sys_status" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select v-model:value="dictTypeQuery.status" placeholder="请选择" allowClear :options="sys_status"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -55,7 +58,7 @@
                :loading="tableLoad"
                :row-selection="dictTypeRowSelectionType"
                row-class-name="hover-cursor-pointer"
-               :custom-row="handleRowClick"
+               :on-row="handleRowClick"
                row-key="id"
                :scroll="{x: 1500}"
       >
@@ -80,7 +83,7 @@
                   <DeleteOutlined />
                 </template>
                 删 除
-                <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+                <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
               </a-button>
             </a-popconfirm>
             <a-button type="primary" ghost @click="handleReloadCache" :loading="loadCache">
@@ -98,6 +101,9 @@
           </template>
           <template v-if="column.key === 'type'">
             <dict-tag :dict-data-option="sys_dict_type" :dict-data-value="record[column.key]"/>
+          </template>
+          <template v-if="column.key === 'businessDomain'">
+            <dict-tag :dict-data-option="sys_dict_business_domain" :dict-data-value="record[column.key]"/>
           </template>
           <template v-if="column.key === 'status'">
             <a-switch v-model:checked="record.statusIsNormal"
@@ -164,7 +170,7 @@
              :confirm-loading="modalActive.saveLoading"
              @ok="saveDictType">
       <template #title>
-        <div style="margin-bottom: var(--ant-margin-lg)">
+        <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>
@@ -184,9 +190,10 @@
           <a-input placeholder="请输入字典编码" v-model:value="dictTypeData.code" show-count :maxlength="30"/>
         </a-form-item>
         <a-form-item label="字典类型">
-          <a-select style="width: 120px" v-model:value="dictTypeData.type">
-            <a-select-option :value="item.value" v-for="item in sys_dict_type">{{item.label}}</a-select-option>
-          </a-select>
+          <a-select style="width: 160px" v-model:value="dictTypeData.type" :options="sys_dict_type" show-search option-filter-prop="label"/>
+        </a-form-item>
+        <a-form-item label="业务域">
+          <a-select style="width: 160px" v-model:value="dictTypeData.businessDomain" placeholder="请选择" allowClear :options="sys_dict_business_domain" show-search option-filter-prop="label"/>
         </a-form-item>
         <a-form-item label="状态">
           <a-radio-group v-model:value="dictTypeData.status">
@@ -203,7 +210,7 @@
               :width="drawerAction.width"
               :destroyOnClose="true"
               :title="drawerAction.title"
-              :body-style="{'padding-top': '0'}">
+              :styles="{body: {'padding-top': '0'}}">
       <dict-data :type-code="drawerAction.typeCode" :type="drawerAction.type"/>
     </a-drawer>
   </div>
@@ -213,17 +220,15 @@
 import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import type {SysDictType, SysDictTypeDTO, SysDictTypeVO} from "@/api/system/dict/type/sys-dict-type.ts";
 import {type BaseModalActiveType, type ResponseType} from "@/api/global/type.ts"
-import type {ColumnsType} from 'ant-design-vue/es/table/interface';
 import {deleteData, queryById, queryPage, reloadCache, save, updateStatus} from "@/api/system/dict/dict-type.ts";
 import dayjs from "dayjs";
-import type {Rule} from "ant-design-vue/es/form";
-import {message} from "@/antd-adapter";
+import {message, type Rule, type TableColumnsType} from "@/antd-adapter";
 import DictData from "./dictData/index.vue"
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"
 import TableSetting from "@/components/table-setting/index.vue";
 
-const { sys_status,sys_dict_type } = initDict("sys_status","sys_dict_type")
+const { sys_status,sys_dict_type,sys_dict_business_domain } = initDict("sys_status","sys_dict_type","sys_dict_business_domain")
 
 
 // 列表查询相关
@@ -258,7 +263,7 @@ const initSearch = () => {
     }
   }
   // 列表列定义
-  const dictTypeColumn = ref<ColumnsType>([
+  const dictTypeColumn = ref<TableColumnsType>([
     {
       title: '名称',
       dataIndex: 'name',
@@ -284,6 +289,12 @@ const initSearch = () => {
       dataIndex: 'type',
       align: 'center',
       key: 'type',
+    },
+    {
+      title: '业务域',
+      dataIndex: 'businessDomain',
+      align: 'center',
+      key: 'businessDomain',
     },
     {
       title: '备注',
@@ -347,7 +358,7 @@ const initSearch = () => {
         dictTypeList.value = resp.data.records
         dictTypeTotal.value = resp.data.total
         // 回显状态
-        dictTypeList.value?.some(dictType => {
+        dictTypeList.value?.forEach(dictType => {
           dictType.statusIsNormal = dictType.status === '0'
           dictType.updateStatusLoading = false
         })
@@ -416,7 +427,11 @@ const initSave = () => {
 
   // 保存方法
   const saveDictType = async () => {
-      await formRef.value.validate()
+      // 校验失败由表单内联展示错误，直接返回不再提交
+      const valid = await formRef.value.validate().then(() => true).catch(() => false)
+      if (!valid) {
+        return
+      }
       modalActive.saveLoading = true
       try {
         const resp = await save(dictTypeData)
@@ -441,6 +456,7 @@ const initSave = () => {
       dictTypeData.name = resp.data.name
       dictTypeData.code = resp.data.code
       dictTypeData.type = resp.data.type
+      dictTypeData.businessDomain = resp.data.businessDomain
       dictTypeData.status = resp.data.status
       dictTypeData.remark = resp.data.remark
     } else {
@@ -453,6 +469,7 @@ const initSave = () => {
     dictTypeData.name = undefined
     dictTypeData.code = undefined
     dictTypeData.type =  '0'
+    dictTypeData.businessDomain = undefined
     dictTypeData.status = '0'
     dictTypeData.remark = undefined
   }
@@ -476,7 +493,7 @@ const initSave = () => {
           dictType.status = newStatus
           dictType.statusIsNormal = dictType.status === '0'
           dictType.updateStatusLoading = false
-          return
+          return true
         }
       })
     }
