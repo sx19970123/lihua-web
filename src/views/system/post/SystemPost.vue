@@ -2,7 +2,7 @@
   <div>
     <a-flex :gap="16" vertical>
       <!--        检索条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -29,9 +29,7 @@
             </a-col>
             <a-col>
               <a-form-item label="岗位状态">
-                <a-select placeholder="请选择" v-model:value="postQuery.status" allow-clear>
-                  <a-select-option :value="item.value" v-for="item in sys_status">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择" v-model:value="postQuery.status" allow-clear :options="sys_status"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -62,7 +60,7 @@
                :loading="tableLoad"
                :row-selection="postRowSelectionType"
                row-class-name="hover-cursor-pointer"
-               :custom-row="handleRowClick"
+               :on-row="handleRowClick"
                :scroll="{x: 1200}"
                row-key="id"
       >
@@ -87,7 +85,7 @@
                   <DeleteOutlined />
                 </template>
                 删 除
-                <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+                <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
               </a-button>
             </a-popconfirm>
             <a-button ghost type="primary" @click="handleExportExcel">
@@ -126,7 +124,7 @@
               </template>
               编辑
             </a-button>
-            <a-divider type="vertical"/>
+            <a-divider :vertical="true"/>
             <a-popconfirm ok-text="确 定"
                           cancel-text="取 消"
                           @confirm="handleDelete(record.id)"
@@ -159,7 +157,7 @@
 
     <a-modal v-model:open="modalActive.open" @ok="savePost" :confirm-loading="modalActive.saveLoading">
       <template #title>
-        <div style="margin-bottom: var(--ant-margin-lg)">
+        <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>
@@ -224,14 +222,11 @@
 
 import {getDeptOption} from "@/api/system/dept/dept.ts";
 import {computed, reactive, ref, useTemplateRef, watch} from "vue";
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {initDict} from "@/helpers/dict.ts";
 import {deleteData, exportExcel, queryById, queryPage, save, updateStatus} from "@/api/system/post/post.ts";
 import {useRoute} from "vue-router";
-import type {Rule} from "ant-design-vue/es/form";
 import {flattenTree} from "@/utils/tree.ts";
-import {type FormInstance} from "ant-design-vue";
-import {message} from "@/antd-adapter";
+import {message, type FormInstance, type Rule, type TableColumnsType} from "@/antd-adapter";
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 import type {SysPost, SysPostDTO, SysPostVO} from "@/api/system/post/type/sys-post.ts";
 import Spin from "@/components/spin";
@@ -300,7 +295,7 @@ const initSearch = () => {
       }
     }
   }
-  const postColumn = ref<ColumnsType>([
+  const postColumn = ref<TableColumnsType>([
     {
       title: '岗位名称',
       key: 'name',
@@ -494,7 +489,7 @@ const initSave = () => {
   }
 
 
-  // 修改角色状态
+  // 修改岗位状态
   const handleUpdateStatus = async (event: MouseEvent, id: string, status: string) => {
     event.stopPropagation()
     let newStatus: string = status
@@ -594,7 +589,7 @@ const handleExportExcel = async () => {
 
   try {
     const blob = await exportExcel(postQuery.value)
-    download(blob, "系统部门")
+    download(blob, "系统岗位")
   } catch (e) {
     message.error("导出失败")
   } finally {

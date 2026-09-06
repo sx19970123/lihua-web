@@ -44,8 +44,8 @@ export const queryById = (id: string) => {
  */
 export const updateStatus = (id: string, status: string) => {
     return request<string>({
-        url: 'system/post/updateStatus/' + id + '/' + status,
-        method: 'post'
+        url: 'system/post/status/' + id + '/' + status,
+        method: 'put'
     })
 }
 
@@ -53,7 +53,7 @@ export const updateStatus = (id: string, status: string) => {
  * 根据id批量删除
  * @param ids
  */
-export const deleteData = (ids: Array<String>) => {
+export const deleteData = (ids: Array<string>) => {
     return request({
         url: 'system/post',
         data: ids,
