@@ -43,8 +43,8 @@ export const queryById = (id: string) => {
  */
 export const updateStatus = (id: string, status: string) => {
   return request<string>({
-    url: 'system/dept/updateStatus/' + id + '/' + status,
-    method: 'post'
+    url: 'system/dept/status/' + id + '/' + status,
+    method: 'put'
   })
 }
 

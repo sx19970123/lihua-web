@@ -2,7 +2,7 @@
  <div>
    <a-flex :gap="16" vertical>
      <!--检索条件-->
-     <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+     <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
        <a-form :colon="false">
          <a-row :gutter="16">
            <a-col>
@@ -17,9 +17,7 @@
            </a-col>
            <a-col>
              <a-form-item label="部门状态" name="status">
-               <a-select style="width: 120px;" placeholder="请选择" v-model:value="deptQuery.status" allow-clear>
-                 <a-select-option v-for="item in sys_status" :value="item.value">{{item.label}}</a-select-option>
-               </a-select>
+               <a-select style="width: 120px;" placeholder="请选择" v-model:value="deptQuery.status" allow-clear :options="sys_status"/>
              </a-form-item>
            </a-col>
            <a-col>
@@ -51,7 +49,7 @@
               :loading="tableLoad"
               :row-selection="deptRowSelectionType"
               row-class-name="hover-cursor-pointer"
-              :custom-row="handleRowClick"
+              :on-row="handleRowClick"
               :scroll="{x: 1500}"
      >
        <template #title>
@@ -76,7 +74,7 @@
                  <DeleteOutlined />
                </template>
                删 除
-               <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+               <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
              </a-button>
            </a-popconfirm>
 
@@ -132,7 +130,7 @@
              </template>
              编辑
            </a-button>
-           <a-divider type="vertical"/>
+           <a-divider :vertical="true"/>
            <a-button type="link"
                      size="small"
                      @click="(event: MouseEvent) => addChildren(event, record)"
@@ -142,7 +140,7 @@
              </template>
              新增下级
            </a-button>
-           <a-divider type="vertical"/>
+           <a-divider :vertical="true"/>
            <a-popconfirm ok-text="确 定"
                          cancel-text="取 消"
                          placement="bottomRight"
@@ -165,7 +163,7 @@
     <!--模态框-->
    <a-modal v-model:open="modalActive.open" @ok="saveDept" :confirm-loading="modalActive.saveLoading">
      <template #title>
-       <div style="margin-bottom: var(--ant-margin-lg)">
+       <div class="mb-ant-lg">
          <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
        </div>
      </template>
@@ -224,7 +222,6 @@
 
 <script setup lang="ts">
 // 查询列表
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {
   deleteData,
   exportExcel,
@@ -235,11 +232,9 @@ import {
   updateStatus
 } from "@/api/system/dept/dept.ts";
 import {computed, reactive, ref, useTemplateRef} from "vue";
-import {type FormInstance} from "ant-design-vue";
-import {message} from "@/antd-adapter";
+import {message, type FormInstance, type Rule, type TableColumnsType} from "@/antd-adapter";
 import {initDict} from "@/helpers/dict.ts";
 import {cloneDeep} from "lodash-es";
-import type {Rule} from "ant-design-vue/es/form";
 import {useRouter} from "vue-router";
 import {flattenTree} from "@/utils/tree.ts";
 import type {SysDept, SysDeptVO} from "@/api/system/dept/type/sys-dept.ts";
@@ -284,7 +279,7 @@ const initSearch = () => {
     }
   }
   // 列表信息
-  const deptColumn = ref<ColumnsType>([
+  const deptColumn = ref<TableColumnsType>([
     {
       title: '部门名称',
       key: 'name',
@@ -441,11 +436,7 @@ const initSave = () => {
   // 新增部门
   const addDept = () => {
     handleModelStatus("新增部门")
-    if (deptList) {
-      sysDept.value.sort = getSort(deptList.value)
-    } else {
-      sysDept.value.sort = 1
-    }
+    sysDept.value.sort = getSort(deptList.value)
   }
   // 新增下级
   const addChildren = (event: MouseEvent, dept: SysDept) => {
@@ -506,7 +497,6 @@ const initSave = () => {
     const resp = await getDeptOption()
     if (resp.code === 200) {
       const deepDeptList = cloneDeep(resp.data)
-      handleDeptTree(deepDeptList)
       parentDeptList.value = [{
         id: '0',
         name: '根节点',
@@ -515,15 +505,6 @@ const initSave = () => {
     } else {
       message.error(resp.msg)
     }
-  }
-
-  // 处理树
-  const handleDeptTree = (deptList: Array<SysDept>) => {
-    deptList.forEach(item => {
-      if (item.children && item.children.length > 0) {
-        handleDeptTree(item.children)
-      }
-    })
   }
 
   const saveDept = async () => {
@@ -545,10 +526,10 @@ const initSave = () => {
     }
   }
 
-  // 修改菜单状态
+  // 修改部门状态
   const handleUpdateStatus = async (event: MouseEvent, id: string, status: string) => {
     event.stopPropagation()
-    let newStatus: string = ''
+    let newStatus: string = status
     try {
       const resp = await updateStatus(id, status)
       if (resp.code === 200) {
@@ -565,7 +546,7 @@ const initSave = () => {
 
   }
 
-  // 回显菜单状态
+  // 回显部门状态
   const handleDeptStatus = (deptList: Array<SysDeptVO>, id: string, status: string): boolean => {
     for (let dept of deptList) {
       if (dept.id === id) {
@@ -595,7 +576,6 @@ const initSave = () => {
     selectById,
     addChildren,
     initTreeData,
-    handleDeptTree,
     addDept,
     saveDept
   }
