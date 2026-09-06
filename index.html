@@ -6,6 +6,23 @@
     <link rel="icon" href="/src/assets/images/logo.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiHua</title>
+    <script>
+      // 主题引导：首帧前同步落 data-theme 与底色，消除暗色模式刷新闪白（白/浅灰帧出现于
+      // CSS 注入前与 data-theme 设置前两个窗口）。底色必须走行内样式——CSS 变量未注入时
+      // var() 声明失效为 unset 且不回退级联中其他规则，只有行内样式压得住首帧；
+      // 推导逻辑须与 settings.ts 的 isDarkTheme 严格一致（缺省 auto 跟随系统）。
+      // mount 后由 theme store 的 changeDocumentElement 清除行内底色，交还 variable.css 接管
+      try {
+        var m = localStorage.getItem('theme-mode')
+        var dark = (m === 'auto' || m === null)
+          ? matchMedia('(prefers-color-scheme: dark)').matches
+          : m === 'dark'
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+        document.documentElement.style.backgroundColor = dark ? '#000000' : '#f5f5f5'
+      } catch (e) {
+        document.documentElement.style.backgroundColor = '#f5f5f5'
+      }
+    </script>
   </head>
   <body data-overlayscrollbars-initialize>
     <div id="app"></div>

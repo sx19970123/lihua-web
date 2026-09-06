@@ -273,6 +273,8 @@ export const useThemeStore = defineStore('theme',{
         // 修改html标签，标记当前颜色模式
         changeDocumentElement(colorPrimary: string) {
             document.documentElement.setAttribute("data-theme",this.$state.isDarkTheme ? 'dark' : 'light')
+            // 清除 index.html 主题引导脚本的行内底色：data-theme 已就位，底色交还 variable.css 的
+            document.documentElement.style.removeProperty("background-color")
             document.documentElement.style.setProperty("--colorPrimary", colorPrimary)
             // 同步 store state：--colorPrimary 供纯 CSS 消费，state 供模板/JS 响应式消费，两者同源于 useToken
             this.$state.antColorPrimary = colorPrimary
