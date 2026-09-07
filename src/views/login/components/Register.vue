@@ -59,15 +59,14 @@
 <script setup lang="ts">
 import {inject, type Ref, ref, useTemplateRef} from "vue";
 import PasswordInput from "@/components/password-input/index.vue"
-import type {Rule} from "ant-design-vue/es/form";
+import {type Rule, message} from "@/antd-adapter";
 import {register} from "@/api/system/authentication/authentication.ts";
-import {message} from "@/antd-adapter";
 import TianaiCaptcha from "@/components/tianai-captcha/index.vue";
 import {useSettingStore} from "@/stores/setting.ts";
 import {checkUserName} from "@/api/system/user/user.ts";
 // 系统设置
 const settingStore = useSettingStore();
-const registerLoading = ref<boolean>()
+const registerLoading = ref<boolean>(false)
 
 // 向父组件抛出切登录方法
 const emits = defineEmits(['changeComponent'])
@@ -146,7 +145,7 @@ const handleFinish = () => {
   }
 }
 
-// 验证码InstanceType<typeof Verify>
+// 验证码组件引用
 const verifyRef = useTemplateRef<InstanceType<typeof TianaiCaptcha>>("tianaiCaptchaRef")
 
 // 表单验证通过后提交注册

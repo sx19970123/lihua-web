@@ -37,9 +37,8 @@
       </a-form-item>
       <a-form-item>
         <a-flex justify="space-between">
-          <a-checkbox v-model:checked="rememberMe">记住账号</a-checkbox>
-          <a-typography-link v-if="false">忘记密码</a-typography-link>
-        </a-flex>
+        <a-checkbox v-model:checked="rememberMe">记住账号</a-checkbox>
+      </a-flex>
       </a-form-item>
       <a-form-item>
         <a-button html-type="submit"
@@ -49,16 +48,6 @@
         </a-button>
       </a-form-item>
     </a-form>
-    <div v-if="false">
-      <a-divider plain>其他方式</a-divider>
-      <a-flex justify="space-around">
-        <a-button size="large" shape="circle"><WeiboCircleOutlined /></a-button>
-        <a-button size="large" shape="circle"><WechatOutlined /></a-button>
-        <a-button size="large" shape="circle"><AlipayCircleOutlined /></a-button>
-        <a-button size="large" shape="circle"><QqOutlined /></a-button>
-        <a-button size="large" shape="circle"><GitlabOutlined /></a-button>
-      </a-flex>
-    </div>
     <!--    验证码-->
     <tianai-captcha ref="tianaiCaptchaRef" @success="userLogin"/>
   </div>
@@ -73,8 +62,7 @@ import userSetup from "@/helpers/user-setup.ts"
 import {initApp} from "@/app-init.ts"
 import {connect} from "@/utils/web-socket.ts"
 import {login} from "@/api/system/authentication/authentication.ts"
-import type {Rule} from "ant-design-vue/es/form"
-import {message} from "@/antd-adapter"
+import {type Rule, message} from "@/antd-adapter"
 import {useRouter} from 'vue-router'
 import {useSettingStore} from "@/stores/setting.ts"
 import {queryPostLoginCheckData} from "@/api/system/profile/profile.ts"
@@ -85,7 +73,7 @@ const settingStore = useSettingStore();
 const emit = defineEmits(["changeComponent","startUserSetup"])
 
 const router = useRouter()
-const loginLoading = ref<boolean>()
+const loginLoading = ref<boolean>(false)
 const rememberMe = ref<boolean>(remember.enableRememberMe())
 const verifyRef = useTemplateRef<InstanceType<typeof TianaiCaptcha>>("tianaiCaptchaRef")
 const registerUsername = inject<Ref<string|undefined>>("registerUsername")
@@ -148,6 +136,8 @@ const userLogin = async (captchaVerification: string) => {
     // 登录
     const resp = await login(loginForm.username, loginForm.password, captchaVerification);
     if (resp.code !== 200) {
+      // 401（密码错误）已由拦截器统一提示并登出，此处覆盖其余业务码（如 507 验证码二次校验失败）
+      message.error(resp.msg)
       return
     }
     // 设置token
@@ -203,7 +193,7 @@ const handleChangeComponent = (name: string) => {
 }
 
 onMounted(() => {
-  // 检擦是否刚注册完成
+  // 检查是否刚注册完成
   checkRegister()
   // 加载记住我
   initRememberMe()

@@ -8,7 +8,7 @@
         <transition name="fade" mode="out-in">
           <div v-show="showTitle">
             <a-typography-title>狸花猫后台管理系统
-              <a-tag :bordered="false">{{ settings.version }}</a-tag>
+              <a-tag variant="filled">{{ settings.version }}</a-tag>
             </a-typography-title>
             <a-typography-title :level="2">
               基于SpringBoot 4.x 和 vue3.x
@@ -71,7 +71,7 @@ const initChangeComponent = () => {
   // 处理切换组件
   const handleChangeComponent = (name: string) => {
     const target = allComponents.filter(component => component.name === name)
-    if (!target || target.length === 0) {
+    if (target.length === 0) {
       console.error("组件name未注册")
       return
     }
