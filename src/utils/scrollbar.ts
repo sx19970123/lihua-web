@@ -21,29 +21,55 @@ export const initPageScrollbar = () => {
 /* ==============================页面滚动锁============================== */
 
 let manualLocked = false;
+let antdLockActive = false;
 
 // 锁定页面滚动（蒙层/锁屏等显式调用；幂等，与 showOverflowY 成对）
-// antd 弹层（Modal/Drawer/图片预览）自带的滚动锁（向 head 注入 `html body { overflow-y: hidden }`）
-// 无需在此桥接：body 溢出被裁切 → 视口溢出量归零 → 库自身的溢出检测会把视口同步置为不可滚动
 export const hiddenOverflowY = () => {
     if (manualLocked) return;
     manualLocked = true;
-    applyLock();
+    applyViewportLock();
 };
 
 // 恢复页面滚动
 export const showOverflowY = () => {
     if (!manualLocked) return;
     manualLocked = false;
-    applyLock();
+    applyViewportLock();
 };
 
-const applyLock = () => {
+// 锁统一走 OS 视口 overflow 通道：html 级 hidden 锁住用户滚动且不塌缩滚动高度，位置天然保留
+const applyViewportLock = () => {
+    const locked = manualLocked || antdLockActive;
     if (pageScrollbar) {
-        // 悬浮滚动条零占位，overflow 切换无布局位移；实例接管后 body 行内样式不再生效
-        pageScrollbar.options({overflow: {y: manualLocked ? 'hidden' : 'scroll'}});
-    } else {
-        // 实例不可用（初始化被取消等）时退回原生行内锁，行为与旧方案一致
-        document.body.style.overflowY = manualLocked ? 'hidden' : '';
+        // 悬浮滚动条零占位，overflow 切换无布局位移
+        pageScrollbar.options({overflow: {y: locked ? 'hidden' : 'scroll'}});
     }
+};
+
+/* ==============================antd 弹层滚动锁镜像============================== */
+
+// antd 弹层（Modal/Drawer/图片预览，经 @v-c/portal 挂 body 的弹层）打开时向 head 注入锁样式
+// 标签（html body { overflow-y: hidden }）。body 的 overflow 已被 custom.css 的 !important
+// 反杀为永不裁切（防塌缩跳顶），锁的实际锁定效果由这里镜像到 OS 视口通道补回。
+// 检测读原始信号而非计算样式（计算值被反杀规则钉死为 visible，会失真）：标签形态按
+// updateCSS 的 setAttribute('vc-util-key', key) 查裸属性 vc-util-key（无 data- 前缀）；
+// 内联形态兜底读 body.style；观察器只充当触发时机（标签增删在 head childList 上）。
+let bridgeInited = false;
+
+const antdLockOn = () =>
+    document.body.style.overflowY === 'hidden'
+    || !!document.querySelector('style[vc-util-key^="vc-util-locker"]');
+
+const mirrorAntdLock = () => {
+    const locked = antdLockOn();
+    if (locked === antdLockActive) return;
+    antdLockActive = locked;
+    applyViewportLock();
+};
+
+export const bridgeAntdScrollLock = () => {
+    if (bridgeInited) return;
+    bridgeInited = true;
+    new MutationObserver(mirrorAntdLock).observe(document.body, {attributes: true, attributeFilter: ['style']});
+    new MutationObserver(mirrorAntdLock).observe(document.head, {childList: true});
 };

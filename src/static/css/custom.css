@@ -22,6 +22,16 @@
     scrollbar-color: var(--lihua-sider-scrollbar-thumb-color);
 }
 
+/* 反杀 antd 弹层滚动锁对 body 的 overflow 裁切（!important 可压过组件库的内联样式与动态样式
+   标签两种形态）：OS 托管视口后 body→视口的 overflow 传播链已断，锁落在 body 盒子上叠加
+   height:100% 会塌缩滚动高度、把视口 scrollTop 钳 0（开弹层跳顶）；body 永不裁切即永不塌缩，
+   锁定效果由 utils/scrollbar.ts 的镜像桥接经 OS 视口 overflow 通道（html 级 hidden，位置天然
+   保留）补回。两轴一起钉 visible：单钉 overflow-y 会因 x 轴 hidden 触发规范降级为 auto，
+   使 body 自身变成滚动容器 */
+html body {
+    overflow: visible !important;
+}
+
 /**
     input 框前缀图标颜色
  */
