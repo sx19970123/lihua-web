@@ -2,7 +2,7 @@
   <div>
     <a-flex vertical :gap="16">
       <!--      检索条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false" :model="menuQuery">
           <a-row :gutter="16">
             <a-col>
@@ -12,16 +12,12 @@
             </a-col>
             <a-col>
               <a-form-item label="类型" name="menuType">
-                <a-select placeholder="请选择" v-model:value="menuQuery.menuType" allow-clear>
-                  <a-select-option v-for="item in sys_menu_type" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择" v-model:value="menuQuery.menuType" allow-clear :options="sys_menu_type"/>
               </a-form-item>
             </a-col>
             <a-col>
               <a-form-item label="状态" name="status">
-                <a-select placeholder="请选择" v-model:value="menuQuery.status" allow-clear>
-                  <a-select-option v-for="item in sys_status" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择" v-model:value="menuQuery.status" allow-clear :options="sys_status"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -55,7 +51,7 @@
           :loading="tableLoad"
           :row-selection="menuRowSelectionType"
           row-class-name="hover-cursor-pointer"
-          :custom-row="handleRowClick"
+          :on-row="handleRowClick"
           :scroll="{x: 1500}"
         >
           <template #title>
@@ -82,7 +78,7 @@
                     <DeleteOutlined />
                   </template>
                   删 除
-                  <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+                  <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
                 </a-button>
               </a-popconfirm>
 
@@ -168,7 +164,7 @@
              @ok="saveMenu"
     >
       <template #title>
-        <div style="margin-bottom: var(--ant-margin-lg)">
+        <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>
@@ -198,7 +194,7 @@
                          v-model:value="sysMenu.parentId"
                          show-search
           >
-            <template #title="{ value: val, label, menuType }">
+            <template #titleRender="{ label, menuType }">
               {{label}}
               <dict-tag :dict-data-value="menuType" :dict-data-option="sys_menu_type" variant="filled"/>
             </template>
@@ -316,16 +312,13 @@
 <script setup lang="ts">
 
 // 列表查询相关
-import type {ColumnsType} from 'ant-design-vue/es/table/interface';
 import {deleteData, queryById, queryList, queryMenuTreeOption, save, updateStatus} from "@/api/system/menu/menu.ts";
 import {computed, reactive, ref, useTemplateRef} from "vue";
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"
 import IconSelect from "@/components/icon-select/index.vue"
 import {flattenTree} from "@/utils/tree.ts"
-import type {Rule} from "ant-design-vue/es/form";
-import {type FormInstance} from "ant-design-vue";
-import {message} from "@/antd-adapter";
+import {message, type FormInstance, type Rule, type TableColumnsType} from "@/antd-adapter";
 import {cloneDeep} from 'lodash-es';
 import {useThemeStore} from "@/stores/theme";
 import type {SysMenu, SysMenuVO} from "@/api/system/menu/type/sys-menu.ts";
@@ -368,7 +361,7 @@ const initSearch = () => {
   }
 
   // 列表列集合
-  const menuColumn = ref<ColumnsType>([
+  const menuColumn = ref<TableColumnsType>([
     {
       title: '菜单名称',
       key: 'label',
