@@ -9,7 +9,7 @@
                                 @back="emits('back')"
   >
     <template #content>
-      <default-dept @dept-select="handleChangeDept" :show-dept-code="false"/>
+      <default-dept @dept-select="handleChangeDept" :show-dept-code="false" :show-tooltip="false"/>
     </template>
   </user-setup-base-component>
 </template>

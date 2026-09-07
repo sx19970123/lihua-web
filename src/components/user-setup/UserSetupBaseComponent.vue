@@ -97,7 +97,8 @@ const handleGoLogin = () => {
 
 <style scoped>
 .login-setting-card {
-  width: 600px;
+  width: 100%;
+  border-radius: 24px;
 }
 .login-setting-prev-btn {
   position: absolute;

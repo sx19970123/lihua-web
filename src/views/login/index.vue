@@ -1,10 +1,12 @@
 <template>
-  <a-flex class="relative isolate w-full h-screen overflow-hidden" justify="center" align="center">
-    <!--    氛围背景层（组件内 z-index:-1，靠根节点 isolate 压到全部内容之下）-->
+  <a-flex class="relative w-full h-screen overflow-hidden" justify="center" align="center">
+    <!--    氛围背景层（z-0 压底）；
+          层叠铁律：验证码弹窗（fixed z-1001）需直达 body 级与蒙版（z-1000）比较——
+          根节点与内容层只可 relative、不可带 z-index/isolate/transform（会建层叠上下文困住弹窗），内容层靠 DOM 顺序压过背景 -->
     <login-background/>
-    <a-flex align="center" :gap="208" v-if="!showUserSetup">
-<!--      主题切换开关-->
-      <theme-mode-segmented class="absolute top-4 right-6" translucent/>
+    <!--      主题切换开关（挂根节点——absolute 以全屏根为基准；内容层是居中窄条不可作定位基准）-->
+    <theme-mode-segmented v-if="!showUserSetup" class="absolute top-4 right-6" translucent/>
+    <a-flex align="center" :gap="208" v-if="!showUserSetup" class="relative">
 <!--        左侧标题-->
       <div class="title">
         <transition name="fade" mode="out-in">
@@ -31,7 +33,7 @@
     </a-flex>
 <!--    进入系统前基础信息设置-->
     <transition name="setting" mode="out-in">
-      <user-setup-index :component-names="componentNameList" v-if="showUserSetup" @go-login="handleGoLogin" />
+      <user-setup-index class="relative" :component-names="componentNameList" v-if="showUserSetup" @go-login="handleGoLogin" />
     </transition>
   </a-flex>
 </template>

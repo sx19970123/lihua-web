@@ -9,29 +9,27 @@
                             @back="emits('back')"
   >
     <template #content>
-      <div style="width: 280px">
-        <a-form :colon="false" ref="resetPasswordRef" :model="password" :rules="rules">
-          <a-form-item name="oldPassword">
-            <a-input-password
-                placeholder="请输入旧密码"
-                v-model:value="password.oldPassword"
-            />
-          </a-form-item>
-          <a-form-item name="newPassword">
-            <password-input class="form-item-width"
-                            v-model="password.newPassword"
-                            placeholder="请输入新密码" :progress-width="92"
-                            :show-progress="!!password.newPassword && password.newPassword.length >= 6 && password.newPassword.length <= 30"
-            />
-          </a-form-item>
-          <a-form-item name="confirmPassword" >
-            <a-input-password class="form-item-width"
-                              placeholder="请再次输入新密码"
-                              v-model:value="password.confirmPassword"
-            />
-          </a-form-item>
-        </a-form>
-      </div>
+      <a-form :colon="false" ref="resetPasswordRef" :model="password" :rules="rules">
+        <a-form-item name="oldPassword">
+          <a-input-password class="form-item-width"
+              placeholder="请输入旧密码"
+              v-model:value="password.oldPassword"
+          />
+        </a-form-item>
+        <a-form-item name="newPassword">
+          <password-input class="form-item-width"
+                          v-model="password.newPassword"
+                          placeholder="请输入新密码" :progress-width="88"
+                          :show-progress="!!password.newPassword && password.newPassword.length >= 6 && password.newPassword.length <= 30"
+          />
+        </a-form-item>
+        <a-form-item name="confirmPassword" >
+          <a-input-password class="form-item-width"
+                            placeholder="请再次输入新密码"
+                            v-model:value="password.confirmPassword"
+          />
+        </a-form-item>
+      </a-form>
     </template>
   </user-setup-base-component>
 </template>
@@ -110,3 +108,9 @@ const handleSkip = (loading:Ref<boolean>) => {
   emits('skip', loading.value)
 }
 </script>
+
+<style scoped>
+.form-item-width {
+  width: 270px;
+}
+</style>

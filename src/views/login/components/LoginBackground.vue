@@ -1,5 +1,5 @@
 <template>
-  <!-- 登录页全屏氛围背景：置于内容层之下（z-index:-1），依赖页面根元素 isolate 建立层叠上下文；
+  <!-- 登录页全屏氛围背景：z-0 压在内容层（z-1）之下；页面根节点不可建层叠上下文（验证码弹窗需与 body 级蒙版直接比较 z-index）；
        时段主题类（morning/noon/dusk/night）驱动整套色板变量 -->
   <div class="login-bg" :class="`login-bg--${period}`" aria-hidden="true">
     <div class="login-bg-base"></div>
@@ -74,7 +74,7 @@ onBeforeUnmount(() => window.clearInterval(timer))
 
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   overflow: hidden;
   pointer-events: none;
   background: var(--bg-base);

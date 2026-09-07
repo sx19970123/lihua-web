@@ -89,26 +89,29 @@ const handleGoLogin = async () => {
 </script>
 
 <style scoped>
+/* 宽度钉在 fixed 根上（left/right:0 + margin:auto 居中）：轮播内部（slick JS 测量）不可靠，由外层硬性保证 600px */
 .user-setup{
   position: fixed;
+  left: 0;
+  right: 0;
   margin: auto;
+  width: 600px;
   max-height: 100vh;
 }
 .user-setup-carousel {
-  width: 600px;
+  width: 100%;
   border: none;
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 24px;
 }
 
 @media screen and (max-width: 600px) {
-  .user-setup-carousel {
+  .user-setup {
     width: calc(100vw - 32px);
-    margin: auto;
   }
 }
 
 :deep(.slick-list) {
-  border-radius: var(--ant-border-radius-lg);
+  border-radius: 24px;
 }
 
 .next-leave-active {

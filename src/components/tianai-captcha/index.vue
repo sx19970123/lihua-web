@@ -149,10 +149,10 @@ const replaceLoadingElement = () => {
 </style>
 
 <style lang="less">
-/* 验证码外部容器样式 */
+/* 验证码外部容器样式（圆角与登录卡/引导卡统一 24px） */
 #tianai-captcha-parent {
   box-shadow: var(--ant-box-shadow-tertiary) !important;
-  border-radius: var(--ant-border-radius-lg) !important;
+  border-radius: 24px !important;
   width: 332px !important;
   height: 326px !important;
   padding: var(--ant-padding) !important;

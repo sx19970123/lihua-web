@@ -13,13 +13,17 @@
             <div @mouseover="handleMouseOver(id)" @mouseleave="handleMouseLeave" @click="handleSetDefaultDept(id)">
               <a-space>
                 <a-flex :gap="8">
-                  <a-tooltip :title="userStore.defaultDept.id !== id ? '点击设为默认部门' : '默认部门'" placement="right" :arrow="false" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
+                  <a-tooltip v-if="showTooltip" :title="userStore.defaultDept.id !== id ? '点击设为默认部门' : '默认部门'" placement="right" :arrow="false" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
                     <!-- 外层 span 为 tooltip 提供唯一子元素（tooltip 只渲染首个子节点） -->
                     <span>
                       <span v-for="(segment, index) in segments" :key="index"
                             :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>
                     </span>
                   </a-tooltip>
+                  <span v-else>
+                    <span v-for="(segment, index) in segments" :key="index"
+                          :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>
+                  </span>
                   <a-typography-text type="secondary" v-if="showDeptCode">{{ code }}</a-typography-text>
                 </a-flex>
                 <span v-if="userStore.defaultDept.id === id">
@@ -48,8 +52,10 @@ const deptTree = ref<Array<SysDept>>(userStore.deptTrees)
 // 鼠标移入的id
 const hoverId = ref<string | undefined>()
 
-const {showDeptCode = true} = defineProps<{
+const {showDeptCode = true, showTooltip = true} = defineProps<{
   showDeptCode?: boolean;
+  // 是否显示「点击设为默认部门」气泡（引导卡等场景关闭）
+  showTooltip?: boolean;
 }>()
 
 const emits = defineEmits(['keywordChange','deptSelect'])

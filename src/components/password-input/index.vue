@@ -11,13 +11,15 @@
       </template>
     </a-input-password>
     <!-- margin 内联保留：.ant-progress 根级 resetComponent margin:0 反杀 m-0 工具类 -->
-    <a-progress style="margin: 0;"
-                v-show="showProgress"
-                :showInfo="false"
-                :size="[progressWidth, 3]"
-                :steps="3"
-                :percent="passwordLevel"
-                :strokeColor="STRENGTH_STEP_COLORS"/>
+    <transition name="progress-fade">
+      <a-progress style="margin: 0;"
+                  v-show="showProgress"
+                  :showInfo="false"
+                  :size="[progressWidth, 3]"
+                  :steps="3"
+                  :percent="passwordLevel"
+                  :strokeColor="STRENGTH_STEP_COLORS"/>
+    </transition>
   </div>
 </template>
 
@@ -104,3 +106,16 @@ watch(() => modelValue, () => {
   handleChangePassword()
 })
 </script>
+
+<style scoped>
+/* 强度条淡入淡出（v-show 切换由 transition 接管出场的 display 时机） */
+.progress-fade-enter-active,
+.progress-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.progress-fade-enter-from,
+.progress-fade-leave-to {
+  opacity: 0;
+}
+</style>
