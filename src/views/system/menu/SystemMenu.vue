@@ -125,7 +125,7 @@
                 </template>
                 编辑
               </a-button>
-              <a-divider type="vertical"/>
+              <a-divider :vertical="true"/>
               <a-button type="link"
                         size="small"
                         @click="(event: MouseEvent) => addChildren(event, record)"
@@ -136,7 +136,7 @@
                 </template>
                 新增下级
               </a-button>
-              <a-divider type="vertical"/>
+              <a-divider :vertical="true"/>
               <a-popconfirm ok-text="确 定"
                             cancel-text="取 消"
                             placement="bottomRight"
