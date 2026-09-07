@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="mt-ant-lg mb-[56px]">
+    <div class="mt-ant-lg mb-[56px] stagger-item" style="--si: 0">
       <a-typography-title :level="2">欢迎登录狸花猫</a-typography-title>
       <a-typography-text v-if="!settingStore.isServerConnected" type="danger">无法连接服务器</a-typography-text>
       <!--                    根据配置显示注册-->
@@ -14,7 +14,7 @@
     <a-form :model="loginForm" @finish="handleFinish" :rules="loginRoles">
       <a-form-item name="username" hasFeedback>
         <a-tooltip placement="topLeft" trigger="contextmenu" title="用户名已自动填写" v-model:open="usernameTip">
-          <a-input class="login-form-item"
+          <a-input class="login-form-item stagger-item" style="--si: 1"
                    autocomplete="off"
                    v-model:value="loginForm.username"
                    placeholder="用户名"
@@ -26,24 +26,24 @@
         </a-tooltip>
       </a-form-item>
       <a-form-item name="password" hasFeedback>
-        <a-input-password class="login-form-item"
+        <a-input-password class="login-form-item stagger-item" style="--si: 2"
                           v-model:value="loginForm.password"
                           placeholder="密码"
         >
           <template #prefix>
             <LockOutlined class="input-prefix-icon-color"/>
-          </template>
+            </template>
         </a-input-password>
       </a-form-item>
       <a-form-item>
-        <a-flex justify="space-between">
+        <a-flex justify="space-between" class="stagger-item" style="--si: 3">
         <a-checkbox v-model:checked="rememberMe">记住账号</a-checkbox>
       </a-flex>
       </a-form-item>
       <a-form-item>
         <a-button html-type="submit"
                   type="primary"
-                  class="login-form-item w-full"
+                  class="login-form-item w-full stagger-item" style="--si: 4"
                   :loading="loginLoading">登录
         </a-button>
       </a-form-item>
@@ -204,5 +204,18 @@ onMounted(() => {
 /* .ant-btn 根级 cssinjs 声明 height，工具类必被反杀，故保留 scoped */
 .login-form-item {
   height: 48px
+}
+
+/* 卡内元素错位上升入场：挂载即触发（index.vue 用 v-if 控制挂载，卡片重现/登录注册切换时重播） */
+.stagger-item {
+  animation: login-item-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--si) * 90ms);
+}
+
+@keyframes login-item-rise {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
 }
 </style>

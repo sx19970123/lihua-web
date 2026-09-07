@@ -1,5 +1,7 @@
 <template>
-  <a-flex class="login-background relative w-full h-screen overflow-hidden" justify="center" align="center">
+  <a-flex class="relative isolate w-full h-screen overflow-hidden" justify="center" align="center">
+    <!--    氛围背景层（组件内 z-index:-1，靠根节点 isolate 压到全部内容之下）-->
+    <login-background/>
     <a-flex align="center" :gap="208" v-if="!showUserSetup">
 <!--      主题切换开关-->
       <theme-mode-segmented class="absolute top-4 right-6" translucent/>
@@ -8,7 +10,7 @@
         <transition name="fade" mode="out-in">
           <div v-show="showTitle">
             <a-typography-title>狸花猫后台管理系统
-              <a-tag variant="filled">{{ settings.version }}</a-tag>
+              <a-tag class="version-tag" variant="filled" color="cyan">v{{ settings.version }}</a-tag>
             </a-typography-title>
             <a-typography-title :level="2">
               基于SpringBoot 4.x 和 vue3.x
@@ -20,10 +22,9 @@
       <div class="w-[378px]">
         <transition name="card" mode="out-in" v-show="showCard">
           <a-card class="login-card max-w-[380px] px-ant-base">
-            <transition name="form" mode="out-in" v-show="showCard">
-              <!-- 用户登录/注册等卡片内表单在这儿通过组件形式切换 -->
-              <component :is="activeComponent" @change-component="handleChangeComponent" @start-user-setup="startUserSetup"/>
-            </transition>
+            <!-- v-if 挂载触发组件内逐元素错位入场（卡片/登录注册切换、重回登录时重播） -->
+            <component :is="activeComponent" v-if="showCard"
+                       @change-component="handleChangeComponent" @start-user-setup="startUserSetup"/>
           </a-card>
         </transition>
       </div>
@@ -38,6 +39,7 @@
 <script setup lang="ts">
 import {markRaw, onMounted, provide, ref} from "vue"
 import ThemeModeSegmented from "@/components/theme-mode-segmented/index.vue"
+import LoginBackground from "@/views/login/components/LoginBackground.vue"
 import UserSetupIndex from "@/components/user-setup/index.vue"
 import UserRegister from "@/views/login/components/Register.vue"
 import UserLogin from "@/views/login/components/Login.vue"
@@ -151,31 +153,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 登录背景（渐变动画；布局声明已迁工具类） */
-.login-background {
-  background-image:linear-gradient(-135deg,#C2FFD8 10%,#465EFB 100%);
-  background-size: 200% 200%;
-  animation: gradientAnimation 30s ease infinite;
-}
-
-/* 渐变动画 */
-@keyframes gradientAnimation {
-  0% {
-    background-position: 0 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0 50%;
-  }
-}
-
 /* 视口小于1300 像素时，隐藏title */
 @media screen and (max-width: 1200px) {
   .title {
     display: none;
   }
+}
+
+/* 版本号随标题行内排布（勿改回 absolute 定位——盒底含行高下半空隙，≠ 文字底边）；
+   基线对齐下 tag 自身 line-height 在基线下留有半行距，按基线抬升对齐 CJK 字形视觉底边 */
+.version-tag {
+  margin-left: 8px;
+  vertical-align: 3px;
 }
 
 /* 登录卡片（max-width 已迁工具类；border-radius 需压过 .ant-card 默认圆角故留 scoped） */
@@ -191,21 +180,13 @@ onMounted(() => {
   }
 }
 
+/* 卡片容器只做轻量入场（小位移+微缩放），主动效由卡内各元素错位上升承担（见 Login/Register 组件） */
 .card-enter-active {
-  transition: all 0.8s ease-in-out;
+  transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .card-enter-from {
-  transform: translateY(80px) scale(88%);
-  opacity: 0;
-}
-
-.form-enter-active {
-  transition: all 0.6s ease-in-out;
-}
-
-.form-enter-from {
-  transform: translateY(24px);
+  transform: translateY(36px) scale(96%);
   opacity: 0;
 }
 
@@ -253,10 +234,3 @@ onMounted(() => {
 
 </style>
 
-<style>
-[data-theme = dark] {
-  .login-background {
-    background-image: linear-gradient(-135deg, #1F7A56 0%, #2C3690 100%);
-  }
-}
-</style>

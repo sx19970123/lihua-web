@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="mt-ant-lg mb-[56px]">
+    <div class="mt-ant-lg mb-[56px] stagger-item" style="--si: 0">
       <a-typography-title :level="2">欢迎注册狸花猫</a-typography-title>
       <a-typography-text>已有账号？</a-typography-text>
       <a-typography-link @click="handleChangeComponent('login')">前往登录
@@ -12,7 +12,7 @@
             @finish="handleFinish"
     >
       <a-form-item name="username" hasFeedback>
-        <a-input class="register-form-item"
+        <a-input class="register-form-item stagger-item" style="--si: 1"
                  autocomplete="off"
                  placeholder="用户名"
                  v-model:value="userRegister.username"
@@ -23,7 +23,7 @@
         </a-input>
       </a-form-item>
       <a-form-item name="password" hasFeedback>
-        <password-input class="register-form-item"
+        <password-input class="register-form-item stagger-item" style="--si: 2"
                         v-model="userRegister.password"
                         :progress-width="98"
                         placeholder="密码"
@@ -34,7 +34,7 @@
       </a-form-item>
 
       <a-form-item name="confirmPassword" hasFeedback>
-        <a-input-password class="register-form-item"
+        <a-input-password class="register-form-item stagger-item" style="--si: 3"
                           placeholder="再次输入密码"
                           v-model:value="userRegister.confirmPassword"
         >
@@ -46,7 +46,7 @@
       <a-form-item>
         <a-button html-type="submit"
                   type="primary"
-                  class="register-form-item w-full"
+                  class="register-form-item w-full stagger-item" style="--si: 4"
                   :loading="registerLoading">注册
         </a-button>
       </a-form-item>
@@ -180,5 +180,18 @@ const handleRegister = async (captchaVerification: string) => {
 /* .ant-btn 根级 cssinjs 声明 height，工具类必被反杀，故保留 scoped */
 .register-form-item {
   height: 48px;
+}
+
+/* 卡内元素错位上升入场：挂载即触发（index.vue 用 v-if 控制挂载，卡片重现/登录注册切换时重播） */
+.stagger-item {
+  animation: register-item-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--si) * 90ms);
+}
+
+@keyframes register-item-rise {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
 }
 </style>
