@@ -261,9 +261,6 @@
           </span>
         </a-button>
         <div v-if="modalActive.moreSetting">
-          <a-form-item label="菜单描述" name="title" v-if="sysMenu.menuType === 'page' && false" :wrapper-col="{span: 17}">
-            <a-input v-model:value="sysMenu.title"/>
-          </a-form-item>
           <a-row>
             <a-col :span="12">
               <a-form-item label="菜单状态" name="status" :label-col="{span: 8}">
@@ -282,7 +279,7 @@
           </a-row>
           <a-row>
             <a-col :span="12">
-              <a-form-item label="多任务栏" name="skip" :label-col="{span: 8}"
+              <a-form-item label="多任务栏" name="viewTab" :label-col="{span: 8}"
                            v-if="sysMenu.menuType === 'page' || (sysMenu.menuType === 'link' && sysMenu.linkOpenType === 'inner')">
                 <a-radio-group v-model:value="sysMenu.viewTab">
                   <a-radio v-for="item in sys_whether" :value="item.value">{{item.label}}</a-radio>
@@ -298,7 +295,7 @@
             </a-col>
           </a-row>
           <a-form-item label="路由参数" name="query" v-if="sysMenu.menuType === 'page'" :wrapper-col="{span: 17}">
-            <a-textarea placeholder="访问路由的默认参数，格式为json字符串" v-model:value="sysMenu.query" :rows="1" :maxlength="100" allowClear show-count/>
+            <a-textarea placeholder="访问路由的默认参数，格式为json字符串" v-model:value="sysMenu.query" :rows="1" :maxlength="500" allowClear show-count/>
           </a-form-item>
           <a-form-item label="备注" name="remark" :wrapper-col="{span: 17}">
             <a-textarea :maxlength="500" :rows="2" v-model:value="sysMenu.remark" allowClear placeholder="请输入备注信息" show-count/>
@@ -469,7 +466,7 @@ const initSearch = () => {
 
   // 展开折叠
   const handleExpanded = () => {
-    if (expandedRowKeys.value.length == 0) {
+    if (expandedRowKeys.value.length === 0) {
       const data = flattenTree(menuList.value)
       expandedRowKeys.value = data.filter(item => item.id).map(item => item.id as string)
     } else {
@@ -618,12 +615,12 @@ const initSave = () => {
       // 获取当前及子节点 id
       menuIds = flattenMenuVo.map(menu => menu.id) as string[]
     } else {
-      menuIds = [sysMenuVO.id ? sysMenuVO.id : '']
+      menuIds = [sysMenuVO.id as string]
       // 菜单启用时展开子菜单
       expandedRowKeys.value.push(...menuIds)
     }
 
-    let newStatus: string = ''
+    let newStatus: string = status
     try {
       const resp = await updateStatus(menuIds as string[], status)
       if (resp.code === 200) {
@@ -675,10 +672,8 @@ const initSave = () => {
   const initTreeData = async () => {
     const resp = await queryMenuTreeOption()
     if (resp.code === 200) {
-      // 深拷贝数据
-      const menuTree = cloneDeep(resp.data)
-      // 过滤不需要的数据（只保留菜单和页面）
-      handleMenuTree(menuTree)
+      // 深拷贝数据并过滤不需要的数据（只保留目录和页面）
+      const menuTree = handleMenuTree(cloneDeep(resp.data))
       // 表单树
       parentMenuTree.value = [{
         label: '根节点',
@@ -692,15 +687,14 @@ const initSave = () => {
   }
 
   // 处理menu树形选择
-  const handleMenuTree = (menuTree: Array<SysMenu>) => {
-    // 过滤最外层
-    menuTree = menuTree.filter(tree => tree.menuType !== 'link' && tree.menuType !== 'perms')
-    menuTree.forEach(item => {
+  const handleMenuTree = (menuTree: Array<SysMenu>): Array<SysMenu> => {
+    const filtered = menuTree.filter(tree => tree.menuType !== 'link' && tree.menuType !== 'perms')
+    filtered.forEach(item => {
       if (item.children && item.children.length > 0) {
-        item.children = item.children.filter(tree => tree.menuType !== 'link' && tree.menuType !== 'perms')
-        handleMenuTree(item.children)
+        item.children = handleMenuTree(item.children)
       }
     })
+    return filtered
   }
   // 保存菜单
   const saveMenu = async () => {
