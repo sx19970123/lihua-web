@@ -56,8 +56,8 @@ export const save = (data: SysUser) => {
 // 修改用户状态
 export const updateStatus = (id: string, status: string) => {
     return request<string>({
-        url: 'system/user/updateStatus/' + id + '/' + status,
-        method: 'post'
+        url: 'system/user/status/' + id + '/' + status,
+        method: 'put'
     })
 }
 
