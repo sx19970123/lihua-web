@@ -4,7 +4,7 @@
   <div class="login-bg" :class="`login-bg--${period}`" aria-hidden="true">
     <div class="login-bg-base"></div>
     <div class="login-bg-beam"></div>
-    <div class="login-bg-grid"></div>
+    <div class="login-bg-cats"></div>
     <div class="login-bg-orb orb-a"></div>
     <div class="login-bg-orb orb-b"></div>
     <div class="login-bg-orb orb-c"></div>
@@ -69,7 +69,7 @@ onBeforeUnmount(() => window.clearInterval(timer))
  * 性能：光球/光带动画只用 transform 与 opacity（GPU 合成）；blur 为静态值不参与动画
  */
 .login-bg {
-  --grid-line: rgba(70, 94, 251, 0.08);
+  --cat-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='264' height='264'%3E%3Cg fill='none' stroke='%23465efb' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M 2 6.5 Q 7 11.5 12 5.5 Q 17 11.5 22 6.5' stroke-opacity='0.12' transform='translate(36,52) rotate(-12) scale(0.8)'/%3E%3Cpath d='M 2 13 Q 2.8 8 4.8 4 Q 7.2 6.8 9 11 M 8.5 11 Q 9.5 13 10.5 11 M 11 11 Q 12.8 6.8 15.2 4 Q 17.2 8 18 13' stroke-opacity='0.11' transform='translate(160,60) rotate(8) scale(1.05)'/%3E%3Cpath d='M 2 13 Q 2.8 8 4.8 4 Q 7.2 6.8 9 11 M 8.5 11 Q 9.5 13 10.5 11 M 11 11 Q 12.8 6.8 15.2 4 Q 17.2 8 18 13' stroke-opacity='0.09' transform='translate(60,190) rotate(15) scale(0.7)'/%3E%3Cpath d='M 2 6.5 Q 7 11.5 12 5.5 Q 17 11.5 22 6.5' stroke-opacity='0.08' transform='translate(190,196) rotate(-4) scale(0.65)'/%3E%3C/g%3E%3C/svg%3E");
   --noise-opacity: 0.05;
 
   position: absolute;
@@ -155,14 +155,13 @@ onBeforeUnmount(() => window.clearInterval(timer))
   animation: beam-sweep 26s ease-in-out infinite alternate;
 }
 
-/* 网格纹理：中心让位内容、四缘显影 */
-.login-bg-grid {
+/* 猫嘴纹样：ω 形小猫嘴 SVG 平铺（单元内三只错落大小/角度/深浅），径向遮罩中心让位、四缘显影；
+   颜色按明暗主题各烤一版（data-URI 内不可用 CSS 变量，故以变量切换整张 url） */
+.login-bg-cats {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 44px 44px;
+  background-image: var(--cat-pattern);
+  background-size: 264px 264px;
   -webkit-mask-image: radial-gradient(ellipse 70% 62% at 50% 44%, transparent 42%, #000 100%);
   mask-image: radial-gradient(ellipse 70% 62% at 50% 44%, transparent 42%, #000 100%);
 }
@@ -287,7 +286,7 @@ onBeforeUnmount(() => window.clearInterval(timer))
 /* 暗色主题 × 时段：仅覆盖色板变量（scoped 无法选中 html 属性，沿用项目全局块惯例） */
 
 [data-theme='dark'] .login-bg {
-  --grid-line: rgba(140, 170, 255, 0.07);
+  --cat-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='264' height='264'%3E%3Cg fill='none' stroke='%238caaff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M 2 6.5 Q 7 11.5 12 5.5 Q 17 11.5 22 6.5' stroke-opacity='0.10' transform='translate(36,52) rotate(-12) scale(0.8)'/%3E%3Cpath d='M 2 13 Q 2.8 8 4.8 4 Q 7.2 6.8 9 11 M 8.5 11 Q 9.5 13 10.5 11 M 11 11 Q 12.8 6.8 15.2 4 Q 17.2 8 18 13' stroke-opacity='0.09' transform='translate(160,60) rotate(8) scale(1.05)'/%3E%3Cpath d='M 2 13 Q 2.8 8 4.8 4 Q 7.2 6.8 9 11 M 8.5 11 Q 9.5 13 10.5 11 M 11 11 Q 12.8 6.8 15.2 4 Q 17.2 8 18 13' stroke-opacity='0.07' transform='translate(60,190) rotate(15) scale(0.7)'/%3E%3Cpath d='M 2 6.5 Q 7 11.5 12 5.5 Q 17 11.5 22 6.5' stroke-opacity='0.07' transform='translate(190,196) rotate(-4) scale(0.65)'/%3E%3C/g%3E%3C/svg%3E");
   --noise-opacity: 0.07;
 }
 

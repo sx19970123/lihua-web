@@ -10,7 +10,7 @@
         <transition name="fade" mode="out-in">
           <div v-show="showTitle">
             <a-typography-title>狸花猫后台管理系统
-              <a-tag class="version-tag" variant="filled" color="cyan">v{{ settings.version }}</a-tag>
+              <a-tag class="version-tag" variant="filled" color="blue">v{{ settings.version }}</a-tag>
             </a-typography-title>
             <a-typography-title :level="2">
               基于SpringBoot 4.x 和 vue3.x
