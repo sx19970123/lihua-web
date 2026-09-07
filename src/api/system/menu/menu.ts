@@ -43,8 +43,8 @@ export const save = (data:SysMenu) => {
  */
 export const updateStatus = (ids: string[], status: string) => {
   return request<string>({
-    url: 'system/menu/updateStatus/' + status,
-    method: 'post',
+    url: 'system/menu/status/' + status,
+    method: 'put',
     data: ids
   })
 }
