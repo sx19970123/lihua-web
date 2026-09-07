@@ -1,7 +1,7 @@
 import request, {blobRequest} from "@/utils/request.ts";
 import type {PageResponseType} from "@/api/global/type.ts";
 import type {SysUser, SysUserDTO, SysUserVO} from "@/api/system/user/type/sys-user.ts";
-import type {RcFile} from "ant-design-vue/es/vc-upload/interface";
+import type {UploadRequestOption} from "@/antd-adapter";
 
 // 分页查询列表
 export const queryPage = (data: SysUserDTO) => {
@@ -117,7 +117,7 @@ export const exportExcel = (data: SysUserDTO) => {
 }
 
 // excel 导入
-export const importExcel = (file:  string | Blob | RcFile) => {
+export const importExcel = (file:  string | Blob | UploadRequestOption['file']) => {
     const formData = new FormData()
     formData.append('file', file)
     return request<string>({

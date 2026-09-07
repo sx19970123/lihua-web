@@ -2,7 +2,7 @@
   <div>
     <a-flex :gap="16" vertical>
       <!--      筛选条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -33,9 +33,7 @@
             </a-col>
             <a-col>
               <a-form-item label="状态">
-                <a-select placeholder="请选择 " v-model:value="userQuery.status" allowClear>
-                  <a-select-option :value="item.value" v-for="item in sys_status">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择" v-model:value="userQuery.status" allow-clear :options="sys_status"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -71,7 +69,7 @@
                :pagination="false"
                :row-selection="userRowSelectionType"
                row-class-name="hover-cursor-pointer"
-               :custom-row="handleRowClick"
+               :on-row="handleRowClick"
                row-key="id"
                :scroll="{x: 1500}"
       >
@@ -96,7 +94,7 @@
                   <DeleteOutlined />
                 </template>
                 删 除
-                <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+                <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
               </a-button>
             </a-popconfirm>
             <a-dropdown>
@@ -104,7 +102,7 @@
                 更多
                 <DownOutlined />
               </a-button>
-              <template #overlay>
+              <template #popupRender>
                 <a-menu>
                   <a-menu-item key="export" @click="handleExportExcel">批量导出</a-menu-item>
                   <a-menu-item key="import">
@@ -156,14 +154,14 @@
               </template>
               编辑
             </a-button>
-            <a-divider type="vertical"/>
+            <a-divider :vertical="true"/>
             <a-button type="link" size="small" @click="(event: MouseEvent) => handleOpenResetPasswordModel(event, record)">
               <template #icon>
                 <KeyOutlined />
               </template>
               重置密码
             </a-button>
-            <a-divider type="vertical"/>
+            <a-divider :vertical="true"/>
             <a-popconfirm title="删除后不可恢复，是否删除？"
                           placement="bottomRight"
                           ok-text="确 定"
@@ -195,11 +193,11 @@
 
     <a-modal v-model:open="modalActive.open">
       <template #title>
-        <div style="margin-bottom: var(--ant-margin-lg)">
+        <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>
-      <a-segmented v-model:value="segmented" :options="segmentedOption" style="margin-bottom: var(--ant-margin)" @change="changeSegmented"/>
+      <a-segmented v-model:value="segmented" :options="segmentedOption" class="mb-ant-base" @change="changeSegmented"/>
       <a-form ref="formRef" :rules="userRules" :model="sysUserDTO" :label-col="{span: 4}" :colon="false">
 <!--        显示基本信息-->
         <div v-show="segmented === 'basic'">
@@ -272,7 +270,7 @@
                   <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}</a-typography-title>
                   <a-tag v-if="isSelected" variant="solid" :color="themeStore.getColorPrimary()">默认</a-tag>
                 </a-flex>
-                <div style="margin-top: var(--ant-margin)">
+                <div class="mt-ant-base">
                   <div v-if="item?.postList && item?.postList.length > 0">
                     <a-checkable-tag v-for="post in item?.postList"
                                      @change="(checked: boolean) => handleSelectPostId(post.id, checked)"
@@ -297,8 +295,7 @@
 <!--        前往下一选项卡-->
         <a-popover v-if="segmented !== 'post'"
                    :content="segmentedOption[segmentedOption.findIndex(item => item.value === segmented) + 1]?.label">
-          <a-button v-if="segmented !== 'post'"
-                    type="primary"
+          <a-button type="primary"
                     @click="toNextForm(segmentedOption[segmentedOption.findIndex(item => item.value === segmented) + 1]?.value)">
             <template #icon>
               <RightOutlined />
@@ -311,7 +308,7 @@
 <!--    重置密码-->
      <a-modal v-model:open="showResetPassword" width="400px">
        <template #title>
-         <div style="margin-bottom: var(--ant-margin-lg)">
+         <div class="mb-ant-lg">
            <a-typography-title :level="4">重置{{targetUserInfo.nickname ? targetUserInfo.nickname + '的' : ''}}密码</a-typography-title>
          </div>
        </template>
@@ -322,7 +319,7 @@
                            placeholder="请输入密码"
                            :progress-width="116"/>
          </a-form-item>
-         <div style="margin-top: var(--ant-margin-xs);">
+         <div class="mt-ant-xs">
            <a-checkbox v-model:checked="useDefaultPassword" @change="handleChangeUseDefaultPassword">使用默认密码</a-checkbox>
          </div>
        </a-form>
@@ -337,7 +334,6 @@
 <script setup lang="ts">
 
 // 列表查询
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {
   deleteByIds,
   excelTemplate,
@@ -360,16 +356,13 @@ import dayjs from "dayjs";
 import {getDeptOption} from "@/api/system/dept/dept.ts";
 import {getRoleOption} from "@/api/system/role/role.ts";
 import {getPostOptionByDeptId} from "@/api/system/post/post.ts";
-import {type FormInstance} from "ant-design-vue";
-import {message, Modal} from "@/antd-adapter";
+import {message, Modal, type FormInstance, type Rule, type TableColumnsType, type UploadRequestOption} from "@/antd-adapter";
 import {cloneDeep} from 'lodash-es';
 import {traverse} from "@/utils/tree.ts";
-import type {Rule} from "ant-design-vue/es/form";
 import type {SysUserDTO, SysUserVO} from "@/api/system/user/type/sys-user.ts";
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 import type {SysRole} from "@/api/system/role/type/sys-role.ts";
 import type {SysPost} from "@/api/system/post/type/sys-post.ts";
-import type {UploadRequestOption} from "ant-design-vue/lib/vc-upload/interface";
 import Spin from "@/components/spin";
 import {ExclamationCircleOutlined} from "@antdv-next/icons";
 import {useSettingStore} from "@/stores/setting.ts";
@@ -428,7 +421,7 @@ const initSearch = () => {
     }
   }
 
-  const userColumn = ref<ColumnsType>([
+  const userColumn = ref<TableColumnsType>([
     {
       title: '用户名',
       key: 'username',
@@ -497,7 +490,7 @@ const initSearch = () => {
   })
 
   const userList = ref<SysUserVO[]>([])
-  const userTotal = ref<Number>(0)
+  const userTotal = ref<number>(0)
   const queryLoading = ref<boolean>(false)
 
   // 列表页查询
@@ -673,10 +666,13 @@ const initSave = () => {
     }
 
     const userDTO = cloneDeep(sysUserDTO.value)
-    // 处理用户部门、手机号、邮箱
-    userDTO.deptIdList = sysUserDTO.value.deptIdList
-    userDTO.phoneNumber === "" ? sysUserDTO.value.phoneNumber = undefined : sysUserDTO.value.phoneNumber
-    userDTO.email === "" ? sysUserDTO.value.email = undefined : sysUserDTO.value.email
+    // 空串手机号/邮箱不提交，避免后端存入 ''
+    if (userDTO.phoneNumber === "") {
+      userDTO.phoneNumber = undefined
+    }
+    if (userDTO.email === "") {
+      userDTO.email = undefined
+    }
 
     const userId = sysUserDTO.value.id
     try {
@@ -718,7 +714,7 @@ const initSave = () => {
           user.status = newStatus
           user.statusIsNormal = user.status === '0'
           user.updateStatusLoading = false
-          return
+          return true
         }
       })
     }
@@ -937,7 +933,7 @@ const initPostData = () => {
   };
 
   // 回显岗位标签
-  const initPostTag = (postIds: Array<String>) => {
+  const initPostTag = (postIds: Array<string>) => {
     // 部门岗位中postId 与 postIds 相同时 checked 设置为true
     const postDeptOption = sysPostList.value
     postDeptOption.forEach(postDept => {
@@ -1119,7 +1115,7 @@ const initResetPassword = () => {
   const defaultPasswordRules: Record<string, Rule[]> = {
     password: [
       {required: true, message: "请填写密码", trigger: ['blur', 'change']},
-      { min: 6, max: 22, message: '密码长度6-22位', trigger: ['blur', 'change']}
+      { min: 6, max: 30, message: '密码长度6-30位', trigger: ['blur', 'change']}
     ]
   }
   // 重置密码表单
