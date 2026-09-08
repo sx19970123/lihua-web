@@ -90,11 +90,6 @@ export interface SysLog {
     userAgent?: string;
 
     /**
-     * 删除标识
-     */
-    delFlag?: string;
-
-    /**
      * 日志执行状态
      */
     executeStatus?: string;
@@ -115,7 +110,37 @@ export interface SysLog {
     region?: string;
 }
 
-export interface SysLogDTO extends SysLog {
+export interface SysLogDTO {
+
+    /**
+     * 业务描述
+     */
+    description?: string;
+
+    /**
+     * 业务类型编码
+     */
+    typeCode?: string;
+
+    /**
+     * 操作人姓名
+     */
+    createName?: string;
+
+    /**
+     * 用户名
+     */
+    username?: string;
+
+    /**
+     * 日志执行状态
+     */
+    executeStatus?: string;
+
+    /**
+     * 客户端类型
+     */
+    clientType?: string;
 
     /**
      * 创建时间集合

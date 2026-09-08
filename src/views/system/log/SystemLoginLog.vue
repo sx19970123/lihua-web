@@ -2,7 +2,7 @@
   <div>
     <a-flex :gap="16" vertical>
       <!--     检索条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -17,16 +17,12 @@
             </a-col>
             <a-col>
               <a-form-item label="登录状态">
-                <a-select v-model:value="logQuery.executeStatus" placeholder="请选择" style="width: 120px" allow-clear>
-                  <a-select-option :value="item.value" v-for="item in sys_log_status">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select v-model:value="logQuery.executeStatus" placeholder="请选择" style="width: 120px" allow-clear :options="sys_log_status"/>
               </a-form-item>
             </a-col>
             <a-col>
               <a-form-item label="客户端类型">
-                <a-select v-model:value="logQuery.clientType" placeholder="请选择" style="width: 120px" allow-clear>
-                  <a-select-option :value="item.value" v-for="item in sys_client_type">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select v-model:value="logQuery.clientType" placeholder="请选择" style="width: 120px" allow-clear :options="sys_client_type"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -63,7 +59,7 @@
           :loading="tableLoad"
           :row-selection="logRowSelectionType"
           row-class-name="hover-cursor-pointer"
-          :custom-row="handleRowClick"
+          :on-row="handleRowClick"
           row-key="id"
           :scroll="{x: 1500}"
       >
@@ -82,7 +78,7 @@
                   <DeleteOutlined />
                 </template>
                 删 除
-                <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+                <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
               </a-button>
             </a-popconfirm>
 
@@ -113,7 +109,7 @@
         </template>
         <template #bodyCell="{column,record,text}">
           <template v-if="column.key === 'description'">
-            <a-tooltip ellipsis>
+            <a-tooltip>
               <template #title>
                 {{text}}
               </template>
@@ -149,7 +145,7 @@
     </a-flex>
     <!--   日志详情模态框-->
     <a-modal cancelText="关 闭" v-model:open="openModal" width="1000px" :footer="null">
-      <a-descriptions title="日志详情" bordered :label-style="{width: '110px'}">
+      <a-descriptions title="日志详情" bordered :styles="{label: {width: '110px'}}">
         <a-descriptions-item label="业务描述" :span="1">
           <a-badge status="success" v-if="logInfo.executeStatus === '0'"/>
           <a-badge status="error" v-else/>
@@ -194,11 +190,10 @@ import {
   queryLoginById,
   queryLoginPage
 } from "@/api/system/log/log.ts";
-import {message} from "@/antd-adapter";
+import {message, type TableColumnsType} from "@/antd-adapter";
 import DictTag from "@/components/dict-tag/index.vue";
 import TableSetting from "@/components/table-setting/index.vue";
 import type {SysLog, SysLogDTO} from "@/api/system/log/type/sys-log.ts";
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import dayjs from "dayjs";
 import {download} from "@/utils/attachment-download.ts";
 import Spin from "@/components/spin";
@@ -237,7 +232,7 @@ const initSearch = () => {
     }
   }
 
-  const logColumn = ref<ColumnsType>([
+  const logColumn = ref<TableColumnsType>([
     {
       title: '日志描述',
       key: 'description',
@@ -442,24 +437,23 @@ const {openDeletePopconfirm,closePopconfirm,handleDelete,openPopconfirm} = initD
 const initClear = () => {
   // 清空按钮倒计时
   const countdown = ref<number>()
-  const interval = ref()
+  const interval = ref<ReturnType<typeof setInterval> | undefined>()
 
   // 开始清空数据倒计时
   const startClearCountdown = (open: boolean, second: number) => {
     clearInterval(interval.value)
     if (open) {
       countdown.value = second
+      interval.value = setInterval(() => {
+        if (second === 0) {
+          clearInterval(interval.value)
+          countdown.value = 0
+        } else {
+          second--
+          countdown.value = second
+        }
+      }, 1000)
     }
-
-    interval.value = setInterval(() => {
-      if (second === 0) {
-        clearInterval(interval.value)
-        countdown.value = 0
-      } else {
-        second--
-        countdown.value = second
-      }
-    }, 1000)
   }
 
 
@@ -489,9 +483,15 @@ const handleExportExcel = async () => {
   const spinInstance = Spin.service({
     description: '努力加载中...'
   });
-  const blob = await excelLoginExport(logQuery.value)
-  download(blob, "登录日志")
-  spinInstance.close()
+
+  try {
+    const blob = await excelLoginExport(logQuery.value)
+    download(blob, "登录日志")
+  } catch (e) {
+    message.error("导出失败")
+  } finally {
+    spinInstance.close()
+  }
 }
 </script>
 

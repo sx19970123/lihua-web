@@ -90,7 +90,7 @@ export const queryLoginById = (id: string) => {
     })
 }
 
-// 查询登录日志详情
+// 根据会话缓存key查询登录日志（monitor 在线用户页消费）
 export const queryLoginByCacheKey = (cacheKey: string) => {
     return request<SysLog>({
         url: 'system/log/login/cacheKey/' + cacheKey,
