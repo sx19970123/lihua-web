@@ -1,7 +1,7 @@
 <template>
   <div>
     <a-flex vertical :gap="8">
-      <div class="m-auto" :style="{height, width: wight}">
+      <div class="m-auto" :style="{height, width: wight}" @wheel.passive="handleWheelPreviewSync">
         <vue-cropper ref="cropperRef"
                      :img="img"
                      :outputSize="outputSize"
@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import {VueCropper} from "vue-cropper";
 import 'vue-cropper/dist/index.css'
-import {ref, useTemplateRef} from 'vue';
+import {onUnmounted, ref, useTemplateRef} from 'vue';
 import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
 import {message, type UploadRequestOption} from "@/antd-adapter";
 
@@ -216,6 +216,21 @@ defineExpose({
 const handleRealTime = (data: CropperDataType) => {
   emit('update:realTime',data)
 }
+
+// vue-cropper 的 showPreview 内置 16ms 节流且无尾帧补发：滚轮快速缩放时终态预览可能
+// 恰好落在节流窗口内被丢弃，上方预览停在中间状态。滚轮停止后补一次预览同步（重调库实例方法重算 real-time）。
+let previewSyncTimer: number | undefined
+
+const handleWheelPreviewSync = () => {
+  window.clearTimeout(previewSyncTimer)
+  previewSyncTimer = window.setTimeout(() => {
+    ;(cropperRef.value as unknown as { showPreview?: () => void })?.showPreview?.()
+  }, 100)
+}
+
+onUnmounted(() => {
+  window.clearTimeout(previewSyncTimer)
+})
 
 /**
  * 上传前校验数据格式
