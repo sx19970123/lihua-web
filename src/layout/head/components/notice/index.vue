@@ -53,8 +53,8 @@
           </a-spin>
         </a-flex>
         <!--                      加载更多-->
-        <a-flex v-if="userNoticeList.length > 0" align="center" justify="center">
-          <a-button type="text" class="w-full" @click="queryMore" :disabled="total === userNoticeList.length">
+        <a-flex v-if="userNoticeList.length > 0" align="center" justify="center" style="margin-top: var(--ant-margin-sm)">
+          <a-button type="link" class="w-full" @click="queryMore" :disabled="total === userNoticeList.length">
             {{total === userNoticeList.length ? '没有更多' : '加载更多'}}
           </a-button>
         </a-flex>

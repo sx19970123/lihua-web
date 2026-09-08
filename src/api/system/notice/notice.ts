@@ -1,6 +1,6 @@
 import request from "@/utils/request.ts"
-import type {SysNotice, SysNoticeDTO, SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
-import type {MapResponseType, PageResponseType} from "@/api/global/type.ts";
+import type {NoticeReadInfoDTO, SysNotice, SysNoticeDTO, SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
+import type {PageResponseType} from "@/api/global/type.ts";
 import type {SysUser} from "@/api/system/user/type/sys-user.ts";
 import type {SysUserNoticeVO} from "@/api/system/notice/type/sys-user-notice.ts";
 
@@ -50,13 +50,13 @@ export const save = (data: SysNoticeVO) => {
 }
 
 /**
- * 获取已读未读信息
- * @param id
+ * 分页查询已读/未读用户（readFlag：0 未读 / 1 已读）
  */
-export const queryReadInfo = (id: string) => {
-    return request<MapResponseType<String,SysUser[]>>({
-        url: "/system/notice/readInfo/" + id,
-        method: "get"
+export const queryReadInfo = (data: NoticeReadInfoDTO) => {
+    return request<PageResponseType<SysUser>>({
+        url: "/system/notice/readInfo",
+        method: "post",
+        data: data
     })
 }
 

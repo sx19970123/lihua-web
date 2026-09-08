@@ -103,3 +103,25 @@ export interface SysNoticeDTO extends SysNotice {
      */
     star?: '1'
 }
+
+export interface NoticeReadInfoDTO {
+    /**
+     * 通知公告 id
+     */
+    noticeId?: string;
+
+    /**
+     * 已读标识：0 未读 / 1 已读
+     */
+    readFlag?: string;
+
+    /**
+     * 当前页数
+     */
+    pageNum: number;
+
+    /**
+     * 每页记录数
+     */
+    pageSize: number;
+}
