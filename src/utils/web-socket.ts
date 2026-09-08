@@ -36,13 +36,13 @@ class WebSocketManager {
     // 事件监听器
     private listeners?: Map<string, (data: any) => void>
     // 心跳
-    private heartbeat?: any
+    private heartbeat?: ReturnType<typeof setInterval>
     // 重试次数
     private retryNumber: number
-    // 最大重试次数
-    private maxRetryNumber: number = 3
-    // 重试间隔
+    // 重试间隔基数
     private retryInterval: number = 2 * 1000
+    // 重试间隔上限
+    private maxRetryInterval: number = 60 * 1000
     // 是否开启重连
     private enableRetry: boolean = true
 
@@ -61,6 +61,8 @@ class WebSocketManager {
 
                 if (code !== 200 || !data) {
                     console.error("获取连接token失败")
+                    // token 获取失败纳入退避重试，由指数间隔节流
+                    this.reconnect()
                     return;
                 }
 
@@ -96,23 +98,26 @@ class WebSocketManager {
                 }
             } catch (e) {
                 console.error("websocket连接失败",e)
+                // 网络异常纳入退避重试，后端发布期间的短暂不可达恢复后自动重连
+                this.reconnect()
             }
         } else {
             console.log("当前websocket实例已存在")
         }
     }
 
-    // 重试连接
+    // 重试连接：指数退避（间隔随次数线性增长、封顶 maxRetryInterval），连接成功时 onopen 归零计数
     private reconnect = () => {
-        if (this.retryNumber >= this.maxRetryNumber) {
-            console.error("websocket 超过重试次数")
-            return
-        }
         this.retryNumber ++
+        const interval = Math.min(this.retryNumber * this.retryInterval, this.maxRetryInterval)
         setTimeout(() => {
-            console.log("websocket 执行第" + this.retryNumber + "次重试")
+            // 登出等主动关闭后不再重连
+            if (!this.enableRetry) {
+                return
+            }
+            console.log("websocket 执行第" + this.retryNumber + "次重连")
             this.connect()
-        }, this.retryNumber * this.retryInterval)
+        }, interval)
     }
 
     // 接收数据
@@ -203,7 +208,8 @@ class WebSocketManager {
  */
 interface WebSocketMessage {
     type: string;
-    data: string;
+    // 后端推送的业务对象，结构随 type 而异（如 WS_NOTICE 为通知公告）
+    data: any;
     timestamp: number;
 }
 

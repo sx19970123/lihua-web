@@ -116,11 +116,16 @@ const {sys_notice_type, sys_notice_priority} = initDict("sys_notice_type", "sys_
 const unReadCount = ref<number>(0)
 // 查询未读数量
 const handleUnReadCount = async () => {
-  const resp = await queryUnReadCount()
-  if (resp.code === 200) {
-    unReadCount.value = resp.data
-  } else {
-    message.error(resp.msg)
+  try {
+    const resp = await queryUnReadCount()
+    if (resp.code === 200) {
+      unReadCount.value = resp.data
+    } else {
+      message.error(resp.msg)
+    }
+  } catch (e) {
+    message.error("获取未读数失败")
+    console.error('获取未读数出错:', e)
   }
 }
 
