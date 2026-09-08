@@ -31,9 +31,8 @@
 <script setup lang="ts">
 // 锁屏表单类型
 import {onMounted, ref} from "vue";
-import type {Rule} from "ant-design-vue/es/form";
 import {useUserStore} from "@/stores/user.ts";
-import {message} from "@/antd-adapter";
+import {message, type Rule} from "@/antd-adapter";
 import {getLockScreenInfo, setLockScreenInfo} from "@/helpers/lock-screen.ts";
 
 const userStore = useUserStore();

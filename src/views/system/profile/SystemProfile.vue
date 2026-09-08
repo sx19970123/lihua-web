@@ -2,7 +2,7 @@
   <div>
     <a-row :gutter="8">
       <a-col :xxl="{span: 4}" :xl="{span: 5}" :lg="{span: 6}" :md="{span: 6}" :sm="{span: 6}" :xs="{span: 6}">
-        <a-card class="h-full" :body-style="{padding: '22px'}">
+        <a-card class="h-full" :styles="{body: {padding: '22px'}}">
           <a-menu v-model:selectedKeys="selectedKeys" @click="handleChangeUserMenu" style="border: 0;width: 100%" :inlineCollapsed="themeStore.isSmallWindow">
             <a-menu-item key="Basic">
               <template #icon><UserOutlined /></template>
