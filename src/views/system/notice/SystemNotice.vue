@@ -2,7 +2,7 @@
   <div>
     <a-flex :gap="16" vertical>
 <!--      检索条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -12,16 +12,12 @@
             </a-col>
             <a-col>
               <a-form-item label="公告类型">
-                <a-select placeholder="请选择" v-model:value="noticeQuery.type" allow-clear>
-                  <a-select-option v-for="item in sys_notice_type" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择" v-model:value="noticeQuery.type" allow-clear :options="sys_notice_type"/>
               </a-form-item>
             </a-col>
             <a-col>
               <a-form-item label="公告状态">
-                <a-select placeholder="请选择" v-model:value="noticeQuery.status" allow-clear>
-                  <a-select-option v-for="item in sys_notice_status" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择" v-model:value="noticeQuery.status" allow-clear :options="sys_notice_status"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -50,7 +46,7 @@
                :data-source="noticeList"
                :columns="noticeColumn"
                row-class-name="hover-cursor-pointer"
-               :custom-row="handleRowClick"
+               :on-row="handleRowClick"
                :pagination="false"
                :loading="tableLoad"
                row-key="id"
@@ -77,7 +73,7 @@
                   <DeleteOutlined />
                 </template>
                 删 除
-                <span v-if="selectedIds && selectedIds.length > 0" style="margin-left: var(--ant-margin-xxs)"> {{selectedIds.length}} 项</span>
+                <span v-if="selectedIds && selectedIds.length > 0" class="ml-ant-xxs"> {{selectedIds.length}} 项</span>
               </a-button>
             </a-popconfirm>
             <!--            表格设置-->
@@ -118,7 +114,7 @@
               </template>
               编辑
             </a-button>
-            <a-divider type="vertical"/>
+            <a-divider :vertical="true"/>
             <a-button type="link" size="small" v-if="record.status === '1'" @click="(event:MouseEvent) => handleRevoke(event, record.id)">
               <template #icon>
                 <RollbackOutlined />
@@ -131,7 +127,7 @@
               </template>
               发布
             </a-button>
-            <a-divider type="vertical"/>
+            <a-divider :vertical="true"/>
             <a-popconfirm title="删除后不可恢复，是否删除？"
                           placement="bottomRight"
                           ok-text="确 定"
@@ -160,9 +156,9 @@
       </a-table>
     </a-flex>
 <!--    保存修改模态框-->
-    <a-modal v-model:open="modalActive.open" :width="960" @ok="saveNotice" destroy-on-close>
+    <a-modal v-model:open="modalActive.open" :width="960" @ok="saveNotice" destroy-on-hidden>
       <template #title>
-        <div style="margin-bottom: var(--ant-margin-lg)">
+        <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
         </div>
       </template>
@@ -198,8 +194,8 @@
             </a-form-item-rest>
             <a-form-item-rest>
               <a-popover trigger="click"
-                         destroyTooltipOnHide
-                         :overlayInnerStyle="{maxWidth: 'calc(100vw - 48px)', marginLeft: 'var(--ant-margin-lg)', marginRight: 'var(--ant-margin-lg)'}"
+                         destroy-on-hidden
+                         :styles="{container: {maxWidth: 'calc(100vw - 48px)', marginLeft: 'var(--ant-margin-lg)', marginRight: 'var(--ant-margin-lg)'}}"
                          :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
                 <template #content>
                   <user-select :bordered="false"
@@ -224,7 +220,7 @@
       </a-form>
     </a-modal>
 <!--    公告预览-->
-    <a-modal v-model:open="previewModelOpen" :footer="false" :width="960" destroy-on-close>
+    <a-modal v-model:open="previewModelOpen" :footer="false" :width="960" destroy-on-hidden>
       <notice-preview :notice-id="previewNoticeId" :show-read-user="true"/>
     </a-modal>
   </div>
@@ -233,18 +229,15 @@
 import {initDict} from "@/helpers/dict.ts";
 import {computed, reactive, ref, useTemplateRef} from "vue";
 import type {SysNotice, SysNoticeDTO, SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {deleteByIds, queryById, queryPage, release, revoke, save} from "@/api/system/notice/notice.ts";
 import DictTag from "@/components/dict-tag/index.vue"
-import {type FormInstance} from "ant-design-vue";
-import {message} from "@/antd-adapter";
+import {type FormInstance, message, type Rule, type TableColumnsType} from "@/antd-adapter";
 import dayjs from "dayjs";
 import Editor from "@/components/tinymce-editor/index.vue"
 import ColorSelect from "@/components/color-select/index.vue"
 import UserSelect from "@/components/user-select/index.vue"
 import NoticePreview from "@/components/notice-preview/index.vue"
 import type {SysUser} from "@/api/system/user/type/sys-user.ts";
-import type {Rule} from "ant-design-vue/es/form";
 import {getUserOptionByUserIds} from "@/api/system/user/user.ts";
 import {type BaseModalActiveType} from "@/api/global/type.ts";
 import TableSetting from "@/components/table-setting/index.vue";
@@ -283,7 +276,7 @@ const initSearch = () => {
   }
 
   // 列
-  const noticeColumn = ref<ColumnsType>([
+  const noticeColumn = ref<TableColumnsType>([
     {
       title: '公告标题',
       key: 'title',
