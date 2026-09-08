@@ -35,7 +35,7 @@ const init = async () => {
   }
 }
 
-// 默认密码配置表单对象
+// 验证码配置表单对象
 const settingForm = ref<Captcha>({
   enable: true
 })

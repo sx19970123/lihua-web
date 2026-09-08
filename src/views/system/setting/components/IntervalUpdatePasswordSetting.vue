@@ -87,7 +87,7 @@ const handleChangeSwitch = async (checked: boolean | string | number) => {
   }
   settingForm.value.enable = !!checked
 
-  // 为 ture 则返回，关闭时才发送请求
+  // 为 true 则返回，关闭时才发送请求
   if (settingForm.value.enable) {
     return;
   }

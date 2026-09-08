@@ -62,6 +62,8 @@ const init = async () => {
           const resp = await save(setting.value)
           if (resp.code === 200) {
             themeStore.enableGrayModel(false)
+          } else {
+            message.error(resp.msg)
           }
         }
       }
@@ -78,7 +80,7 @@ const presets = ref([
   { label: '下个月', value: dayjs().add(+1, 'month') },
 ]);
 
-// 默认密码配置表单对象
+// 灰色模式配置表单对象
 const settingForm = ref<GrayModel>({
   enable: false,
   closeTime: undefined

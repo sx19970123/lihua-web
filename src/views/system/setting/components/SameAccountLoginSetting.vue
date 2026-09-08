@@ -47,7 +47,7 @@ const init = async () => {
   }
 }
 
-// 定期修改密码表单
+// 同账号登录限制配置表单
 const settingForm = ref<SameAccountLoginSetting>({
   enable: false,
   maximum: 1
@@ -70,7 +70,7 @@ const handleChangeSwitch = async (checked: boolean | string | number) => {
   }
   settingForm.value.enable = !!checked
 
-  // 为 ture 则返回，关闭时才发送请求
+  // 为 true 则返回，关闭时才发送请求
   if (settingForm.value.enable) {
     return;
   }
@@ -85,7 +85,7 @@ const handleChangeSwitch = async (checked: boolean | string | number) => {
 // 表单验证
 const rules: Record<string, Rule[]> = {
   maximum: [
-    { required: true,message: "请输入最小登录数",trigger: 'change'}
+    { required: true,message: "请输入最大同时在线数",trigger: 'change'}
   ]
 }
 

@@ -81,7 +81,7 @@ const init = async () => {
   }
 }
 
-// 默认密码配置表单对象
+// ip限制配置表单对象
 const settingForm = ref<RestrictAccessIp>({
   enable: false,
   ipList: ['']

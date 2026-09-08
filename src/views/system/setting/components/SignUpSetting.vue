@@ -9,8 +9,8 @@
       </a-form-item>
       <transition :name="themeStore.routeTransition" mode="out-in">
         <div v-if="settingForm.enable">
-          <a-flex :gap="16">
-            <a-card>
+          <a-flex :gap="16" wrap="wrap">
+            <a-card class="flex-1 min-w-[300px]">
               <a-typography-title :level="5">角色</a-typography-title>
               <a-form-item class="w-[270px]" name="roleIds">
                 <a-select
@@ -22,7 +22,7 @@
                     :fieldNames="{label: 'name', value: 'id'}"/>
               </a-form-item>
             </a-card>
-            <a-card>
+            <a-card class="flex-1 min-w-[300px]">
               <a-typography-title :level="5">部门</a-typography-title>
               <a-form-item class="w-[270px]">
                 <easy-tree-select :tree-data="sysDeptList"
@@ -33,7 +33,7 @@
                 />
               </a-form-item>
             </a-card>
-            <a-card v-if="settingForm.deptIds && settingForm.deptIds.length > 0">
+            <a-card v-if="settingForm.deptIds && settingForm.deptIds.length > 0" class="flex-1 min-w-[300px]">
               <a-typography-title :level="5">岗位</a-typography-title>
               <a-form-item class="w-[270px]" >
                 <selectable-card
@@ -70,7 +70,7 @@
             </a-card>
           </a-flex>
           <a-form-item style="margin-top: var(--ant-margin-lg)">
-            <a-button type="primary" html-type="submit" @click="handleSubmit" :loading="submitLoading">提 交</a-button>
+            <a-button type="primary" @click="handleSubmit" :loading="submitLoading">提 交</a-button>
           </a-form-item>
         </div>
       </transition>
@@ -102,15 +102,6 @@ const settingStore = useSettingStore();
 const themeStore = useThemeStore();
 const submitLoading = ref<boolean>(false);
 
-// 加载配置，已保存的系统配置中没有当前配置的话会进行创建
-const init = async () => {
-  const settingData = await settingStore.getSettingInfo<SignUp>(componentName);
-  if (settingData) {
-    settingForm.value = settingData
-    await loadPost()
-  }
-}
-
 // 自助注册配置表单对象
 const settingForm = ref<SignUp>({
   enable: false,
@@ -126,207 +117,202 @@ const setting = ref<SysSetting>({
   json: JSON.stringify(settingForm.value)
 })
 
-// 角色
-const initRoleData = () => {
-  // 角色信息
-  const sysRoleList = ref<Array<SysRole>>([])
-  // 加载角色信息
-  const initRole = async () => {
-    const resp = await getRoleOption()
-    if (resp.code === 200) {
-      sysRoleList.value = resp.data
-    } else {
-      message.error(resp.msg)
-    }
-  }
-  initRole()
-  return {
-    sysRoleList
+// 角色选项
+const sysRoleList = ref<Array<SysRole>>([])
+// 加载角色选项
+const initRole = async () => {
+  const resp = await getRoleOption()
+  if (resp.code === 200) {
+    sysRoleList.value = resp.data
+  } else {
+    message.error(resp.msg)
   }
 }
-const {sysRoleList} = initRoleData()
 
-// 部门
-// 加载部门
-const initDeptData = () => {
-  // 部门信息
-  const sysDeptList = ref<Array<SysDept>>([])
-
-  // 加载部门信息
-  const initDept = async () => {
-    const resp = await getDeptOption()
-    if (resp.code === 200) {
-      // 单位树
-      sysDeptList.value = resp.data
-    } else {
-      message.error(resp.msg)
-    }
-  }
-
-  return {
-    sysDeptList,
-    initDept,
+// 部门选项
+const sysDeptList = ref<Array<SysDept>>([])
+// 加载部门选项
+const initDept = async () => {
+  const resp = await getDeptOption()
+  if (resp.code === 200) {
+    sysDeptList.value = resp.data
+  } else {
+    message.error(resp.msg)
   }
 }
-const {sysDeptList,initDept} = initDeptData()
 
-// 岗位/默认部门
-const initPostData = () => {
+// 岗位可选项
+type PostOptional = {
+  id?: string,
+  name?: string,
+  checked: boolean
+}
 
-  type PostOptional = {
-    id?: string,
-    name?: string,
-    checked: boolean
+// 部门下岗位分组
+type PostType = {
+  deptName: string,
+  deptId: string,
+  postList: Array<PostOptional>,
+}
+
+// 岗位分组信息
+const sysPostList = ref<Array<PostType>>([])
+// 岗位加载 loading
+const postLoading = ref<boolean>(false)
+
+// 按已选部门加载岗位分组
+const loadPost = async () => {
+  try {
+    if (settingForm.value.deptIds) {
+      postLoading.value = true
+      await initPostByDeptIds(settingForm.value.deptIds)
+    }
+  } finally {
+    postLoading.value = false
+  }
+}
+
+// 根据部门id初始化岗位信息
+const initPostByDeptIds = async (deptIds: string[]) => {
+  if (!deptIds.length) {
+    sysPostList.value = []
+    return
   }
 
-  type PostType = {
-    deptName: string,
-    deptId: string,
-    postList: Array<PostOptional>,
-  }
+  // 获取部门id｜名称集合
+  const deptOptions = getDeptOptions(deptIds)
 
-  // 岗位信息
-  const sysPostList = ref<Array<PostType>>([])
-  // 加载loading
-  const postLoading = ref<boolean>(false)
+  await initPostByDeptIdOption(deptIds, deptOptions)
+}
 
-  // 加载部门
-  const loadPost = async () => {
-    try {
-      if (settingForm.value.deptIds) {
-        postLoading.value = true
-        await initPostByDeptIds(settingForm.value.deptIds)
+// 获取部门选项集合
+const getDeptOptions = (deptIds: string[]) => {
+  const options: { value: string; label: string }[] = []
+
+  deptIds.forEach(id => {
+    traverse(sysDeptList.value, (dept) => {
+      if (dept.id === id && dept.name) {
+        options.push({
+          value: dept.id,
+          label: dept.name
+        })
+        return true
       }
-    } finally {
-      postLoading.value = false
-    }
+    })
+  })
+
+  return options
+}
+
+const initPostByDeptIdOption = async (deptIds: string[], options: { label: string; value: string }[]) => {
+
+  const originDeptIds = sysPostList.value.map(post => post.deptId)
+
+  // 删除未选中的部门
+  sysPostList.value = sysPostList.value.filter(item => deptIds.includes(item.deptId))
+  // 找新增部门
+  const newDeptIds = deptIds.filter(id => !originDeptIds.includes(id))
+
+  if (!newDeptIds.length) {
+    // 清理已移除部门残留的岗位选中与默认部门
+    pruneRemovedDeptRefs(deptIds)
+    return
   }
 
-  // 根据部门id初始化岗位信息
-  const initPostByDeptIds = async (deptIds: string[]) => {
-    if (!deptIds.length) {
-      sysPostList.value = []
-      return
-    }
+  const resp = await getPostOptionByDeptId(newDeptIds)
 
-    // 获取部门id｜名称集合
-    const deptOptions = getDeptOptions(deptIds)
-
-    await initPostByDeptIdOption(deptIds, deptOptions)
+  if (resp.code !== 200) {
+    message.error(resp.msg)
+    return
   }
 
-  // 获取部门选项集合
-  const getDeptOptions = (deptIds: string[]) => {
-    const options: { value: string; label: string }[] = []
+  const data = resp.data
 
-    deptIds.forEach(id => {
-      traverse(sysDeptList.value, (dept) => {
-        if (dept.id === id && dept.name) {
-          options.push({
-            value: dept.id,
-            label: dept.name
-          })
-          return true
+  newDeptIds.forEach(deptId => {
+    const dept = options.find(item => item.value === deptId)
+
+    sysPostList.value.push({
+      deptId,
+      deptName: dept?.label ?? '',
+      postList: sysPostsToPostOptional(data[deptId])
+    })
+  })
+
+  // 清理已移除部门残留的岗位选中与默认部门
+  pruneRemovedDeptRefs(deptIds)
+  // 回显岗位
+  if (settingForm.value.postIds?.length) {
+    initPostTag(settingForm.value.postIds)
+  }
+}
+
+// 清理已移除部门残留的引用：其岗位选中从 postIds 中移除、默认部门指向时清空，
+// 保证落库配置只引用当前选中部门
+const pruneRemovedDeptRefs = (deptIds: string[]) => {
+  if (settingForm.value.postIds?.length) {
+    const postIdSet = new Set(sysPostList.value.flatMap(item => (item.postList ?? []).map(post => post.id)))
+    settingForm.value.postIds = settingForm.value.postIds.filter(id => postIdSet.has(id))
+  }
+  if (settingForm.value.defaultDeptId && !deptIds.includes(settingForm.value.defaultDeptId)) {
+    settingForm.value.defaultDeptId = ''
+  }
+}
+
+// 岗位数据转为可选项
+const sysPostsToPostOptional = (postList?: SysPost[]): PostOptional[] => {
+  if (!postList) return []
+
+  return postList.map(post => ({
+    id: post.id,
+    name: post.name,
+    checked: false
+  }))
+}
+
+// 处理选中/取消选中 岗位标签
+const handleSelectPostId = (tag: string, checked: boolean) => {
+  // 初始化 postIdList 为数组，如果它还没有被初始化
+  if (!settingForm.value.postIds) {
+    settingForm.value.postIds = [];
+  }
+
+  // 如果 checked 为 true，则添加 tag，否则删除它
+  if (checked) {
+    // 确保 tag 不会被重复添加
+    if (!settingForm.value.postIds.includes(tag)) {
+      settingForm.value.postIds.push(tag);
+    }
+  } else {
+    // 找到 tag 的索引并将其删除
+    const index = settingForm.value.postIds.indexOf(tag);
+    if (index > -1) {
+      settingForm.value.postIds.splice(index, 1);
+    }
+  }
+};
+
+// 回显岗位标签
+const initPostTag = (postIds: Array<string>) => {
+  // 部门岗位中postId 与 postIds 相同时 checked 设置为true
+  sysPostList.value.forEach(postDept => {
+    if (postDept.postList && postDept.postList.length > 0) {
+      postDept.postList.forEach(post => {
+        if (post.id && postIds.includes(post.id)) {
+          post.checked = true
         }
       })
-    })
-
-    return options
-  }
-
-  const initPostByDeptIdOption = async (deptIds: string[], options: { label: string; value: string }[]) => {
-
-    const originDeptIds = sysPostList.value.map(post => post.deptId)
-
-    // 删除未选中的部门
-    sysPostList.value = sysPostList.value.filter(item => deptIds.includes(item.deptId))
-    // 找新增部门
-    const newDeptIds = deptIds.filter(id => !originDeptIds.includes(id))
-
-    if (!newDeptIds.length) return
-
-    const resp = await getPostOptionByDeptId(newDeptIds)
-
-    if (resp.code !== 200) {
-      message.error(resp.msg)
-      return
     }
+  })
+}
 
-    const data = resp.data
-
-    newDeptIds.forEach(deptId => {
-      const dept = options.find(item => item.value === deptId)
-
-      sysPostList.value.push({
-        deptId,
-        deptName: dept?.label ?? '',
-        postList: sysPostsToPostOptional(data[deptId])
-      })
-    })
-
-    // 回显岗位
-    if (settingForm.value.postIds?.length) {
-      initPostTag(settingForm.value.postIds)
-    }
-  }
-
-  // 岗位数据转为可选项
-  const sysPostsToPostOptional = (postList?: SysPost[]): PostOptional[] => {
-    if (!postList) return []
-
-    return postList.map(post => ({
-      id: post.id,
-      name: post.name,
-      checked: false
-    }))
-  }
-
-  // 处理选中/取消选中 岗位标签
-  const handleSelectPostId = (tag: string, checked: boolean) => {
-    // 初始化 postIdList 为数组，如果它还没有被初始化
-    if (!settingForm.value.postIds) {
-      settingForm.value.postIds = [];
-    }
-
-    // 如果 checked 为 true，则添加 tag，否则删除它
-    if (checked) {
-      // 确保 tag 不会被重复添加
-      if (!settingForm.value.postIds.includes(tag)) {
-        settingForm.value.postIds.push(tag);
-      }
-    } else {
-      // 找到 tag 的索引并将其删除
-      const index = settingForm.value.postIds.indexOf(tag);
-      if (index > -1) {
-        settingForm.value.postIds.splice(index, 1);
-      }
-    }
-  };
-
-  // 回显岗位标签
-  const initPostTag = (postIds: Array<String>) => {
-    // 部门岗位中postId 与 postIds 相同时 checked 设置为true
-    const postDeptOption = sysPostList.value
-    postDeptOption.forEach(postDept => {
-      if (postDept.postList && postDept.postList.length > 0) {
-        postDept.postList.forEach(post => {
-          if (post.id && postIds.includes(post.id)) {
-            post.checked = true
-          }
-        })
-      }
-    })
-  }
-
-  return {
-    sysPostList,
-    postLoading,
-    loadPost,
-    handleSelectPostId,
-    initPostByDeptIds
+// 加载配置，已保存的系统配置中没有当前配置的话会进行创建
+const init = async () => {
+  const settingData = await settingStore.getSettingInfo<SignUp>(componentName);
+  if (settingData) {
+    settingForm.value = settingData
+    await loadPost()
   }
 }
-const {sysPostList, postLoading, loadPost ,handleSelectPostId} = initPostData()
 
 // 处理开关switch
 // antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
@@ -356,11 +342,11 @@ const handleSubmit = async () => {
       roleIds: []
     }
   } else {
-    if (form.roleIds?.length === 0) {
+    if (!form.roleIds?.length) {
       message.error("请选择角色")
       return
     }
-    if (form.deptIds?.length === 0) {
+    if (!form.deptIds?.length) {
       message.error("请选择部门")
       return
     }
@@ -382,6 +368,7 @@ const handleSubmit = async () => {
 }
 
 onMounted(async () => {
+  initRole()
   await initDept()
   await init()
 })
