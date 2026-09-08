@@ -83,7 +83,7 @@
 
         <template #bodyCell="{column,record,text}">
           <template v-if="column.key === 'title'">
-            <a-tooltip ellipsis>
+            <a-tooltip>
               <template #title>
                 {{text}}
               </template>
@@ -242,7 +242,7 @@ import {getUserOptionByUserIds} from "@/api/system/user/user.ts";
 import {type BaseModalActiveType} from "@/api/global/type.ts";
 import TableSetting from "@/components/table-setting/index.vue";
 
-const {sys_notice_type, sys_notice_status, 	sys_notice_user_scope, sys_notice_priority} = initDict("sys_notice_type", "sys_notice_status", "sys_notice_user_scope", "sys_notice_priority")
+const {sys_notice_type, sys_notice_status, sys_notice_user_scope, sys_notice_priority} = initDict("sys_notice_type", "sys_notice_status", "sys_notice_user_scope", "sys_notice_priority")
 // 查询列表
 const initSearch = () => {
   // 列表多选
@@ -387,26 +387,15 @@ const initSave = () => {
     title: ""
   })
 
-  // 将优先级选项处理为color-select组件可以处理的数据类型
-  const priorityOption = ref<Array<{
-    name: string,
-    color: string,
-    key?: string
-  }>>([])
-  // 处理优先级字典数据
-  const handlePriorityOption = () => {
-    const dictPriority = sys_notice_priority.value
-    dictPriority.forEach(item => {
-      priorityOption.value.push({
-        name: item.label ? item.label : '',
-        color: item.tagStyle ? item.tagStyle : '',
-        key: item.value,
-      })
-    })
-  }
+  // 将优先级字典处理为 color-select 组件可以处理的数据类型
+  const priorityOption = computed(() => sys_notice_priority.value.map(item => ({
+    name: item.label ?? '',
+    color: item.tagStyle ?? '',
+    key: item.value
+  })))
 
   // 选择用户范围描述
-  const selectUserInfo = ref<String>('')
+  const selectUserInfo = ref<string>('')
 
   // 处理显示已选择用户
   const handleSelectUserInfo = (userList: SysUser[]) => {
@@ -434,9 +423,6 @@ const initSave = () => {
   // 处理模态框状态
   const handleModalStatus = (title?: string) => {
     modalActive.open = !modalActive.open
-    if(modalActive.open && priorityOption.value.length === 0) {
-      handlePriorityOption()
-    }
     if (title) {
       modalActive.title = title
     }
@@ -493,7 +479,7 @@ const initSave = () => {
           if (selectUserList.code === 200) {
             handleSelectUserInfo(selectUserList.data)
           } else {
-            message.error(resp.msg)
+            message.error(selectUserList.msg)
           }
         }
       }
