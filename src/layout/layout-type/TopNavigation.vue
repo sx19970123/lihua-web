@@ -20,7 +20,7 @@
         </a-layout-header>
       </transition>
       <!--多标签-->
-      <view-tabs v-if="themeStore.showViewTabs"/>
+      <view-tabs v-if="themeStore.showViewTabs && !themeStore.isMiniWindow"/>
     </div>
     <a-layout-content>
       <!--内容-->

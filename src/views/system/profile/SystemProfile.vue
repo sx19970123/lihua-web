@@ -77,11 +77,6 @@ const isProfileTabKey = (value: unknown): value is ProfileTabKey => {
   return typeof value === 'string' && profileTabs.includes(value as ProfileTabKey)
 }
 
-const getProfileTabFromRoute = (): ProfileTabKey => {
-  const tab = route.query.tab
-  return isProfileTabKey(tab) ? tab : defaultProfileTab
-}
-
 const changeUserMenu = (key: ProfileTabKey) => {
   const target = allComponents.value.filter(item => item.name === key)[0]
   if (!target) return
@@ -90,7 +85,14 @@ const changeUserMenu = (key: ProfileTabKey) => {
 }
 
 watch(() => route.query.tab, () => {
-  changeUserMenu(getProfileTabFromRoute())
+  const tab = route.query.tab
+  // 进入页面未携带（或非法）tab 参数时，补写默认 tab 到地址栏；replace 不产生历史记录，
+  // 补写后 watch 以合法值重触发，不会循环
+  if (!isProfileTabKey(tab)) {
+    router.replace({query: {...route.query, tab: defaultProfileTab}})
+    return
+  }
+  changeUserMenu(tab)
 }, {immediate: true})
 
 // 点击菜单切换组件

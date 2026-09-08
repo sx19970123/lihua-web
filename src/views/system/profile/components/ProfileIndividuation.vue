@@ -16,7 +16,7 @@
 
       <!-- 布局设置 -->
       <a-typography-title :level="5">布局设置</a-typography-title>
-      <a-form-item label="导航类型" v-if="!themeStore.isSmallWindow">
+      <a-form-item label="导航类型" v-if="!themeStore.isSmallWindow || themeStore.isMiniWindow">
         <nav-select v-model="themeStore.layoutType"/>
       </a-form-item>
       <a-form-item label="导航宽度" v-if="themeStore.layoutType !== 'top-navigation' || themeStore.isSmallWindow">
@@ -28,7 +28,7 @@
       <a-form-item label="固定头部">
         <a-switch v-model:checked="themeStore.affixHead"/>
       </a-form-item>
-      <a-form-item label="多任务栏" v-if="viewTabsStore.$state.showLayout && !isMiniWindow">
+      <a-form-item label="多任务栏" v-if="viewTabsStore.$state.showLayout">
         <a-switch v-model:checked="themeStore.showViewTabs"/>
       </a-form-item>
       <a-form-item label="显示页脚">
@@ -49,7 +49,7 @@
         </a-radio-group>
       </a-form-item>
       <a-form-item label="界面圆角">
-        <a-slider class="w-[230px]" v-model:value="themeStore.borderRadius" :min="2" :max="16" dots/>
+        <a-slider class="w-[230px]" v-model:value="themeStore.borderRadius" :min="2" :max="16" :step="2" dots/>
       </a-form-item>
       <a-form-item label="点击反馈">
         <a-select style="width: 200px" v-model:value="themeStore.clickEffect" :options="clickEffectList"/>
@@ -73,7 +73,6 @@ import NavSelect from "@/components/nav-type-select/index.vue"
 import settings from "@/settings";
 import {useUserStore} from "@/stores/user";
 import {serializeThemeState, useThemeStore} from "@/stores/theme";
-import {usePermissionStore} from "@/stores/permission.ts";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import {computed, onUnmounted, ref, watch} from "vue";
 import {ResponseError} from "@/api/global/type.ts";
@@ -81,7 +80,6 @@ import {message} from "@/antd-adapter";
 
 const themeStore = useThemeStore()
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
 const viewTabsStore = useViewTabsStore()
 // 主题颜色
 const colorList = ref<Array<{name: string,color: string}>>(settings.colorOptions)
@@ -102,7 +100,6 @@ const transitionOptions = [
   { value: 'switch', label: '交换' },
   { value: 'trick', label: '整活' }
 ]
-const isMiniWindow = ref<boolean>(window.location.href.includes("miniWindow=true"))
 // 卸载组件时触发，同步主题到服务端（本地缓存已由 store 变更即写；内容无变化时 saveTheme 内部去重不发请求）
 onUnmounted(()=> {
   userStore.saveTheme(serializeThemeState(themeStore.$state)).catch((e) => {
@@ -115,7 +112,6 @@ onUnmounted(()=> {
 })
 
 // Switch 的 change 事件先于 v-model 写回触发，回调内读状态是旧值，统一改为 watch 驱动
-watch(() => themeStore.siderGroup, () => permissionStore.reloadMenu())
 watch(() => themeStore.borderRadius, () => themeStore.changeBorderRadius())
 watch(() => themeStore.showViewTabs, () => themeStore.changeShowViewTabs())
 watch(() => themeStore.showFooter, () => themeStore.changeFooter())

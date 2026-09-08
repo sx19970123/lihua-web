@@ -53,7 +53,7 @@ router.beforeEach(async (to, from) => {
     } else {
         // 清空登录后信息
         userSetup.clearData()
-        // 重置主题
+        // 重置主题（内存与展示回到默认；主题无本地缓存，服务端为唯一事实源，重登由 initApp 纯服务端初始化）
         themeStore.resetState();
         // 关闭websocket连接
         closeConnect()

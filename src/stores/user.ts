@@ -12,12 +12,19 @@ import type {SysPost} from "@/api/system/post/type/sys-post.ts";
 import type {StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";
 import {closeConnect} from "@/utils/web-socket.ts";
 import {useDictStore} from "@/stores/dict.ts";
+import {serializeThemeState, useThemeStore} from "@/stores/theme.ts";
+import {debounce} from "lodash-es";
 import router from "@/router";
 import {attachmentUrl, getTemporaryPath} from "@/utils/attachment-url.ts";
 import {createWindowGuard} from "@/utils/window-guard.ts";
 
 // 认证失效联动（清用户态+跳转+提示）的单飞窗：token 过期时并发 401 只执行一次，窗口自动复位
 const authFailureGuard = createWindowGuard(5000)
+
+// 主题防抖同步（幂等挂接）：服务端为唯一事实源，主题变更后延迟合并同步，
+// 避免拖动色板/圆角等连续调整的高频请求；窗口内的兜底见 handleLogout 的 flush 与样式布局页卸载时的即时同步
+let themeSyncSubscribed = false
+let debouncedThemeSync: ReturnType<typeof debounce> | undefined
 
 export const useUserStore = defineStore('user', {
     state: () => {
@@ -106,11 +113,24 @@ export const useUserStore = defineStore('user', {
                 })
             })
         },
+        // 挂接主题变更防抖同步（幂等，initApp 登录后调用）
+        subscribeThemeSync() {
+            if (themeSyncSubscribed) return
+            themeSyncSubscribed = true
+            const themeStore = useThemeStore()
+            debouncedThemeSync = debounce(() => {
+                this.saveTheme(serializeThemeState(themeStore.$state)).catch(() => {})
+            }, 800)
+            themeStore.$subscribe(() => debouncedThemeSync!())
+        },
         // 退出登录
         async handleLogout() {
             // 关闭 websocket 连接
             try {
                 closeConnect()
+                // 登出前冲刷防抖窗口内未发出的主题同步：清 token 后防抖与组件卸载的同步都会失败；
+                // 无 pending 说明服务端已是最新（或本无变更），无需补发
+                debouncedThemeSync?.flush()
                 await logout()
             } finally {
                 this.clearUserInfo()
@@ -169,14 +189,13 @@ export const useUserStore = defineStore('user', {
             // 更新默认部门后更新部门下岗位
             state.defaultDeptPosts = state.posts.filter(post => post.deptCode === state.defaultDeptCode)
         },
-        // 保存主题修改（本地缓存已由 theme store 变更即写，此处只负责同步服务端；成功静默，失败由调用方提示）
+        // 保存主题修改（服务端为唯一事实源，与已知服务端值相同则静默跳过；成功静默，失败由调用方提示）
         saveTheme(themeJson: string) {
             return new Promise((resolve, reject) => {
                 if (themeJson !== this.userInfo.theme) {
                     saveTheme(themeJson).then(resp => {
                         if (resp.code === 200) {
                             this.userInfo.theme = themeJson
-                            localStorage.removeItem('theme-unsynced')
                             resolve(resp)
                         } else {
                             reject(resp.msg)
@@ -185,8 +204,6 @@ export const useUserStore = defineStore('user', {
                         reject(error.msg)
                     })
                 } else {
-                    // 与服务端已知内容一致（无实际改动），清除可能残留的待传标记
-                    localStorage.removeItem('theme-unsynced')
                     resolve("主题已保存")
                 }
             })

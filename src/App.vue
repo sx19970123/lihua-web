@@ -46,8 +46,6 @@ const appApiRef = useTemplateRef<AppApi>("appApiRef")
 // 避免 store 状态、antd 算法、DOM 属性三者起始不一致；主题色同步由 store 内部完成
 // （不可用根级 useToken 取色：App.vue 在自身渲染的 ConfigProvider 之外，只会拿到库默认 token）
 themeStore.applyThemeMode()
-// 登录页等 init 前的主题变更同样即时进本地缓存（置待传标记，登录后由校准逻辑补传服务端）
-themeStore.subscribePersist()
 
 // 初始化系统配置
 const settingStore = useSettingStore()
@@ -109,30 +107,22 @@ const initTheme = () => {
     }
   }
 
-  // 将主题同步到其他标签页
-  const syncTabTheme = (event: StorageEvent) => {
-    // 同步外观模式（配置态），实际态由各端自行推导
-    if (event.key === 'theme-mode' && event.newValue) {
-      themeStore.changeThemeMode(event.newValue as 'light' | 'dark' | 'auto', true)
-    }
-    // 同步其他主题
-    if (event.key === 'theme' && event.newValue) {
-      themeStore.init(event.newValue)
-      permissionStore.reloadMenu()
-    }
-  }
-
   return {
-    handleFollowSystemTheme,
-    syncTabTheme
+    handleFollowSystemTheme
   }
 
 }
-const {handleFollowSystemTheme, syncTabTheme} = initTheme()
+const {handleFollowSystemTheme} = initTheme()
 
 // 监听自动档接管（系统偏好监听器的挂载/卸载）；档位持久化由 changeThemeMode 收口
 watch(() => themeStore.themeMode === 'auto', () => {
   handleFollowSystemTheme()
+})
+
+// 分组导航开关变更需重建菜单数据；watch 挂在应用层而非样式布局页，
+// 保证跨窗主题同步重放、以及未来任何来源的变更都能刷新菜单
+watch(() => themeStore.siderGroup, () => {
+  permissionStore.reloadMenu()
 })
 
 // 监听灰色模式
@@ -151,13 +141,8 @@ onMounted(() => {
   settingStore.initBaseSetting()
   // 主题跟随系统
   handleFollowSystemTheme()
-  // 启用监听storage以同步标签页间主题
-  window.addEventListener('storage', syncTabTheme)
-})
-
-onUnmounted(() => {
-  // 删除storage监听
-  window.removeEventListener('storage', syncTabTheme)
+  // 挂接跨窗主题同步（主窗与小窗画中画 iframe 间全量广播，替代原 storage 事件方案）
+  themeStore.subscribeThemeBroadcast()
 })
 
 </script>

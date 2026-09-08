@@ -1,19 +1,22 @@
 import {defineStore} from "pinia";
 import {theme} from "antdv-next";
+import {nextTick} from "vue";
 import settings, {type ClickEffect, type ThemeMode} from "@/settings";
+import {debounce} from "lodash-es";
 
 /**
- * 主题持久化序列化：剔除运行时字段（窗口尺寸随缩放变化、服务端加载标记随会话变化，均非用户配置），
- * 本地缓存写入、服务端保存、启动比对校准三方共用同一形态，保证字符串可直接比较
+ * 主题持久化序列化：剔除运行时字段（窗口尺寸随缩放变化、小窗/服务端加载标记随宿主环境变化，均非用户配置），
+ * 服务端保存与跨窗广播共用同一形态，保证字符串可直接比较
  */
 export const serializeThemeState = (state: object): string => {
-    return JSON.stringify(state, (key, value) => key === 'isSmallWindow' || key === 'isServerLoad' ? undefined : value)
+    return JSON.stringify(state, (key, value) => ['isSmallWindow', 'isMiniWindow', 'isServerLoad'].includes(key) ? undefined : value)
 }
 
-// 变更即写本地缓存的订阅（幂等挂接）；init 重放期间抑制，避免服务端校准被误判为新改动
-let persistSubscribed = false
-let suppressPersist = false
-let lastPersisted = ''
+// 跨窗主题同步（主窗与小窗画中画 iframe 同源）：BroadcastChannel 全量广播，
+// 接收方经 init 重放（算法/html 属性/主题色全量落地）；接收期间的变更不回播，防消息回环
+let broadcastSubscribed = false
+let applyingRemote = false
+let themeChannel: BroadcastChannel | undefined
 
 export const useThemeStore = defineStore('theme',{
     state() {
@@ -95,6 +98,12 @@ export const useThemeStore = defineStore('theme',{
         const isSmallWindow: boolean = false
 
         /**
+         * 是否为画中画小窗（URL 携带 miniWindow=true 的 iframe 宿主）：
+         * 运行时形态标记，小窗的无多任务栏/侧栏布局由消费层按此派生，不写入用户配置字段
+         */
+        const isMiniWindow: boolean = window.location.href.includes("miniWindow=true")
+
+        /**
          * 原侧边宽度，用于调整侧边栏时保存临时变量
          */
         const originSiderWith: number = settings.originSiderWith
@@ -142,6 +151,7 @@ export const useThemeStore = defineStore('theme',{
             groundGlass,
             affixHead,
             isSmallWindow,
+            isMiniWindow,
             siderGroup,
             siderWith,
             originSiderWith,
@@ -153,42 +163,45 @@ export const useThemeStore = defineStore('theme',{
         }
     },
     actions: {
-        // 挂接"变更即写本地缓存"订阅（幂等）：任何状态变更立即落 localStorage 并标记待同步，不发请求
-        subscribePersist() {
-            if (persistSubscribed) return
-            persistSubscribed = true
+        // 挂接跨窗主题同步（幂等，应用启动时调用）：变更经 100ms 防抖全量广播到其他窗口，接收方经 init 重放
+        subscribeThemeBroadcast() {
+            if (broadcastSubscribed) return
+            broadcastSubscribed = true
+            themeChannel = new BroadcastChannel('theme-sync')
+            const debouncedBroadcast = debounce(() => {
+                if (applyingRemote) return
+                themeChannel?.postMessage(serializeThemeState(this.$state))
+            }, 100)
             this.$subscribe(() => {
-                if (suppressPersist) return
-                const json = serializeThemeState(this.$state)
-                if (json === lastPersisted) return
-                localStorage.setItem('theme', json)
-                localStorage.setItem('theme-unsynced', '1')
-                lastPersisted = json
+                if (applyingRemote) return
+                debouncedBroadcast()
             })
+            themeChannel.onmessage = (event: MessageEvent<string>) => {
+                // 同值跳过：与本端当前一致的消息无需重放（第二道回环防线）
+                if (event.data === serializeThemeState(this.$state)) return
+                applyingRemote = true
+                try {
+                    this.init(event.data)
+                } finally {
+                    // $subscribe 为 pre-flush 异步回调：标志须延迟到本轮更新后才复位，
+                    // 否则重放触发的回调见 false 会把同值再广播回去，形成两窗 ping-pong 回环，
+                    // 旧值回声会覆盖用户刚做出的选择
+                    nextTick(() => {
+                        applyingRemote = false
+                    })
+                }
+            }
         },
         // 初始化样式
         init(themeJson?: string) {
-            suppressPersist = true
-            try {
-                this.initState(themeJson)
-                // 旧版主题 JSON 的圆角只存于 token 内，回读后同步到顶层字段，保持字段与 token 一致
-                this.$state.borderRadius = this.$state.themeConfig.token.borderRadius ?? settings.themeConfig.token.borderRadius
-                this.applyThemeMode()
-                this.changeGroundGlass()
-                this.changeShowViewTabs()
-                this.changeFooter()
-                this.$state.isServerLoad = true
-            } finally {
-                lastPersisted = serializeThemeState(this.$state)
-                suppressPersist = false
-            }
-            this.subscribePersist()
-        },
-        // 服务端校准后回写本地缓存（内容已同步，不置待传标记）
-        syncLocalCache() {
-            const json = serializeThemeState(this.$state)
-            lastPersisted = json
-            localStorage.setItem('theme', json)
+            this.initState(themeJson)
+            // 旧版主题 JSON 的圆角只存于 token 内，回读后同步到顶层字段，保持字段与 token 一致
+            this.$state.borderRadius = this.$state.themeConfig.token.borderRadius ?? settings.themeConfig.token.borderRadius
+            this.applyThemeMode()
+            this.changeGroundGlass()
+            this.changeShowViewTabs()
+            this.changeFooter()
+            this.$state.isServerLoad = true
         },
         // 通过json数据初始化state
         initState(themeJson?: string) {
@@ -208,11 +221,6 @@ export const useThemeStore = defineStore('theme',{
             } catch (e) {
                 console.error('初始化主题失败，使用默认主题',e)
                 return;
-            }
-            // 小窗模式下ViewTabs隐藏，设置导航模式为side-navigation
-            if (window.location.href.includes("miniWindow=true")) {
-                this.$state.showViewTabs = false
-                this.$state.layoutType = "side-navigation"
             }
         },
         // 切换外观模式（档位变更唯一入口）：写配置态并全量落地

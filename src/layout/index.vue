@@ -1,15 +1,15 @@
 <template>
   <div>
     <!--  小窗口导航-->
-    <drawer-navigation v-if="themeStore.isSmallWindow" :show-layout="!isMiniWindow && viewTabsStore.$state.showLayout"/>
-    <!--  正常导航-->
+    <drawer-navigation v-if="themeStore.isSmallWindow" :show-layout="!themeStore.isMiniWindow && viewTabsStore.$state.showLayout"/>
+    <!--  正常导航（小窗强制侧边导航：形态由消费层派生，不写入 layoutType 用户配置）-->
     <template v-else>
       <!--  侧边导航-->
-      <side-navigation v-if="themeStore.layoutType === 'side-navigation'" :show-layout="!isMiniWindow && viewTabsStore.$state.showLayout"/>
+      <side-navigation v-if="effectiveLayoutType === 'side-navigation'" :show-layout="!themeStore.isMiniWindow && viewTabsStore.$state.showLayout"/>
       <!--  混合导航-->
-      <mix-navigation v-if="themeStore.layoutType === 'mix-navigation'" :show-layout="!isMiniWindow && viewTabsStore.$state.showLayout"/>
+      <mix-navigation v-if="effectiveLayoutType === 'mix-navigation'" :show-layout="!themeStore.isMiniWindow && viewTabsStore.$state.showLayout"/>
       <!--  顶部导航-->
-      <top-navigation v-if="themeStore.layoutType === 'top-navigation'" :show-layout="!isMiniWindow && viewTabsStore.$state.showLayout"/>
+      <top-navigation v-if="effectiveLayoutType === 'top-navigation'" :show-layout="!themeStore.isMiniWindow && viewTabsStore.$state.showLayout"/>
     </template>
 
     <!--  使用传送组件重新加载头部内容，避免刷新组件造成的重复请求  -->
@@ -34,14 +34,16 @@ import Head from "@/layout/head/index.vue"
 import {useThemeStore} from "@/stores/theme"
 import {useViewTabsStore} from "@/stores/view-tabs.ts"
 import {usePermissionStore} from "@/stores/permission.ts"
-import {nextTick, onMounted, onUnmounted, ref, watch} from "vue"
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
 import {debounce} from "lodash-es"
 import settings from "@/settings.ts"
 
 const themeStore = useThemeStore()
 const viewTabsStore = useViewTabsStore()
 const permissionStore = usePermissionStore()
-const isMiniWindow = ref<boolean>(window.location.href.includes("miniWindow=true"))
+
+// 小窗形态的布局选择（仅展示层，用户配置的 layoutType 不被覆盖）
+const effectiveLayoutType = computed(() => themeStore.isMiniWindow ? 'side-navigation' : themeStore.layoutType)
 
 
 /**

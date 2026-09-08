@@ -37,7 +37,7 @@
             <div id="lihua-layout-head"/>
           </a-flex>
         </transition>
-        <view-tabs v-if="themeStore.showViewTabs"/>
+        <view-tabs v-if="themeStore.showViewTabs && !themeStore.isMiniWindow"/>
       </a-layout-header>
       <a-layout-content>
         <!--内容-->
