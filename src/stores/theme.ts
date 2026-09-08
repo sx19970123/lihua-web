@@ -249,9 +249,9 @@ export const useThemeStore = defineStore('theme',{
         changeFooter() {
             document.documentElement.style.setProperty('--footer-display-height', this.$state.showFooter ? 'var(--footer-height)' : '0px')
         },
-        // 修改导航宽度时同时修改原始值
-        changeSiderWidth() {
-          this.$state.originSiderWith = this.$state.siderWith
+        // 修改导航宽度时同时修改原始值（取事件新值而非读绑定状态：change 可能先于 v-model 写回；仅用户拖动触发，编程式修改 siderWith 不经过此通道）
+        changeSiderWidth(value: number) {
+          this.$state.originSiderWith = value
         },
         // 切换主要颜色
         changeColorPrimary() {

@@ -33,6 +33,7 @@ import {useUserStore} from "@/stores/user.ts";
 import {message, type Rule} from "@/antd-adapter";
 import PasswordInput from "@/components/password-input/index.vue";
 import {updatePassword} from "@/api/system/profile/profile.ts";
+import {ResponseError} from "@/api/global/type.ts";
 
 const userStore = useUserStore()
 const submitLoading = ref<boolean>(false)
@@ -86,7 +87,13 @@ const handleFinish = async (data: passwordType) => {
     } else {
       message.error(resp.msg)
     }
-  }  finally {
+  } catch (e) {
+    if (e instanceof ResponseError) {
+      message.error(e.msg)
+    } else {
+      console.error(e)
+    }
+  } finally {
     submitLoading.value = false
   }
 }

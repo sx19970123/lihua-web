@@ -107,39 +107,30 @@ const {user_gender} = initDict('user_gender')
 const formRef = useTemplateRef<FormInstance>("formRef")
 
 // 初始化数据
-const init = () => {
-  const profileInfo = reactive<ProfileInfo>({
-    avatar: userStore.avatar,
-    nickname: userStore.userInfo.nickname,
-    gender: userStore.userInfo.gender,
-    email: userStore.userInfo.email,
-    phoneNumber: userStore.userInfo.phoneNumber
-  })
+const profileInfo = reactive<ProfileInfo>({
+  avatar: userStore.avatar,
+  nickname: userStore.userInfo.nickname,
+  gender: userStore.userInfo.gender,
+  email: userStore.userInfo.email,
+  phoneNumber: userStore.userInfo.phoneNumber
+})
 
-  const userRoles = reactive<Record<string,Rule[]> >({
-    nickname: [
-      { required: true , message: '用户昵称不能为空'},
-      { max: 20 , message: '用户昵称最大20字符'}
-    ],
-    gender: [
-      { required: true , message: '用户性别不能为空'}
-    ],
-    email: [
-      { required: false , message: '邮箱地址不能为空'},
-      { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: '请输入正确的邮箱'}
-    ],
-    phoneNumber: [
-      { required: false , message: '手机号码不能为空'},
-      { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码'}
-    ]
-  })
-  return {
-    profileInfo,
-    userRoles
-  }
-}
-
-const { profileInfo, userRoles }= init()
+// 表单校验规则（邮箱/手机选填：非 required 字段为空时 async-validator 跳过 pattern）
+const userRoles = reactive<Record<string,Rule[]> >({
+  nickname: [
+    { required: true , message: '用户昵称不能为空'},
+    { max: 20 , message: '用户昵称最大20字符'}
+  ],
+  gender: [
+    { required: true , message: '用户性别不能为空'}
+  ],
+  email: [
+    { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: '请输入正确的邮箱'}
+  ],
+  phoneNumber: [
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码'}
+  ]
+})
 
 /**
  * 保存用户信息，返回是否成功（inline-edit 组件据此收尾编辑态）
@@ -176,50 +167,39 @@ const handleClearValidate = () => {
 }
 
 // 初始化部门相关逻辑
-const initDept = () => {
-  // 默认部门id
-  const defaultDeptId = ref<string|undefined>(userStore.defaultDept.id)
-  // 部门列表
-  const deptList = flattenTree(userStore.deptTrees)
-  // 岗位列表
-  const postList = userStore.posts
-  // 选中部门，修改默认部门
-  const handleSelectDefaultDept = async ({item}:{item: SysDept}) => {
-    if (!item.id) {
-      return
-    }
-    try {
-      const resp = await setDefaultDept(item.id)
-      if (resp.code === 200) {
-        // 更新默认部门
-        userStore.updateDefaultDept(resp.data)
-        message.success(resp.msg)
-      } else {
-        message.error(resp.msg)
-      }
-    } catch (e) {
-      if (e instanceof ResponseError) {
-        message.error(e.msg)
-      } else {
-        console.error(e)
-      }
-    }
+// 默认部门id
+const defaultDeptId = ref<string|undefined>(userStore.defaultDept.id)
+// 部门列表
+const deptList = flattenTree(userStore.deptTrees)
+// 岗位列表
+const postList = userStore.posts
+// 选中部门，修改默认部门
+const handleSelectDefaultDept = async ({item}:{item: SysDept}) => {
+  if (!item.id) {
+    return
   }
-
-  // 取消选中时恢复默认部门的选中回显
-  const handleUnselectDefaultDept = async () => {
-    await nextTick(() => defaultDeptId.value = userStore.defaultDept.id)
-  }
-
-  return {
-    deptList,
-    defaultDeptId,
-    postList,
-    handleSelectDefaultDept,
-    handleUnselectDefaultDept
+  try {
+    const resp = await setDefaultDept(item.id)
+    if (resp.code === 200) {
+      // 更新默认部门
+      userStore.updateDefaultDept(resp.data)
+      message.success(resp.msg)
+    } else {
+      message.error(resp.msg)
+    }
+  } catch (e) {
+    if (e instanceof ResponseError) {
+      message.error(e.msg)
+    } else {
+      console.error(e)
+    }
   }
 }
-const {deptList, defaultDeptId, postList, handleSelectDefaultDept, handleUnselectDefaultDept} = initDept()
+
+// 取消选中时恢复默认部门的选中回显
+const handleUnselectDefaultDept = async () => {
+  await nextTick(() => defaultDeptId.value = userStore.defaultDept.id)
+}
 
 // 默认部门id变化时同步选中
 watch(() => userStore.defaultDept.id, (value) => {

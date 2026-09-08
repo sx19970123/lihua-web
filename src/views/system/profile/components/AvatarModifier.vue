@@ -71,7 +71,7 @@ import ImageCropper from "@/components/image-cropper/index.vue"
 import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
 import SysAvatar from "@/components/user-avatar/index.vue"
 import {useUserStore} from "@/stores/user";
-import {message, Modal} from "@/antd-adapter";
+import {message} from "@/antd-adapter";
 import settings from "@/settings";
 import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
 import {cloneDeep, debounce} from 'lodash-es'
@@ -93,110 +93,79 @@ let updatedData: AvatarType = {
   value :''
 };
 
-const init = () => {
-  // 控制modal开关
-  const open = ref<boolean>(false)
-  const modelValue = props.modelValue
-  // 默认头像类型
-  const avatarType = ref<string>(modelValue.type)
-  // 默认头像背景颜色
-  const avatarColor = ref<string>(modelValue.backgroundColor)
-  // 图标选择尺寸
-  const iconSize = ref<'small' | 'large' | 'default'>('large')
-  // 图片裁剪宽度
-  const imageCropperWight = ref<number>(0)
-  // 首次加载时的图片头像id
-  let lastImageId: string | undefined = undefined
+// 本组件创建的头像预览 blob URL：父组件经 v-model 共享持有，替换与还原时由此处统一释放
+let ownPreviewUrl: string | undefined = undefined
 
-  // 图片地址
-  const avatarUrl = ref<string>(modelValue.url)
-  // 图标
-  const avatarIcon = ref<string>(modelValue.type === 'icon' ? modelValue.value : '')
-  // 文本
-  const avatarText = ref<string>(modelValue.type === 'text' ? modelValue.value : '')
-
-  // 图片预览返回结果
-  const avatarImg = ref<CropperDataType>({
-    div: { height: "", width: "" },
-    h: 0,
-    html: "",
-    img: { height: "", transform: "", width: "" },
-    url: "",
-    w: 0
-  })
-
-  // 头像背景颜色定义
-  const avatarBackgroundColor = ref<Array<{name: string,color: string}>>(cloneDeep(settings.colorOptions))
-
-  // 颜色集合第一个添加为跟随系统颜色
-  avatarBackgroundColor.value.unshift({
-    name: '跟随系统',
-    color: 'conic-gradient(from 45deg, ' + settings.colorOptions.map(item => item.color).join(",") + ')'
-  })
-
-  // 处理窗口宽度 1050 / 680 / 492 划分图标选择器尺寸
-  const handleWindowWith = () => {
-    const width = window.innerWidth
-
-    if (width > 1050) {
-      iconSize.value = 'large'
-    } else if (width < 1050 && width > 680) {
-      iconSize.value = 'default'
-    } else {
-      iconSize.value = 'small'
-    }
-
-    // 视口宽度 - dialog 外边距 - dialog 内边距
-    if (width <= 1050) {
-      imageCropperWight.value = width - 48 - 32
-    } else {
-      imageCropperWight.value = 954
-    }
-  }
-
-  // 打开头像模态框
-  const openModal = () => {
-    open.value = true
-    initLastImageId()
-  }
-
-  // 初始化上一个图片头像的id
-  const initLastImageId = () => {
-    if (avatarType.value === 'image') {
-      lastImageId = cloneDeep(modelValue.value)
-    }
-  }
-
-  handleWindowWith()
-  return {
-    open,
-    avatarType,
-    avatarColor,
-    avatarImg,
-    avatarBackgroundColor,
-    avatarIcon,
-    avatarText,
-    avatarUrl,
-    iconSize,
-    imageCropperWight,
-    handleWindowWith,
-    openModal
+const releaseOwnPreviewUrl = () => {
+  if (ownPreviewUrl) {
+    URL.revokeObjectURL(ownPreviewUrl)
+    ownPreviewUrl = undefined
   }
 }
-const {
-  open,
-  avatarType,
-  avatarColor,
-  avatarImg,
-  avatarBackgroundColor,
-  avatarIcon,
-  avatarText,
-  avatarUrl,
-  iconSize,
-  imageCropperWight,
-  handleWindowWith,
-  openModal
-} = init()
+
+// 控制modal开关
+const open = ref<boolean>(false)
+// 默认头像类型
+const avatarType = ref<string>(props.modelValue.type)
+// 默认头像背景颜色
+const avatarColor = ref<string>(props.modelValue.backgroundColor)
+// 图标选择尺寸
+const iconSize = ref<'small' | 'large' | 'default'>('large')
+// 图片裁剪宽度
+const imageCropperWight = ref<number>(0)
+
+// 图片地址
+const avatarUrl = ref<string>(props.modelValue.url)
+// 图标
+const avatarIcon = ref<string>(props.modelValue.type === 'icon' ? props.modelValue.value : '')
+// 文本
+const avatarText = ref<string>(props.modelValue.type === 'text' ? props.modelValue.value : '')
+
+// 图片预览返回结果
+const avatarImg = ref<CropperDataType>({
+  div: { height: "", width: "" },
+  h: 0,
+  html: "",
+  img: { height: "", transform: "", width: "" },
+  url: "",
+  w: 0
+})
+
+// 头像背景颜色定义
+const avatarBackgroundColor = ref<Array<{name: string,color: string}>>(cloneDeep(settings.colorOptions))
+
+// 颜色集合第一个添加为跟随系统颜色
+avatarBackgroundColor.value.unshift({
+  name: '跟随系统',
+  color: 'conic-gradient(from 45deg, ' + settings.colorOptions.map(item => item.color).join(",") + ')'
+})
+
+// 处理窗口宽度 1050 / 680 / 492 划分图标选择器尺寸
+const handleWindowWith = () => {
+  const width = window.innerWidth
+
+  if (width > 1050) {
+    iconSize.value = 'large'
+  } else if (width < 1050 && width > 680) {
+    iconSize.value = 'default'
+  } else {
+    iconSize.value = 'small'
+  }
+
+  // 视口宽度 - dialog 外边距 - dialog 内边距
+  if (width <= 1050) {
+    imageCropperWight.value = width - 48 - 32
+  } else {
+    imageCropperWight.value = 954
+  }
+}
+
+// 打开头像模态框
+const openModal = () => {
+  open.value = true
+}
+
+handleWindowWith()
 
 // 头像选择ref
 const imageCropperRef = useTemplateRef<InstanceType<typeof ImageCropper>>("imageCropperRef")
@@ -215,7 +184,7 @@ const handleOk = async () => {
         if (!avatarUrl.value) {
           throw new Error('请上传头像');
         }
-        const blob = await cropperInstance.getBlob() as Blob;
+        const blob = await cropperInstance.getBlob();
 
         if (!blob) {
           throw new Error('获取 blob 数据失败');
@@ -229,8 +198,11 @@ const handleOk = async () => {
         if (resp.code !== 200) {
           throw new Error(resp.msg);
         }
+        // 释放上一次确认生成的预览 URL（父组件的持有值随本次 emits 同步替换）
+        releaseOwnPreviewUrl()
+        ownPreviewUrl = URL.createObjectURL(blob)
         updatedData = {
-          url: URL.createObjectURL(blob),
+          url: ownPreviewUrl,
           value: resp.data,
           type: avatarType.value,
           backgroundColor: avatarColor.value
@@ -282,24 +254,13 @@ const handleOk = async () => {
 };
 
 /**
- * 关闭modal提示并还原初始头像
+ * 关闭modal并还原初始头像（放弃未确认的更改）
  */
 const close = () => {
-  open.value = true;
-  showConfirm()
-};
-
-const showConfirm = () => {
-  Modal.confirm({
-    title: '提 示',
-    content: '关闭对话框后配置将不会应用，确认关闭？',
-    cancelText: '取 消',
-    okText: '关 闭',
-    onOk() {
-      emits('update:modelValue', userStore.avatar);
-      open.value = false;
-    }
-  });
+  emits('update:modelValue', userStore.avatar);
+  // 还原后父组件不再持有预览 URL，释放本组件创建的 blob URL
+  releaseOwnPreviewUrl()
+  open.value = false;
 };
 
 // 拖动窗口防抖
@@ -309,11 +270,9 @@ const debounceChangeWith = debounce(handleWindowWith, 300)
 onMounted(() => {
   window.addEventListener('resize', debounceChangeWith)
 })
-// 组件销毁后删除监听
+// 组件销毁后删除监听（页面级卸载，父组件随之销毁，释放预览 URL 安全）
 onUnmounted(() => {
-  if (updatedData.url) {
-    URL.revokeObjectURL(updatedData?.url)
-  }
+  releaseOwnPreviewUrl()
   window.removeEventListener('resize', debounceChangeWith)
 })
 

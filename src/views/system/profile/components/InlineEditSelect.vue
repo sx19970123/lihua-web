@@ -55,15 +55,15 @@ const bordered = ref<boolean>(false)
 // 聚焦（下拉展开）态
 const isGetFocus = ref<boolean>(false)
 
-// 选中即提交，提交结果由组件内收尾
-const handleChange = async () => {
-  emits('update:modelValue', value.value)
+// 选中即提交，提交结果由组件内收尾（change 可能先于 v-model 写回，取事件新值）
+const handleChange = async (value: string) => {
+  emits('update:modelValue', value)
   if (loading.value) {
     return
   }
   loading.value = true
   try {
-    await onSubmit(value.value)
+    await onSubmit(value)
   } catch (e) {
     console.error(e)
   }
