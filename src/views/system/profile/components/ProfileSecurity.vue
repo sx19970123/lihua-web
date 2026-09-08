@@ -10,7 +10,7 @@
         <password-input class="w-[270px]"
                         v-model="password.newPassword"
                         placeholder="请输入新密码"
-                        :progress-width="90"
+                        :progress-width="88"
                         :show-progress="!!password.newPassword && password.newPassword.length >= 6"
         />
       </a-form-item>

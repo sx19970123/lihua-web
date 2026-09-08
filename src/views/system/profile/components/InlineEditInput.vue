@@ -1,7 +1,7 @@
 <template>
   <a-input v-model:value="value"
            size="large"
-           :style="{'border-color': bordered || isGetFocus ? themeStore.getColorPrimary() : 'var(--lihua-alpha-0)'}"
+           :class="bordered || isGetFocus ? 'inline-edit-active' : 'inline-edit-idle'"
            :readonly="loading"
            ref="inputRef"
            @mouseover="bordered = true"
@@ -13,6 +13,7 @@
     <template #suffix>
       <!-- mousedown.prevent：阻止点击确认按钮时输入框失焦，失焦回调因此只承担「取消编辑回滚」语义 -->
       <a-button v-if="isGetFocus"
+                class="inline-edit-confirm"
                 size="small"
                 type="text"
                 :loading="loading"
@@ -30,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, useTemplateRef} from "vue";
+import {ref, useTemplateRef, watch} from "vue";
 import type {InputRef} from "antdv-next";
 import {useThemeStore} from "@/stores/theme.ts";
 
@@ -67,6 +68,10 @@ const loading = ref<boolean>(false)
 const bordered = ref<boolean>(false)
 // 聚焦编辑态
 const isGetFocus = ref<boolean>(false)
+
+// 编辑值实时同步给 v-model：form-item 监听 model 值变化自动触发 change 校验（实时红框/清除）；
+// 取消编辑时 blur 回滚会再同步回已落定值，提交成功时 blur 落定同值
+watch(value, (v) => emits('update:modelValue', v))
 
 const handleFocus = () => {
   isGetFocus.value = true
@@ -110,3 +115,22 @@ const handleSubmit = async () => {
   }
 }
 </script>
+
+<style scoped>
+/* 行内编辑边框：平时透明、悬停/聚焦主色（token 变量随主题切换）。
+   改用 class 而非内联：组件库 form 校验错误态的边框规则带 :not() 伪类、特异性 (0,3,0)，
+   可自然压过此处两类状态 (0,2,0)——错误红优先于悬停/聚焦主色，无需组件感知校验状态 */
+.inline-edit-idle {
+  border-color: var(--lihua-alpha-0);
+}
+
+.inline-edit-active {
+  border-color: var(--ant-color-primary);
+}
+
+/* form 校验错误态（根元素挂 ant-input-status-error）时隐藏确认按钮：
+   当前值非法不提供提交动作，值改为合法后错误态实时清除、按钮恢复 */
+.ant-input-status-error .inline-edit-confirm {
+  display: none;
+}
+</style>

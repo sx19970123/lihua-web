@@ -3,12 +3,7 @@
     <a-form :colon="false" :model="formData" :rules="rules" layout="vertical" @finish="handleSaveLockInfo">
       <a-form-item class="w-[270px]" label="自动锁屏" name="defaultPassword">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              一段时间未操作将自动锁屏
-            </template>
-            <QuestionCircleOutlined class="ml-ant-xxs"/>
-          </a-tooltip>
+          一段时间未操作将自动锁屏
         </template>
         <a-switch v-model:checked="formData.autoLock"></a-switch>
       </a-form-item>

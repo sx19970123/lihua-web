@@ -1,7 +1,7 @@
 <template>
   <a-form
       ref="formRef"
-      :hideRequiredMark="true"
+      :required-mark="false"
       :model="profileInfo"
       :rules="userRoles"
       :colon="false"
@@ -16,9 +16,8 @@
             <avatar-modifier v-model="profileInfo.avatar" @change="(value?: string) => handleSave({avatar: value})"/>
           </a-form-item>
           <a-form-item label="用户昵称" name="nickname">
-            <inline-edit-input required
-                                v-model="profileInfo.nickname"
-                                :on-submit="(value?: string) => handleSave({nickname : value})"
+            <inline-edit-input v-model="profileInfo.nickname"
+                                :on-submit="(value?: string) => handleNicknameSubmit(value)"
                                 @reset="handleClearValidate"
             />
           </a-form-item>
@@ -115,10 +114,12 @@ const profileInfo = reactive<ProfileInfo>({
   phoneNumber: userStore.userInfo.phoneNumber
 })
 
-// 表单校验规则（邮箱/手机选填：非 required 字段为空时 async-validator 跳过 pattern）
+// 表单校验规则（邮箱/手机选填：非 required 字段为空时 async-validator 跳过 pattern；
+// 必填星标由 form 的 required-mark=false 全局隐藏）
 const userRoles = reactive<Record<string,Rule[]> >({
   nickname: [
-    { required: true , message: '用户昵称不能为空'},
+    // whitespace：纯空格串也视为未填写
+    { required: true, whitespace: true, message: '用户昵称不能为空'},
     { max: 20 , message: '用户昵称最大20字符'}
   ],
   gender: [
@@ -131,6 +132,18 @@ const userRoles = reactive<Record<string,Rule[]> >({
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码'}
   ]
 })
+
+/**
+ * 昵称提交前兜底校验（编辑中值已实时同步进 model 并触发 change 校验）：
+ * 校验失败由 form-item 内联展示错误（红框 + message 文案）并保持编辑态
+ */
+const handleNicknameSubmit = async (value?: string) => {
+  const valid = await formRef.value?.validate(['nickname']).then(() => true).catch(() => false)
+  if (!valid) {
+    return false
+  }
+  return handleSave({nickname: value})
+}
 
 /**
  * 保存用户信息，返回是否成功（inline-edit 组件据此收尾编辑态）
