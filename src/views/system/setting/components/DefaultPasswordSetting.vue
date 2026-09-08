@@ -3,14 +3,9 @@
     <a-form layout="vertical" :model="settingForm" :rules="rules" @finish="handleFinish">
       <a-form-item class="w-[270px]" label="默认密码" name="defaultPassword">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              用户管理模块新增用户时的默认密码
-            </template>
-            <QuestionCircleOutlined class="question-icon"/>
-          </a-tooltip>
+          用户管理模块新增用户时的默认密码
         </template>
-        <password-input class="w-[270px]" v-model="settingForm.defaultPassword" placeholder="请输入默认密码" :progress-width="90"/>
+        <password-input class="w-[270px]" v-model="settingForm.defaultPassword" placeholder="请输入默认密码" :progress-width="88"/>
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit" :loading="submitLoading">提 交</a-button>
@@ -23,8 +18,7 @@
 import {useSettingStore} from "@/stores/setting.ts";
 import {getCurrentInstance, onMounted, ref} from "vue";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
-import type {Rule} from "ant-design-vue/es/form";
-import {message} from "@/antd-adapter";
+import {message, type Rule} from "@/antd-adapter";
 import type {DefaultPassword} from "@/api/system/setting/type/default-password.ts";
 import PasswordInput from "@/components/password-input/index.vue";
 import {save} from "@/api/system/setting/setting.ts";

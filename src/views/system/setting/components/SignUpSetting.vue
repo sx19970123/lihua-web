@@ -3,12 +3,7 @@
     <a-form layout="vertical" :model="settingForm">
       <a-form-item label="自助注册">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              是否允许新用户注册
-            </template>
-            <QuestionCircleOutlined class="question-icon"/>
-          </a-tooltip>
+          是否允许新用户注册
         </template>
         <a-switch v-model:checked="settingForm.enable" @change="handleChangeSwitch"></a-switch>
       </a-form-item>

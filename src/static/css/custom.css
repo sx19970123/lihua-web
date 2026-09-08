@@ -54,13 +54,6 @@ html body {
 }
 
 /**
-    问号提示距离标题的距离
- */
-.question-icon {
-    margin-left: var(--ant-margin-xxs) !important;
-}
-
-/**
     暗色模式半透明蒙版，降低亮度
  */
 [data-theme = 'dark'] {

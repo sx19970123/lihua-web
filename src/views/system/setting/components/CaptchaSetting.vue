@@ -3,12 +3,7 @@
     <a-form layout="vertical">
       <a-form-item label="验证码">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              登录或注册等场景下是否需要验证码
-            </template>
-            <QuestionCircleOutlined class="question-icon"/>
-          </a-tooltip>
+          登录或注册等场景下是否需要验证码
         </template>
         <a-switch v-model:checked="settingForm.enable" @change="handleChangeSwitch"></a-switch>
       </a-form-item>

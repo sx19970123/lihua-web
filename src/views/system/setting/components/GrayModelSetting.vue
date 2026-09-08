@@ -3,12 +3,7 @@
     <a-form layout="vertical" :model="settingForm">
       <a-form-item label="灰色模式">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              所有用户页面设置为灰白配色
-            </template>
-            <QuestionCircleOutlined class="question-icon"/>
-          </a-tooltip>
+          所有用户页面设置为灰白配色
         </template>
         <a-switch v-model:checked="settingForm.enable" @change="handleChangeSwitch"></a-switch>
       </a-form-item>

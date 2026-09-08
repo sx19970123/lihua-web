@@ -3,7 +3,6 @@
     <a-col :xxl="{span: 4}" :xl="{span: 5}" :lg="{span: 6}" :md="{span: 6}" :sm="{span: 6}" :xs="{span: 6}">
       <a-card class="h-full">
         <a-menu
-            class="menu"
             style="border: 0;width: 100%"
             v-model:selected-keys="selectKeys"
             :inlineCollapsed="themeStore.isSmallWindow"

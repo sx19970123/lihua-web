@@ -7,12 +7,7 @@
     >
       <a-form-item label="限制访问IP">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              配置禁止访问ip地址，支持 ? * 通配符
-            </template>
-            <QuestionCircleOutlined class="question-icon"/>
-          </a-tooltip>
+          配置禁止访问ip地址，支持 ? * 通配符
         </template>
         <a-switch v-model:checked="settingForm.enable" @change="handleChangeSwitch"></a-switch>
       </a-form-item>

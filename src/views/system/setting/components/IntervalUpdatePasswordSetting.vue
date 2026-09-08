@@ -3,12 +3,7 @@
     <a-form layout="vertical" :model="settingForm" @finish="handleFinish" :rules="rules">
       <a-form-item label="定期修改密码">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              设置系统用户多长时间需要修改密码
-            </template>
-            <QuestionCircleOutlined class="question-icon"/>
-          </a-tooltip>
+          设置系统用户多长时间需要修改密码
         </template>
         <a-switch v-model:checked="settingForm.enable" @change="handleChangeSwitch"></a-switch>
       </a-form-item>
@@ -21,12 +16,7 @@
                             placeholder="请输入"
                             v-model:value="settingForm.interval">
               <template #addonAfter>
-                <a-select style="width: 60px" v-model:value="settingForm.unit">
-                  <a-select-option value="day">天</a-select-option>
-                  <a-select-option value="week">周</a-select-option>
-                  <a-select-option value="month">月</a-select-option>
-                  <a-select-option value="year">年</a-select-option>
-                </a-select>
+                <a-select style="width: 60px" v-model:value="settingForm.unit" :options="unitOptions"/>
               </template>
             </a-input-number>
           </a-form-item>
@@ -44,8 +34,7 @@ import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import {useSettingStore} from "@/stores/setting.ts";
 import {getCurrentInstance, onMounted, ref} from "vue";
 import type {IntervalUpdatePassword} from "@/api/system/setting/type/interval-update-password.ts";
-import type {Rule} from "ant-design-vue/es/form";
-import {message} from "@/antd-adapter";
+import {message, type Rule} from "@/antd-adapter";
 import {useThemeStore} from "@/stores/theme.ts";
 import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";
@@ -60,6 +49,14 @@ const init = async () => {
     settingForm.value = settingData
   }
 }
+
+// 周期单位选项
+const unitOptions = [
+  {value: 'day', label: '天'},
+  {value: 'week', label: '周'},
+  {value: 'month', label: '月'},
+  {value: 'year', label: '年'}
+]
 
 // 定期修改密码表单
 const settingForm = ref<IntervalUpdatePassword>({

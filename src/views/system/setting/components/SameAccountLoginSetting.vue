@@ -3,12 +3,7 @@
     <a-form layout="vertical" :model="settingForm" @finish="handleFinish" :rules="rules">
       <a-form-item label="同账号登录限制">
         <template #tooltip>
-          <a-tooltip>
-            <template #title>
-              同一账号最多允许 X 人同时登录，超出后先登录的用户将被强制下线
-            </template>
-            <QuestionCircleOutlined class="question-icon"/>
-          </a-tooltip>
+          同一账号最多允许 X 人同时登录，超出后先登录的用户将被强制下线
         </template>
         <a-switch v-model:checked="settingForm.enable" @change="handleChangeSwitch"></a-switch>
       </a-form-item>
@@ -36,8 +31,7 @@ import {getCurrentInstance, onMounted, ref} from "vue";
 import type {SameAccountLoginSetting} from "@/api/system/setting/type/same-account-login-setting.ts";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import {useThemeStore} from "@/stores/theme.ts";
-import {message} from "@/antd-adapter";
-import type {Rule} from "ant-design-vue/es/form";
+import {message, type Rule} from "@/antd-adapter";
 import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";
 
