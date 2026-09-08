@@ -13,7 +13,7 @@
               <template #icon><KeyOutlined /></template>
               <span>系统默认密码</span>
             </a-menu-item>
-            <a-menu-item key="IntervalUpdatePassword">
+            <a-menu-item key="IntervalUpdatePasswordSetting">
               <template #icon><FieldTimeOutlined /></template>
               <span>定期修改密码</span>
             </a-menu-item>
@@ -23,7 +23,7 @@
             </a-menu-item>
           </a-menu-item-group>
           <a-menu-item-group title="登录">
-            <a-menu-item key="SignInSetting">
+            <a-menu-item key="SignUpSetting">
               <template #icon><IdcardOutlined /></template>
               <span>自助注册</span>
             </a-menu-item>
@@ -62,10 +62,18 @@ import UpdatePasswordSetting from "@/views/system/setting/components/IntervalUpd
 import CaptchaSetting from "@/views/system/setting/components/CaptchaSetting.vue";
 import RestrictAccessIpSetting from "@/views/system/setting/components/RestrictAccessIpSetting.vue";
 import SameAccountLoginSetting from "@/views/system/setting/components/SameAccountLoginSetting.vue";
-import {markRaw, ref} from "vue";
+import {markRaw, ref, watch} from "vue";
+import {useRoute, useRouter} from "vue-router";
 
 const themeStore = useThemeStore()
+const route = useRoute()
+const router = useRouter()
 
+const settingTabs = ['DefaultPasswordSetting', 'IntervalUpdatePasswordSetting', 'SameAccountLoginSetting', 'SignUpSetting', 'CaptchaSetting', 'RestrictAccessIpSetting', 'GrayModelSetting'] as const
+type SettingTabKey = typeof settingTabs[number]
+const defaultSettingTab: SettingTabKey = 'DefaultPasswordSetting'
+
+// 注册子组件
 const allComponents = ref([
   {
     name: 'DefaultPasswordSetting',
@@ -76,11 +84,11 @@ const allComponents = ref([
     com: markRaw(GrayModelSetting)
   },
   {
-    name: 'SignInSetting',
+    name: 'SignUpSetting',
     com: markRaw(SignUpSetting)
   },
   {
-    name: 'IntervalUpdatePassword',
+    name: 'IntervalUpdatePasswordSetting',
     com: markRaw(UpdatePasswordSetting)
   },
   {
@@ -100,9 +108,33 @@ const allComponents = ref([
 const selectKeys = ref(['DefaultPasswordSetting'])
 // 选中组件
 const activeComponent = ref(markRaw(DefaultPasswordSetting))
-// 处理选择设置
-const handleChangeSetting = ({key}: {key: string}) => {
+
+const isSettingTabKey = (value: unknown): value is SettingTabKey => {
+  return typeof value === 'string' && settingTabs.includes(value as SettingTabKey)
+}
+
+const changeSettingMenu = (key: SettingTabKey) => {
   const target = allComponents.value.filter(item => item.name === key)[0]
+  if (!target) return
+  selectKeys.value = [key]
   activeComponent.value = target.com
+}
+
+watch(() => route.query.tab, () => {
+  const tab = route.query.tab
+  // 进入页面未携带（或非法）tab 参数时，补写默认 tab 到地址栏；replace 不产生历史记录，
+  // 补写后 watch 以合法值重触发，不会循环
+  if (!isSettingTabKey(tab)) {
+    router.replace({query: {...route.query, tab: defaultSettingTab}})
+    return
+  }
+  changeSettingMenu(tab)
+}, {immediate: true})
+
+// 点击菜单切换组件，tab 参数入路由（刷新/直达可还原）
+const handleChangeSetting = ({key}: {key: string}) => {
+  const tab = isSettingTabKey(key) ? key : defaultSettingTab
+  changeSettingMenu(tab)
+  router.replace({path: '/setting', query: {tab}})
 }
 </script>
