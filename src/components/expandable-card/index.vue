@@ -16,10 +16,11 @@
            :style="overviewStyle">
         <slot name="overview"></slot>
       </div>
-      <!-- detail 层：过渡期挂载，按最终尺寸渲染（显式宽高），被容器裁切，与 overview 相交渐变 -->
+      <!-- detail 层：过渡期挂载，按最终尺寸渲染（显式宽高），被容器裁切，与 overview 相交渐变。
+           transform-gpu 与 overview 同款常驻合成层提升（落定帧不再因动画效果移除而重栅格） -->
       <div v-if="showStatus !== 'ready'"
            ref="detailRef"
-           class="absolute top-0 left-0 transition-opacity"
+           class="absolute top-0 left-0 transition-opacity transform-gpu"
            :style="detailStyle">
         <slot name="detail"></slot>
       </div>
@@ -33,8 +34,10 @@
       </div>
     </div>
 
-    <!-- 占位元素，复刻slot:overview，会随着页面视口变化而变化，返回动画参数从该组件中获取 -->
-    <div v-if="showStatus !== 'ready'" class="opacity-0" ref="placeholderRef">
+    <!-- 占位元素，复刻slot:overview，会随着页面视口变化而变化，返回动画参数从该组件中获取。
+         h-full 与 ready 态容器的 height:100% 同基准：根被外部拉伸（消费方挂 h-full）时占位跟随拉伸，
+         关闭飞行落点高度恒等于复位后的静止高度——否则落定帧与回流帧之间会跳变 -->
+    <div v-if="showStatus !== 'ready'" class="opacity-0 h-full" ref="placeholderRef">
       <slot name="overview"></slot>
     </div>
 
@@ -68,7 +71,7 @@ import {hiddenOverflowY} from "@/utils/scrollbar.ts";
 const TRANSITION = {
   // 非弹簧动画的默认缓动
   easeOut: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-  // 主动画弹簧参数（iPad 小组件展开手感：果断飞出、长尾滑行、无回弹）
+  // 主动画弹簧参数（iPad 小组件展开手感：果断飞出、无回弹）
   // 当前为临界阻尼（damping = 2√(stiffness·mass)）→ 无过冲的最快收敛曲线
   // 飞出感不够 → 升 stiffness（damping 按 2√(stiffness·mass) 同步调，duration 随收敛点缩短）
   // 想要回弹 → damping 降到 2√(stiffness·mass) 以下
@@ -134,7 +137,7 @@ const cancelActiveAnimations = () => {
 type AnimateOptions = {
   duration?: number
   ease?: string
-  // 使用弹簧采样关键帧（急起步长尾滑行），时长/曲线取 TRANSITION.spring，忽略 duration/ease
+  // 使用弹簧采样关键帧，时长/曲线取 TRANSITION.spring，忽略 duration/ease
   spring?: boolean
   onStart?: () => void
   onComplete?: () => void
@@ -142,6 +145,10 @@ type AnimateOptions = {
 
 // 阻尼弹簧进度序列（半隐式欧拉数值解，0→1，末项精确 1）——
 // 容器布局帧与内容 zoom 帧共用同一序列 + 同 duration/linear，实现逐帧自同步
+// 尾段修理（唯一改动，曲线其余部分逐位保留原解）：数值阻尼在该步长下偏大，末段 ~85ms 以
+// 亚感知速度（<2px/帧）爬行完最后 ~6px、末帧强制收敛再补一小跳（收尾钝感来源）——
+// 自剩余行程进入爬行区（TAIL.from）的采样点起，改用三次 Hermite 平滑刹停：
+// 位置/速度与原曲线连续衔接、落定速度恰为 0，其后采样恒 1（纯静止保持，无爬行、无跳变）
 const springProgress = (): number[] => {
   const {duration, stiffness, damping, mass, frames} = TRANSITION.spring
   const step = duration / frames / 1000
@@ -155,6 +162,25 @@ const springProgress = (): number[] => {
     const force = (-stiffness * (progress - 1) - damping * velocity) / mass
     velocity += force * step
     progress += velocity * step
+  }
+  // ===== 尾段修理 =====
+  const TAIL = {from: 0.985, brake: 7}
+  const splice = result.findIndex(p => p >= TAIL.from)
+  if (splice >= 1 && splice + TAIL.brake < frames) {
+    // 衔接点位置与速度（速度取前向差分，与数值曲线同斜率，衔接零折角）
+    const p0 = result[splice]
+    const v0 = (result[splice] - result[splice - 1]) / step
+    const span = TAIL.brake * step
+    for (let j = 1; j <= TAIL.brake; j++) {
+      const u = j / TAIL.brake
+      result[splice + j] = p0 * (2 * u ** 3 - 3 * u ** 2 + 1)
+          + (3 * u ** 2 - 2 * u ** 3)
+          + v0 * span * (u ** 3 - 2 * u ** 2 + u)
+    }
+    // 刹车落定后的采样恒 1（静止保持到动画结束）
+    for (let j = splice + TAIL.brake + 1; j <= frames; j++) {
+      result[j] = 1
+    }
   }
   return result
 }
