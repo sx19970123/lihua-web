@@ -1,18 +1,10 @@
 <template>
   <div>
     <!-- 展示 overview 和 detail 的容器；表面（圆角/阴影/边框/底色）由组件常驻提供，overflow-hidden 裁切内容 -->
-    <!-- 整卡可点：role=button + 键盘展开（Enter/Space）；展开态退出 tab 序（此时容器是承载 detail 的覆盖层，不再是按钮）；
-         非浮起卡（elevated 判定失败，即不可展开的静态卡）无按钮语义、不进 tab 序 -->
     <div class="z-1001 overflow-hidden"
          ref="containerRef"
-         :role="isElevated ? 'button' : undefined"
-         :tabindex="isElevated && showStatus === 'ready' ? 0 : -1"
-         :aria-expanded="isElevated ? showStatus !== 'ready' : undefined"
          :style="style"
          @click="handleClickCard"
-         @keydown="handleKeydownCard"
-         @focus="handleFocusCard"
-         @blur="handleBlurCard"
          @mouseenter="handleMouseEnterCard"
          @mouseleave="handleMouseLeaveCard"
     >
@@ -771,37 +763,6 @@ const handleMouseLeaveCard = () => {
   style.value.transitionDuration = '240ms'
   style.value.transform = ''
   style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
-}
-
-// 键盘展开：div 加 role=button 浏览器不会自动合成 click，Enter/Space 手动触发
-// （Space 阻止默认滚动）；展开后焦点仍留容器上，Esc（window 级 keydownClose）关闭后可再次触发
-const handleKeydownCard = (event: KeyboardEvent) => {
-  if (event.key !== 'Enter' && event.key !== ' ') {
-    return
-  }
-  event.preventDefault()
-  handleClickCard()
-}
-
-// 键盘焦点环：表面边框是内联 outline，优先级高于 UA 样式表的 :focus 默认描边，
-// 焦点环会被边框吞掉——:focus-visible 命中时把 outline 让位给焦点环并外移 3px 画在卡外一圈
-// （与贴边边框拉开区分，不似边框加粗），原 1px 边框由 inset box-shadow 顶替（跟随圆角），卡面观感不变；
-// 失焦从 surface 恢复（无边框卡恢复为无描边；bordered=false 不影响键盘可见性）；
-// 只对键盘聚焦生效（鼠标点击获得的焦点不画环），展开/关闭时 style 整体替换自动回到边框态
-const handleFocusCard = (event: FocusEvent) => {
-  if (!(event.target instanceof HTMLElement) || !event.target.matches(':focus-visible')) {
-    return
-  }
-  style.value.outline = '2px solid var(--ant-color-primary)'
-  style.value.outlineOffset = '3px'
-  if (props.bordered) {
-    style.value.boxShadow = 'var(--ant-box-shadow-tertiary), inset 0 0 0 1px var(--ant-color-border-secondary)'
-  }
-}
-const handleBlurCard = () => {
-  style.value.outline = surface.value.outline
-  style.value.outlineOffset = surface.value.outlineOffset
-  style.value.boxShadow = surface.value.boxShadow
 }
 
 // 依据当前视口（实时读取，无需缓存）与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）

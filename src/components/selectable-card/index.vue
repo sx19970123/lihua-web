@@ -1,14 +1,10 @@
 <template>
   <a-spin :spinning="loading">
-    <a-flex :gap="gap" :wrap="vertical ? 'nowrap' : 'wrap'" :vertical="vertical" class="scrollbar selectable-container" ref="selectableRef" :style="{'max-height': vertical ? maxHeight + 'px' : 'none', ...cardStyle}">
-      <template v-if="dataSource && dataSource.length > 0">
+    <a-flex :gap="gap" :wrap="vertical ? 'nowrap' : 'wrap'" :vertical="vertical" class="scrollbar" ref="selectableRef" :style="{'max-height': vertical ? maxHeight + 'px' : 'none', ...cardStyle}">
+        <template v-if="dataSource && dataSource.length > 0">
         <div class="menu-card-item" :style="itemStyle" v-for="(item,index) in dataSource" :key="item[itemKey]">
           <div class="selectable-card-item rounded-ant-lg p-ant-base border border-solid border-ant-border mr-[3px] hover:cursor-pointer hover:border-[var(--colorPrimary)]"
-             role="button"
-             tabindex="0"
-             :aria-pressed="activeCardValueList.includes(item[itemKey])"
              @click.stop="handleClickCard(item)"
-             @keydown="handleKeydownCard($event, item)"
              :style="activeCardValueList.includes(item[itemKey]) ? bodyStyle : undefined">
             <!--      具名插槽 content-->
             <!--      返回参数 dataSource：传入的option-->
@@ -138,13 +134,6 @@ const clearActiveCardValueList = () => {
   activeCardValueList.length = 0
 }
 
-// 键盘触发选中（Enter/Space）：div 上的 role=button 浏览器不会自动合成 click，须手动触发；Space 需阻止页面滚动
-const handleKeydownCard = (event: KeyboardEvent, item: any): void => {
-  if (event.key !== 'Enter' && event.key !== ' ') return
-  event.preventDefault()
-  handleClickCard(item)
-}
-
 // 处理双向绑定回显
 const handleVmodel = () => {
   // 绑定值不存在时清空已选项（0/false/'' 为合法选中值，不做清空）
@@ -271,20 +260,3 @@ watch(() => dataSource, () => {
 
 }, {deep: true})
 </script>
-
-<style scoped>
-/* 容器四周留 5px（3px 间隙 + 2px 环宽）收纳卡外焦点环：.scrollbar 的 overflow:auto 会裁掉
-   伸出容器盒的 outline，环必须收进来；负 margin 抵消 padding 的布局偏移。
-   走 scoped 而非工具类：ant-flex 根级样式显式置 margin/padding 为 0，单类工具类压不过 */
-.selectable-container {
-  padding: 5px;
-  margin: -5px;
-}
-
-/* 键盘聚焦环：仅 :focus-visible 命中（Tab 聚焦），鼠标点击不画环；
-   画在卡片外一圈（3px 间隙），与贴边的边框及选中态主色描边拉开视觉区分 */
-.selectable-card-item:focus-visible {
-  outline: 2px solid var(--ant-color-primary);
-  outline-offset: 3px;
-}
-</style>
