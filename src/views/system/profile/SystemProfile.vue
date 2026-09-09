@@ -21,6 +21,10 @@
               <template #icon><SkinOutlined /></template>
               <span>样式布局</span>
             </a-menu-item>
+            <a-menu-item key="CommonPages">
+              <template #icon><AppstoreOutlined /></template>
+              <span>常用页面</span>
+            </a-menu-item>
           </a-menu>
         </a-card>
       </a-col>
@@ -38,6 +42,7 @@ import Basic from './components/ProfileBasicSetting.vue'
 import Individuation from './components/ProfileIndividuation.vue'
 import ProfileSecurity from './components/ProfileSecurity.vue'
 import ProfileLockScreen from './components/ProfileLockScreen.vue'
+import ProfileCommonPages from './components/ProfileCommonPages.vue'
 import {markRaw, ref, watch} from "vue";
 import {useThemeStore} from "@/stores/theme"
 import {useRoute, useRouter} from "vue-router";
@@ -45,7 +50,7 @@ import {useRoute, useRouter} from "vue-router";
 const themeStore = useThemeStore()
 const route = useRoute()
 const router = useRouter()
-const profileTabs = ['Basic', 'Security', 'LockScreen', 'Individuation'] as const
+const profileTabs = ['Basic', 'Security', 'LockScreen', 'Individuation', 'CommonPages'] as const
 type ProfileTabKey = typeof profileTabs[number]
 const defaultProfileTab: ProfileTabKey = 'Basic'
 
@@ -66,6 +71,10 @@ const allComponents = ref([
   {
     name: 'LockScreen',
     com: markRaw(ProfileLockScreen)
+  },
+  {
+    name: 'CommonPages',
+    com: markRaw(ProfileCommonPages)
   }
 ])
 // 默认选中组件
