@@ -7,7 +7,7 @@
       </a-flex>
       <div class="scrollbar common-page-max-height">
         <selectable-card :data-source="starList"
-                     item-key="menuId"
+                     item-key="routerPathKey"
                      :item-style="{width: '100%'}"
                      :gap="8"
                      empty-description="暂无收藏的页面，可在页签右键菜单收藏"
@@ -38,7 +38,7 @@
       </a-flex>
       <div class="scrollbar common-page-max-height">
         <selectable-card :data-source="affixList"
-                     item-key="menuId"
+                     item-key="routerPathKey"
                      :item-style="{width: '100%'}"
                      :gap="8"
                      empty-description="暂无固定的页面，可在页签右键菜单固定"
@@ -194,6 +194,12 @@ initRecent()
   min-width: 300px;
 }
 
+/* 列表满高：内容区可用高度（--content-height，variable.css 组合——头部块实测 + 页脚自适应）
+   减本页家具（卡体 padding 24×2 + 卡头标题行约 40 + 滚动条余量） */
+.common-page-max-height {
+  max-height: calc(var(--content-height) - 96px);
+}
+
 /* 行尾时间与标记图标的收缩留白 */
 .common-page-time {
   color: var(--ant-color-text-tertiary);
@@ -203,10 +209,5 @@ initRecent()
 
 .common-page-mark-icon {
   color: var(--colorPrimary);
-}
-
-/* 列表高度：视口扣除头部/多任务栏与页面纵向留白（卡头标题、页面内边距） */
-.common-page-max-height {
-  max-height: calc(100vh - (var(--layout-display-height) + var(--tab-display-height) + 240px));
 }
 </style>
