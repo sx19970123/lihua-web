@@ -119,13 +119,15 @@ const affixList = computed(() => viewTabsStore.totalViewTabs.filter(tab => tab.a
 // 变更进行中的行（兼防连点）；初值空串——静态路由 tab 无 menuId，undefined 会与之恒等误触发 loading
 const pendingKey = ref<string>('')
 
-// 取消收藏/固定：另一侧保持现值提交，与页签右键操作同语义
+// 取消收藏/固定：目标侧置 false、另一侧保持现值提交，与页签右键操作同语义
 const handleCancel = async (tab: StarViewType, field: 'star' | 'affix') => {
   if (!tab.menuId) return
 
   pendingKey.value = tab.menuId
   try {
-    const resp = await viewTab(tab.menuId, field === 'affix', field === 'star')
+    const affix = field === 'affix' ? false : !!tab.affix
+    const star = field === 'star' ? false : !!tab.star
+    const resp = await viewTab(tab.menuId, affix, star)
     if (resp.code === 200) {
       if (field === 'affix') {
         viewTabsStore.unAffix(resp.data)

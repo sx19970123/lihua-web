@@ -193,6 +193,16 @@ export const useViewTabsStore = defineStore('viewTabs',{
             this.$state.viewTabs = this.$state.viewTabs.filter(viewTab => !keys.includes(viewTab.routerPathKey))
             this.persistViewTabs()
         },
+        // 同步 totalViewTabs 中的对应项（存在则替换、不存在则追加）；
+        // 固定/取消固定只重排 viewTabs，total 侧状态须同步——常用页面/收藏列表消费 total
+        syncTotalViewTab(tab: StarViewType) {
+            const totalIndex = this.$state.totalViewTabs.findIndex(t => t.routerPathKey === tab.routerPathKey)
+            if (totalIndex !== -1) {
+                this.$state.totalViewTabs.splice(totalIndex, 1, tab)
+            } else {
+                this.$state.totalViewTabs.push(tab)
+            }
+        },
         // 传入tab元素，与集合中的元素进行替换
         replaceByKey(tab: StarViewType) {
             // 替换viewTabs（未打开的标签不在 viewTabs 中，无需替换）
@@ -200,13 +210,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
             if (index !== -1) {
                 this.$state.viewTabs.splice(index,1, tab)
             }
-            // 替换totalViewTabs（不存在时追加，避免 splice(-1) 误伤末位元素）
-            const totalIndex = this.$state.totalViewTabs.findIndex(t => t.routerPathKey === tab.routerPathKey)
-            if (totalIndex !== -1) {
-                this.$state.totalViewTabs.splice(totalIndex,1, tab)
-            } else {
-                this.$state.totalViewTabs.push(tab)
-            }
+            this.syncTotalViewTab(tab)
         },
         // 添加固定，固定到前排
         affix(tab: StarViewType) {
@@ -217,6 +221,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 viewTabs.splice(index,1)
             }
             this.$state.viewTabs.splice(targetIndex,0,tab)
+            this.syncTotalViewTab(tab)
             this.persistViewTabs()
         },
         // 取消固定，移动到最后
@@ -227,6 +232,7 @@ export const useViewTabsStore = defineStore('viewTabs',{
                 viewTabs.splice(index,1)
             }
             viewTabs.splice(viewTabs.length,0,tab)
+            this.syncTotalViewTab(tab)
             this.persistViewTabs()
         },
         // 移动元素
