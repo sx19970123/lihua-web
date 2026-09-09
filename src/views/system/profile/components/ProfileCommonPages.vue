@@ -50,13 +50,14 @@
                 <component :is="item.icon" v-if="item.icon"/>
                 <a-typography-text ellipsis>{{item.label}}</a-typography-text>
               </a-flex>
-              <a-tooltip title="取消固定">
+              <a-tooltip v-if="!item.static" title="取消固定">
                 <a-button type="text" size="small" :loading="pendingKey === item.menuId" @click.stop="handleCancel(item, 'affix')">
                   <template #icon>
                     <PushpinOutlined class="common-page-mark-icon"/>
                   </template>
                 </a-button>
               </a-tooltip>
+              <!-- 静态路由的固定来自路由定义（无 menuId，不落库），不可取消 -->
             </a-flex>
           </template>
         </selectable-card>
@@ -115,8 +116,8 @@ const router = useRouter()
 const starList = computed(() => viewTabsStore.totalViewTabs.filter(tab => tab.star))
 const affixList = computed(() => viewTabsStore.totalViewTabs.filter(tab => tab.affix))
 
-// 变更进行中的行（兼防连点）
-const pendingKey = ref<string>()
+// 变更进行中的行（兼防连点）；初值空串——静态路由 tab 无 menuId，undefined 会与之恒等误触发 loading
+const pendingKey = ref<string>('')
 
 // 取消收藏/固定：另一侧保持现值提交，与页签右键操作同语义
 const handleCancel = async (tab: StarViewType, field: 'star' | 'affix') => {
@@ -136,7 +137,7 @@ const handleCancel = async (tab: StarViewType, field: 'star' | 'affix') => {
       message.error(resp.msg)
     }
   } finally {
-    pendingKey.value = undefined
+    pendingKey.value = ''
   }
 }
 
