@@ -68,12 +68,6 @@
         }
     }
 
-    /* 吸底项（如"清空最近使用"）：遮底色由 TabRightMenu.vue 的 inherit 跟随内层菜单玻璃底（半透明），
-       这里只补自带模糊防止滚动列表从底部透出；同样让出 hover，保住 danger 项原生的"实心红底 + 白字"反馈 */
-    .enable-glass.ant-dropdown-menu-submenu-popup .ant-dropdown-menu .recent-clear-item:not(:hover) {
-        backdrop-filter: var(--lihua-backdrop-filter-sm);
-    }
-
     /* 组件库下拉自带的实心箭头底色，毛玻璃下透出会是一块色斑 */
     .enable-glass .ant-dropdown-arrow::before {
         background: transparent !important;
