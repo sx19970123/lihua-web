@@ -10,6 +10,7 @@
                    @route-skip="(path: string, query?: string) => emits('routeSkip', path, query)"
                    @cancel-keep-alive="(keys: Array<string>) => emits('cancelKeepAlive', keys)"
                    @close-view-tab="(key: string) => emits('closeViewTab', key)"
+                   @close-tabs="(keys: Array<string>, fallbackKey?: string) => emits('closeTabs', keys, fallbackKey)"
     />
   </span>
 </template>
@@ -44,7 +45,8 @@ const props = defineProps<{
 const emits = defineEmits<{
   routeSkip: [path: string, query?: string],
   cancelKeepAlive: [keys: Array<string>],
-  closeViewTab: [key: string]
+  closeViewTab: [key: string],
+  closeTabs: [keys: Array<string>, fallbackKey?: string]
 }>()
 
 /**

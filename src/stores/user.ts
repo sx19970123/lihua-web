@@ -9,7 +9,6 @@ import type {AuthInfoType, UserInfoType} from "@/api/system/profile/type/auth-in
 import type {SysRole} from "@/api/system/role/type/sys-role.ts";
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 import type {SysPost} from "@/api/system/post/type/sys-post.ts";
-import type {StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";
 import {closeConnect} from "@/utils/web-socket.ts";
 import {useDictStore} from "@/stores/dict.ts";
 import {serializeThemeState, useThemeStore} from "@/stores/theme.ts";
@@ -35,9 +34,6 @@ export const useUserStore = defineStore('user', {
         const username: string = ''
         const avatar: AvatarType = {}
 
-        // 用户收藏固定的菜单数据
-        const viewTabs: StarViewType[] = []
-
         // 角色权限相关数据
         const roles: SysRole[] = []
         const roleCodes: string[] = []
@@ -56,7 +52,6 @@ export const useUserStore = defineStore('user', {
             nickname,
             username,
             avatar,
-            viewTabs,
             roles,
             roleCodes,
             permissions,
@@ -83,9 +78,6 @@ export const useUserStore = defineStore('user', {
                         state.nickname = data.userInfo.nickname ? data.userInfo.nickname : ''
                         state.username = data.userInfo.username ? data.userInfo.username : ''
                         state.avatar = data.userInfo.avatar ? JSON.parse(data.userInfo.avatar) : this.getDefaultAvatar()
-
-                        // 收藏固定菜单赋值
-                        state.viewTabs = data.viewTabs
 
                         // 角色权限相关赋值
                         state.roles = data.roles
@@ -159,9 +151,6 @@ export const useUserStore = defineStore('user', {
             userState.nickname = ''
             userState.username = ''
             userState.avatar = this.getDefaultAvatar()
-
-            // 收藏固定菜单赋值
-            userState.viewTabs = []
 
             // 角色权限相关赋值
             userState.roles = []

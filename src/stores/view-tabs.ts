@@ -188,54 +188,10 @@ export const useViewTabsStore = defineStore('viewTabs',{
             this.$state.viewTabs = this.$state.viewTabs.filter(viewTab => viewTab.routerPathKey !== key)
             this.persistViewTabs()
         },
-        // 关闭左边
-        closeLeft(key: string): Array<string> {
-            const index:number = this.getIndex(key)
-            const viewTabs:StarViewType[] = this.$state.viewTabs
-            const removeArray:string[] = []
-            for (let i = 0; i < index; i++) {
-                if (!viewTabs[i].affix) {
-                    removeArray.push(viewTabs[i].routerPathKey)
-                }
-            }
-            this.$state.viewTabs = viewTabs.filter((tab:StarViewType) => !removeArray.includes(tab.routerPathKey))
+        // 批量关闭tab页（右键菜单关闭左边/右边/其他/全部的提交口）
+        closeViewTabs(keys: Array<string>) {
+            this.$state.viewTabs = this.$state.viewTabs.filter(viewTab => !keys.includes(viewTab.routerPathKey))
             this.persistViewTabs()
-            return removeArray
-        },
-        // 关闭右边
-        closeRight(key: string): Array<string> {
-            const index:number = this.getIndex(key)
-            const viewTabs:StarViewType[] = this.$state.viewTabs
-            const removeArray:string[] = []
-            for (let i = index + 1; i < viewTabs.length; i++) {
-                if (!viewTabs[i].affix) {
-                    removeArray.push(viewTabs[i].routerPathKey)
-                }
-            }
-            this.$state.viewTabs = viewTabs.filter((tab:StarViewType) => !removeArray.includes(tab.routerPathKey))
-            this.persistViewTabs()
-            return removeArray
-        },
-        // 关闭其他
-        closeOther(key: string): Array<string> {
-            const index:number = this.getIndex(key)
-            const viewTabs:StarViewType[] = this.$state.viewTabs
-            const removeArray:string[] = []
-            for (let i = 0; i < viewTabs.length; i++) {
-                if (!viewTabs[i].affix && i !== index) {
-                    removeArray.push(viewTabs[i].routerPathKey)
-                }
-            }
-            this.$state.viewTabs = viewTabs.filter((tab:StarViewType) => !removeArray.includes(tab.routerPathKey))
-            this.persistViewTabs()
-            return removeArray
-        },
-        // 关闭全部
-        closeAll(): Array<string> {
-            const removeArray = this.$state.viewTabs.filter(tab => !tab.affix).map(tab => tab.routerPathKey)
-            this.$state.viewTabs = this.$state.viewTabs.filter(tab => tab.affix)
-            this.persistViewTabs()
-            return removeArray
         },
         // 传入tab元素，与集合中的元素进行替换
         replaceByKey(tab: StarViewType) {
@@ -291,7 +247,10 @@ export const useViewTabsStore = defineStore('viewTabs',{
         },
         // 设置组件缓存
         setComponentsKeepAlive(name: string) {
-            this.$state.componentAlive.push('index')
+            // 'index'（首页）常驻缓存；本方法随路由切换高频调用，两项都须去重防数组无限膨胀
+            if (!this.$state.componentAlive.includes('index')) {
+                this.$state.componentAlive.push('index')
+            }
             if (!this.$state.componentAlive.includes(name)) {
                 this.$state.componentAlive.push(name)
             }

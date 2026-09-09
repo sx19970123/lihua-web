@@ -64,13 +64,13 @@ import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import {viewTab} from "@/api/system/view-tab/view-tab.ts";
 import {message} from "@/antd-adapter";
 import {LockOutlined, StarFilled, StarOutlined, UnlockOutlined} from '@antdv-next/icons';
-import {h, ref} from "vue";
+import {ref} from "vue";
 import type {ResponseType} from "@/api/global/type.ts";
 import type {StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";
 
 const viewTabsStore = useViewTabsStore()
 const tabPane = defineProps(['tab','index'])
-const emits = defineEmits(['routeSkip','cancelKeepAlive','closeViewTab'])
+const emits = defineEmits(['routeSkip','cancelKeepAlive','closeViewTab','closeTabs'])
 const usableMiniWindow = window.location.origin.startsWith("http://localhost") || window.location.origin.startsWith("https")
 const reloading = ref<boolean>(false);
 // 处理点击菜单
@@ -179,54 +179,39 @@ const initMiniWindow = () => {
 
 const { createMiniWindow } = initMiniWindow()
 
-// 处理关闭左侧
+// 处理关闭左侧（keys 与回退页上抛，动画与提交由 index.vue 统一处理）
 const handleCloseLeft = (tab: StarViewType) => {
-  const actIndex = viewTabsStore.getIndex(viewTabsStore.activeKey)
   const index = viewTabsStore.getIndex(tab.routerPathKey)
-  const closeKeys = viewTabsStore.closeLeft(tab.routerPathKey)
-  emits('cancelKeepAlive',closeKeys)
-  if (actIndex < index) {
-    emits('routeSkip',tab.routerPathKey, tab.query)
-  }
+  const closeKeys = viewTabsStore.viewTabs.slice(0, index).filter(item => !item.affix).map(item => item.routerPathKey)
+  emits('closeTabs', closeKeys, tab.routerPathKey)
 }
 
 // 处理关闭右侧
 const handleCloseRight = (tab: StarViewType) => {
-  const actIndex = viewTabsStore.getIndex(viewTabsStore.activeKey)
   const index = viewTabsStore.getIndex(tab.routerPathKey)
-  const closeKeys = viewTabsStore.closeRight(tab.routerPathKey)
-  emits('cancelKeepAlive',closeKeys)
-  if (actIndex > index) {
-    emits('routeSkip',tab.routerPathKey, tab.query)
-  }
+  const closeKeys = viewTabsStore.viewTabs.slice(index + 1).filter(item => !item.affix).map(item => item.routerPathKey)
+  emits('closeTabs', closeKeys, tab.routerPathKey)
 }
 
 // 处理关闭其他
 const handleCloseOther = (tab: StarViewType) => {
-  const closeKeys = viewTabsStore.closeOther(tab.routerPathKey)
-  emits('cancelKeepAlive',closeKeys)
-  emits('routeSkip',tab.routerPathKey, tab.query)
+  const closeKeys = viewTabsStore.viewTabs.filter(item => item.routerPathKey !== tab.routerPathKey && !item.affix).map(item => item.routerPathKey)
+  emits('closeTabs', closeKeys, tab.routerPathKey)
 }
 
 // 处理star
 const handleStar = (tab: StarViewType) => {
   if (!tab.menuId) return
 
-  viewTab(tab.menuId,tab.affix ? '1' : '0','1').then((resp: ResponseType<StarViewType>) => {
+  viewTab(tab.menuId, tab.affix, true).then((resp: ResponseType<StarViewType>) => {
     if (resp.code === 200) {
       viewTabsStore.replaceByKey(resp.data)
-      message.success({
-        content: () => '添加收藏',
-        icon: () => h( StarFilled ),
-      })
+      message.success(resp.msg)
     } else {
       message.error(resp.msg)
     }
   }).catch(() => {
-    message.error({
-      content: () => '添加收藏失败',
-      icon: () => h( StarFilled ),
-    })
+    message.error('添加收藏失败')
   })
 }
 
@@ -234,21 +219,15 @@ const handleStar = (tab: StarViewType) => {
 const handleUnStar = (tab: StarViewType) => {
   if (!tab.menuId) return
 
-  viewTab(tab.menuId,tab.affix ? '1' : '0','0').then((resp: ResponseType<StarViewType>) => {
+  viewTab(tab.menuId, tab.affix, false).then((resp: ResponseType<StarViewType>) => {
     if (resp.code === 200) {
       viewTabsStore.replaceByKey(resp.data)
-      message.success({
-        content: () => '取消收藏',
-        icon: () => h( StarOutlined ),
-      })
+      message.success(resp.msg)
     } else {
       message.error(resp.msg)
     }
   }).catch(() => {
-    message.error({
-      content: () => '取消收藏失败',
-      icon: () => h( StarOutlined ),
-    })
+    message.error('取消收藏失败')
   })
 }
 
@@ -256,21 +235,15 @@ const handleUnStar = (tab: StarViewType) => {
 const handleAffix = (tab: StarViewType) => {
   if (!tab.menuId) return
 
-  viewTab(tab.menuId,'1',tab.star ? '1' : '0').then((resp: ResponseType<StarViewType>) => {
+  viewTab(tab.menuId, true, tab.star).then((resp: ResponseType<StarViewType>) => {
     if (resp.code === 200) {
       viewTabsStore.affix(resp.data)
-      message.success({
-        content: () => '固定页面',
-        icon: () => h( LockOutlined ),
-      })
+      message.success(resp.msg)
     } else {
       message.error(resp.msg)
     }
   }).catch(() => {
-    message.error({
-      content: () => '固定页面失败',
-      icon: () => h( LockOutlined ),
-    })
+    message.error('固定页面失败')
   })
 }
 
@@ -278,21 +251,15 @@ const handleAffix = (tab: StarViewType) => {
 const handleUnAffix = (tab: StarViewType) => {
   if (!tab.menuId) return
 
-  viewTab(tab.menuId,'0',tab.star ? '1' : '0').then((resp: ResponseType<StarViewType>) => {
+  viewTab(tab.menuId, false, tab.star).then((resp: ResponseType<StarViewType>) => {
     if (resp.code === 200) {
       viewTabsStore.unAffix(resp.data)
-      message.success({
-        content: () => '取消固定',
-        icon: () => h( UnlockOutlined ),
-      })
+      message.success(resp.msg)
     } else {
       message.error(resp.msg)
     }
   }).catch(() => {
-    message.error({
-      content: () => '取消固定失败',
-      icon: () => h( UnlockOutlined ),
-    })
+    message.error('取消固定失败')
   })
 }
 </script>

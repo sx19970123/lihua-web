@@ -22,12 +22,13 @@
                             @route-skip="routeSkip"
                             @cancel-keep-alive="cancelKeepAliveCache"
                             @close-view-tab="closeTab"
+                            @close-tabs="closeTabs"
         />
       </template>
       <!--view-tabs 右侧下拉菜单-->
       <template #rightExtra>
         <a-space :size="0">
-          <tab-right-menu @route-skip="routeSkip" @cancel-keep-alive="cancelKeepAliveCache"/>
+          <tab-right-menu @route-skip="routeSkip" @cancel-keep-alive="cancelKeepAliveCache" @close-tabs="closeTabs"/>
         </a-space>
       </template>
     </a-tabs>
@@ -106,6 +107,42 @@ const closeTab = (key: string) => {
   tabEl.style.setProperty('--closing-w', `${tabEl.offsetWidth}px`)
   tabEl.classList.add('view-tab-closing')
   setTimeout(commitClose, 190)
+};
+
+/** 批量关闭标签（右键菜单/更多操作的关闭左边/右边/其他/全部）：与单张关闭同款退场动画——
+ *  全部目标页签同时挂 view-tab-closing 并行收宽淡出（整排手风琴式收拢），期满统一提交；
+ *  激活页在关闭集合中时跳转 fallbackKey（触发菜单的锚点页），未提供（关闭全部）则跳剩余第一张；
+ *  拖拽进行中或节点解析失败（异常路径）跳过动画直接关闭 */
+const closeTabs = (keys: Array<string>, fallbackKey?: string) => {
+  const validKeys = keys.filter(key => viewTabsStore.viewTabs.some(tab => tab.routerPathKey === key && !tab.affix))
+  if (!validKeys.length) {
+    return
+  }
+
+  const commitBatch = () => {
+    if (validKeys.includes(activeKey.value)) {
+      const fallbackTab = viewTabsStore.viewTabs.find(tab => tab.routerPathKey === fallbackKey)
+      const remainTab = fallbackTab ?? viewTabsStore.viewTabs.find(tab => !validKeys.includes(tab.routerPathKey))
+      if (remainTab) {
+        routeSkip(remainTab.routerPathKey, remainTab.query)
+      }
+    }
+    viewTabsStore.closeViewTabs(validKeys)
+    cancelKeepAliveCache(validKeys)
+  }
+
+  const tabEls = validKeys
+      .map(key => document.querySelector<HTMLElement>(`.tab-none-padding .ant-tabs-tab[data-node-key="${CSS.escape(key)}"]`))
+      .filter((el): el is HTMLElement => !!el)
+  if (document.querySelector('.tab-none-padding [data-dnd-dragging]') || !tabEls.length) {
+    commitBatch()
+    return
+  }
+  tabEls.forEach(tabEl => {
+    tabEl.style.setProperty('--closing-w', `${tabEl.offsetWidth}px`)
+    tabEl.classList.add('view-tab-closing')
+  })
+  setTimeout(commitBatch, 190)
 };
 
 /**

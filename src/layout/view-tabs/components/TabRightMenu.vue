@@ -77,7 +77,7 @@ import type {RecentType, StarViewType} from "@/api/system/view-tab/type/sys-view
 import {handleTime} from "@/utils/handle-date.ts";
 
 const viewTabsStore = useViewTabsStore()
-const emits = defineEmits(['routeSkip','cancelKeepAlive'])
+const emits = defineEmits(['routeSkip','cancelKeepAlive','closeTabs'])
 
 /**
  * 处理点击菜单后执行功能
@@ -85,14 +85,10 @@ const emits = defineEmits(['routeSkip','cancelKeepAlive'])
  */
 const handleClickMenuTab = ({ key }: { key :string }) => {
   switch (key) {
-    // 关闭全部
+    // 关闭全部（keys 上抛，动画与提交由 index.vue 统一处理）
     case "close-all": {
-      const closeKeys = viewTabsStore.closeAll()
-      emits('cancelKeepAlive',closeKeys)
-      if (viewTabsStore.viewTabs.length > 0) {
-        const tab = viewTabsStore.viewTabs[0]
-        emits('routeSkip',tab.routerPathKey, tab.query)
-      }
+      const closeKeys = viewTabsStore.viewTabs.filter(tab => !tab.affix).map(tab => tab.routerPathKey)
+      emits('closeTabs', closeKeys)
       break
     }
     // 清空最近使用
