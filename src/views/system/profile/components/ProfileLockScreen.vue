@@ -28,7 +28,7 @@
 import {onMounted, ref} from "vue";
 import {useUserStore} from "@/stores/user.ts";
 import {message, type Rule} from "@/antd-adapter";
-import {getLockScreenInfo, setLockScreenInfo} from "@/helpers/lock-screen.ts";
+import {DEFAULT_LOCK_TIMEOUT, getLockScreenInfo, setLockScreenInfo} from "@/helpers/lock-screen.ts";
 
 const userStore = useUserStore();
 
@@ -96,7 +96,7 @@ const handleSaveLockInfo = () => {
 
 onMounted(() => {
   // 数据回显
-  const {autoLock, timeout, password} = getLockScreenInfo() || {autoLock: false, timeout: 0};
+  const {autoLock, timeout, password} = getLockScreenInfo() || {autoLock: false, timeout: DEFAULT_LOCK_TIMEOUT};
 
   formData.value = {
     autoLock,

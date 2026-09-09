@@ -5,6 +5,9 @@ const LOCK_SCREEN_SETTING_KEY = "lihua_lock_screen_setting_"
 
 const LOCK_KEY = "lihua_lock_screen"
 
+/** 自动锁屏时长默认值（分钟）：未保存过设置或存量记录缺时长时的兜底 */
+export const DEFAULT_LOCK_TIMEOUT = 10
+
 type LockStatus = 'locked' | 'unlocked' | 'logout' | undefined
 
 /**
@@ -30,7 +33,7 @@ export const getLockScreenInfo = () => {
         const lockScreen = JSON.parse(lockScreenInfo)
         return {
             autoLock: lockScreen.autoLock,
-            timeout: lockScreen.timeout,
+            timeout: lockScreen.timeout || DEFAULT_LOCK_TIMEOUT,
             password: decrypt(lockScreen.password)
         }
     }
