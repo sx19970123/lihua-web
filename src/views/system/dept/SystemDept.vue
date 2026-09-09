@@ -2,7 +2,7 @@
  <div>
    <a-flex :gap="16" vertical>
      <!--检索条件-->
-     <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
+     <a-card :styles="{body: {'padding-bottom': '0'}}">
        <a-form :colon="false">
          <a-row :gutter="16">
            <a-col>
@@ -41,6 +41,7 @@
          </a-row>
        </a-form>
      </a-card>
+     <a-card :styles="{body: {padding: 0}}">
      <a-table :pagination="false"
               :columns="deptColumn"
               :data-source="deptList"
@@ -159,6 +160,7 @@
          </template>
        </template>
      </a-table>
+     </a-card>
    </a-flex>
     <!--模态框-->
    <a-modal v-model:open="modalActive.open" @ok="saveDept" :confirm-loading="modalActive.saveLoading">

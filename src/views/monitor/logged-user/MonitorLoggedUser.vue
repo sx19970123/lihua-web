@@ -1,6 +1,6 @@
 <template>
   <a-flex :gap="16" vertical>
-    <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+    <a-card :styles="{body: {'padding-bottom': '0'}}">
       <a-form :colon="false">
         <a-row :gutter="16">
           <a-col>
@@ -15,9 +15,7 @@
           </a-col>
           <a-col>
             <a-form-item label="客户端类型">
-              <a-select v-model:value="queryParam.clientType" placeholder="请选择" style="width: 120px" allow-clear>
-                <a-select-option :value="item.value" v-for="item in sys_client_type">{{item.label}}</a-select-option>
-              </a-select>
+              <a-select v-model:value="queryParam.clientType" placeholder="请选择" style="width: 120px" allow-clear :options="sys_client_type"/>
             </a-form-item>
           </a-col>
           <a-col>
@@ -42,11 +40,12 @@
       </a-form>
     </a-card>
 
+    <a-card :styles="{body: {padding: 0}}">
     <a-table
       row-class-name="hover-cursor-pointer"
       row-key="cacheKey"
       :row-selection="userRowSelectionType"
-      :custom-row="handleRowClick"
+      :on-row="handleRowClick"
       :data-source="currentPage"
       :columns="userColumn"
       :pagination="false"
@@ -114,10 +113,11 @@
         </a-flex>
       </template>
     </a-table>
+    </a-card>
 
     <!--   日志详情模态框-->
     <a-modal cancelText="关 闭" v-model:open="openModal" width="1000px" :footer="null">
-      <a-descriptions title="登录日志" bordered :label-style="{width: '110px'}">
+      <a-descriptions title="登录日志" bordered :styles="{label: {width: '110px'}}">
         <a-descriptions-item label="业务描述" :span="1">
           <a-badge status="success" v-if="logInfo.executeStatus === '0'"/>
           <a-badge status="error" v-else/>
@@ -154,10 +154,9 @@
 
 <script setup lang="ts">
 import {computed, ref} from "vue";
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
+import {message, type TableColumnsType} from "@/antd-adapter";
 import type {LoggedUserQueryParams, LoggedUserType} from "@/api/monitor/logged-user/type/logged-user-type.ts";
 import {forceLogout, queryList} from "@/api/monitor/logged-user/logged-user.ts";
-import {message} from "@/antd-adapter";
 import dayjs from "dayjs";
 import type {SysLog} from "@/api/system/log/type/sys-log.ts";
 import {queryLoginByCacheKey} from "@/api/system/log/log.ts";
@@ -198,7 +197,7 @@ const initSearch = () => {
     }
   }
 
-  const userColumn = ref<ColumnsType>([
+  const userColumn = ref<TableColumnsType>([
     {
       title: '缓存键值',
       key: 'cacheKey',
@@ -277,7 +276,7 @@ const initSearch = () => {
       if (resp.code === 200) {
         allDataList.value = resp.data
         pagination.value.total = resp.data.length
-        // 每次执行 initList 后都从第一页开始
+        // 重新渲染当前页数据（查询/重置入口已先行重置页码，强退后刷新停留在当前页）
         changePage(pagination.value.pageNum, pagination.value.pageSize)
       } else {
         message.error(resp.msg)
@@ -340,7 +339,7 @@ const handleOpenPopconfirm = () => {
 
 // 用户强制退出
 const handleConfirm = async (cacheKey?: string) => {
-  const targetLogoutCacheKeys = []
+  const targetLogoutCacheKeys: Array<string> = []
   if (cacheKey) {
     targetLogoutCacheKeys.push(cacheKey)
   } else {
@@ -377,10 +376,10 @@ const initLogInfo = () => {
   const openModal = ref<boolean>(false)
   // 日志详情
   const logInfo = ref<SysLog>({})
-  // 根据id查询日志详情
-  const selectByCacheKey = async (event:MouseEvent, id: string) => {
+  // 根据缓存key查询登录日志详情
+  const selectByCacheKey = async (event:MouseEvent, cacheKey: string) => {
     event.stopPropagation()
-    const resp = await queryLoginByCacheKey(id)
+    const resp = await queryLoginByCacheKey(cacheKey)
     if (resp.code === 200) {
       logInfo.value = resp.data
 

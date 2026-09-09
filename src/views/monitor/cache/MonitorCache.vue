@@ -191,7 +191,7 @@ const loadKeyList = async (item: CacheMonitor) => {
       infoKey.value = undefined
       keys.value = []
       targetKeyType.value = item
-      resp.data.forEach(key => keys.value.push({key: key}))
+      keys.value = resp.data.map(key => ({key: key}))
     } else {
       message.error(resp.msg)
     }

@@ -2,7 +2,7 @@
   <div>
     <a-flex :gap="16" vertical>
 <!--      检索条件-->
-      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
+      <a-card :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -42,6 +42,7 @@
         </a-form>
       </a-card>
 <!--      列表-->
+      <a-card :styles="{body: {padding: 0}}">
       <a-table :row-selection="noticeRowSelectionType"
                :data-source="noticeList"
                :columns="noticeColumn"
@@ -154,6 +155,7 @@
           </a-flex>
         </template>
       </a-table>
+      </a-card>
     </a-flex>
 <!--    保存修改模态框-->
     <a-modal v-model:open="modalActive.open" :width="960" @ok="saveNotice" destroy-on-hidden>

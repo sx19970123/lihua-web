@@ -2,7 +2,7 @@
   <div>
     <a-flex vertical :gap="16">
       <!--    检索条件-->
-      <a-card :style="{boxShadow: 'none'}" :styles="{body: {'padding-bottom': '0'}}">
+      <a-card :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -52,6 +52,7 @@
         </a-form>
       </a-card>
       <!--    列表页-->
+      <a-card :styles="{body: {padding: 0}}">
       <a-table :data-source="dictTypeList"
                :columns="dictTypeColumn"
                :pagination="false"
@@ -162,6 +163,7 @@
           </a-flex>
         </template>
       </a-table>
+      </a-card>
     </a-flex>
     <!--    新增编辑对话框-->
     <a-modal v-model:open="modalActive.open"
