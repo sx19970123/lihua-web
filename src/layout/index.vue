@@ -89,19 +89,7 @@ const initHeaderObserve = () => {
     if (!observedHeaderEl) {
       return
     }
-    const headerHeight = Math.floor(observedHeaderEl.offsetHeight)
-    document.documentElement.style.setProperty('--layout-header-height', `${headerHeight}px`)
-
-    // 回归期调试：custom property 的 calc 不参与求值，用探针元素解析出 --content-height 的真实像素，
-    // 并逐项打印公式原料（--ant-* 类作用域变量在探针上下文可能为空，公式已不依赖它们）
-    const probe = document.createElement('div')
-    probe.style.visibility = 'hidden'
-    probe.style.position = 'fixed'
-    probe.style.height = 'var(--content-height)'
-    contentContainer.value?.appendChild(probe)
-    const probeStyle = getComputedStyle(probe)
-    console.log(`[content-height] 头部块 ${headerHeight}px → 解析 ${probeStyle.height} | vh ${window.innerHeight} | header ${probeStyle.getPropertyValue('--layout-header-height').trim()} | space ${probeStyle.getPropertyValue('--content-space').trim()} | footer ${probeStyle.getPropertyValue('--footer-display-height').trim()}`)
-    probe.remove()
+    document.documentElement.style.setProperty('--layout-header-height', `${Math.floor(observedHeaderEl.offsetHeight)}px`)
   }
 
   // 观察头部块高度（布局切换更换元素时可重复调用，幂等：同一元素不重挂）
