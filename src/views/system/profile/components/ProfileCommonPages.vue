@@ -53,7 +53,7 @@
               <a-tooltip v-if="!item.static" title="取消固定">
                 <a-button type="text" size="small" :loading="pendingKey === item.menuId" @click.stop="handleCancel(item, 'affix')">
                   <template #icon>
-                    <PushpinOutlined class="common-page-mark-icon"/>
+                    <PushpinFilled class="common-page-mark-icon"/>
                   </template>
                 </a-button>
               </a-tooltip>

@@ -47,11 +47,11 @@
           取消收藏
         </a-menu-item>
         <a-menu-item key="affix" v-if="!tabPane.tab.affix && !tabPane.tab.static">
-          <LockOutlined />
+          <PushpinOutlined />
           固定页面
         </a-menu-item>
         <a-menu-item key="un-affix" v-if="tabPane.tab.affix && !tabPane.tab.static">
-          <UnlockOutlined />
+          <PushpinFilled />
           取消固定
         </a-menu-item>
       </a-menu>
@@ -63,7 +63,7 @@
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import {viewTab} from "@/api/system/view-tab/view-tab.ts";
 import {message} from "@/antd-adapter";
-import {LockOutlined, StarFilled, StarOutlined, UnlockOutlined} from '@antdv-next/icons';
+import {PushpinFilled, PushpinOutlined, StarFilled, StarOutlined} from '@antdv-next/icons';
 import {ref} from "vue";
 import type {ResponseType} from "@/api/global/type.ts";
 import type {StarViewType} from "@/api/system/view-tab/type/sys-view-tab.ts";
