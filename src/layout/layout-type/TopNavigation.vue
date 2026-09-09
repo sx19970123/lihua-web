@@ -1,6 +1,6 @@
 <template>
   <a-layout class="layout">
-    <div class="background-glass relative z-10"
+    <div id="lihua-layout-header" class="background-glass relative z-10"
          :class="{ 'sticky top-0': themeStore.affixHead,
                    'dark-header': themeStore.siderTheme === 'dark' && !themeStore.isSmallWindow }">
       <transition :name="themeStore.routeTransition" mode="out-in">

@@ -22,7 +22,7 @@
     </transition>
     <!--   右侧head和content   -->
     <a-layout>
-      <a-layout-header class="side-navigation-header background-glass z-10"
+      <a-layout-header id="lihua-layout-header" class="side-navigation-header background-glass z-10"
                        :class="{ 'sticky top-0': themeStore.affixHead }">
         <transition :name="themeStore.routeTransition" mode="out-in">
           <!--    菜单收缩-->

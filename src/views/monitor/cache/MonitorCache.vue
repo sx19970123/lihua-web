@@ -281,8 +281,9 @@ onMounted(() => {
 }
 </style>
 <style>
-/* 头部与多任务栏的显示高度由 store 直写的 --layout-display-height/--tab-display-height 提供（variable.css 内置默认值） */
+/* 列表满高：内容区可用高度（--content-height，variable.css 组合——头部块实测 + 页脚自适应）
+   减本页家具（顶部 alert 约 40 + 间距 8 + 卡体 padding 24×2 + 卡头标题行约 40） */
 .cache-monitor-max-content-height {
-  max-height: calc(100vh - (var(--layout-display-height) + var(--tab-display-height) + 156px));
+  max-height: calc(var(--content-height) - 144px);
 }
 </style>

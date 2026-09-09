@@ -32,6 +32,18 @@
     --tab-display-height: 54px;
     --layout-display-height: var(--lihua-layout-height);
 
+    /* ====================内容区可用高度（满高列表页消费）==================== */
+    /* 页面真正可自由支配的高度：视口 − 头部块 − 内容区顶 padding − 底部占用。
+       头部块高度为实测值（layout/index 观察 #lihua-layout-header——head 行+多任务栏
+       的包裹元素，显隐状态变化体现为其高度变化）；底部取 max——页脚显示时页脚行兼任
+       底部留白（.layout-content 底 padding 融合为 0）、隐藏时恢复底 padding。
+       --content-space 为 .layout-content 上下 padding 的同源值（16px）——不直接引用
+       --ant-*：cssinjs 变量按组件根作用域注入，:root 层定义的 calc 在游离上下文
+      （探针/弹层）求值时拿不到会整式失效 */
+    --layout-header-height: 0px;
+    --content-space: 16px;
+    --content-height: calc(100vh - var(--layout-header-height) - var(--content-space) - max(var(--content-space), var(--footer-display-height)));
+
     /* ==============================滚动条============================== */
     --lihua-scrollbar-thumb-color: rgb(227,227,227) transparent;
     --lihua-sider-scrollbar-thumb-color: rgb(66,66,66) transparent;

@@ -60,6 +60,8 @@ const initTeleport = () => {
       headContainer.value = document.getElementById('lihua-layout-head')
       // 内容组件容器
       contentContainer.value = document.getElementById('lihua-layout-content')
+      // 头部块（head 行 + 多任务栏的包裹元素，四布局统一 id）高度实测随行
+      observeHeaderHeight()
     })
   }
 
@@ -71,6 +73,56 @@ const initTeleport = () => {
 }
 
 const {headContainer, contentContainer, loadTeleportContainer} = initTeleport()
+
+/**
+ * 内容区可用高度供给：观察布局头部块（#lihua-layout-header，含 head 行与多任务栏）高度
+ * 写入 --layout-header-height，variable.css 组合出 --content-height 供满高列表页消费。
+ * 头部块在内容区上方、高度只随 head/多任务栏显隐与布局形态变化，与页面内容无关——
+ * 无反馈回路；显隐开关经 ResizeObserver 自动捕获无需 watch，布局切换更换元素随
+ * loadTeleportContainer 重挂；observe 首次回调在首次绘制前送达，无需公式初值
+ */
+const initHeaderObserve = () => {
+  let headerResizeObserver: ResizeObserver | undefined
+  let observedHeaderEl: HTMLElement | undefined
+
+  const syncHeaderHeight = () => {
+    if (!observedHeaderEl) {
+      return
+    }
+    const headerHeight = Math.floor(observedHeaderEl.offsetHeight)
+    document.documentElement.style.setProperty('--layout-header-height', `${headerHeight}px`)
+
+    // 回归期调试：custom property 的 calc 不参与求值，用探针元素解析出 --content-height 的真实像素，
+    // 并逐项打印公式原料（--ant-* 类作用域变量在探针上下文可能为空，公式已不依赖它们）
+    const probe = document.createElement('div')
+    probe.style.visibility = 'hidden'
+    probe.style.position = 'fixed'
+    probe.style.height = 'var(--content-height)'
+    contentContainer.value?.appendChild(probe)
+    const probeStyle = getComputedStyle(probe)
+    console.log(`[content-height] 头部块 ${headerHeight}px → 解析 ${probeStyle.height} | vh ${window.innerHeight} | header ${probeStyle.getPropertyValue('--layout-header-height').trim()} | space ${probeStyle.getPropertyValue('--content-space').trim()} | footer ${probeStyle.getPropertyValue('--footer-display-height').trim()}`)
+    probe.remove()
+  }
+
+  // 观察头部块高度（布局切换更换元素时可重复调用，幂等：同一元素不重挂）
+  const observeHeaderHeight = () => {
+    const headerEl = document.getElementById('lihua-layout-header')
+    if (!headerEl || headerEl === observedHeaderEl) {
+      return
+    }
+    headerResizeObserver?.disconnect()
+    observedHeaderEl = headerEl
+    headerResizeObserver = new ResizeObserver(syncHeaderHeight)
+    headerResizeObserver.observe(headerEl)
+    syncHeaderHeight()
+  }
+
+  return {
+    observeHeaderHeight,
+    disconnect: () => headerResizeObserver?.disconnect()
+  }
+}
+const {observeHeaderHeight, disconnect: disconnectHeaderObserve} = initHeaderObserve()
 
 // 组件切换时重新加载菜单，刷新分组导航
 watch(() =>[themeStore.isSmallWindow, themeStore.layoutType], () => {
@@ -102,6 +154,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener("resize", debounceResize)
+  window.removeEventListener("resize", debounceResize);
+  disconnectHeaderObserve()
 })
 </script>
