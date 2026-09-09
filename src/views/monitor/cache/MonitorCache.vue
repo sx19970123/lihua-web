@@ -38,12 +38,14 @@
               </a-button>
             </a-tooltip>
             <a-tooltip  v-if="targetKeyType" :title="'清空' + targetKeyType.label + '键值列表'">
-              <a-button type="link" danger :loading="loadingKeys" @click="removeCacheInfo(targetKeyType.keyPrefix)">
-                <template #icon>
-                  <DeleteOutlined />
-                </template>
-                清空
-              </a-button>
+              <a-popconfirm :title="'是否清空' + targetKeyType.label + '全部键值？'" @confirm="removeCacheInfo(targetKeyType.keyPrefix)">
+                <a-button type="link" danger :loading="removing">
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
+                  清空
+                </a-button>
+              </a-popconfirm>
             </a-tooltip>
           </div>
         </a-flex>
@@ -61,11 +63,13 @@
                <a-typography-text ellipsis>
                  {{item.key}}
                </a-typography-text>
-               <a-button danger type="link" @click="(event:MouseEvent) => {event.stopPropagation();removeCacheInfo(item.key)}">
-                 <template #icon>
-                   <DeleteOutlined />
-                 </template>
-               </a-button>
+               <a-popconfirm title="是否删除该缓存？" @confirm="removeCacheInfo(item.key)">
+                 <a-button danger type="link" :loading="removing" @click="(event:MouseEvent) => event.stopPropagation()">
+                   <template #icon>
+                     <DeleteOutlined />
+                   </template>
+                 </a-button>
+               </a-popconfirm>
              </a-flex>
             </template>
           </selectable-card>
@@ -84,12 +88,14 @@
               </a-button>
             </a-tooltip>
             <a-tooltip title="删除缓存内容">
-              <a-button type="link" danger :loading="loadingInfo" @click="removeCacheInfo(infoKey)">
-                <template #icon>
-                  <DeleteOutlined />
-                </template>
-                删除
-              </a-button>
+              <a-popconfirm title="是否删除该缓存内容？" @confirm="removeCacheInfo(infoKey)">
+                <a-button type="link" danger :loading="removing">
+                  <template #icon>
+                    <DeleteOutlined />
+                  </template>
+                  删除
+                </a-button>
+              </a-popconfirm>
             </a-tooltip>
           </div>
         </a-flex>
@@ -104,7 +110,7 @@
               {{infoKey}}
             </a-descriptions-item>
             <a-descriptions-item label="剩余有效时间">
-              {{info?.expireMinutes ? info?.expireMinutes < 0 ? info?.expireMinutes : + info?.expireMinutes +' 分钟' : ''}}
+              {{formatExpireMinutes(info?.expireMinutes)}}
             </a-descriptions-item>
             <a-descriptions-item label="缓存内容">
               {{info?.value}}
@@ -146,6 +152,8 @@ const targetKeyType = ref<CacheMonitor>()
 const loadingKeys = ref<boolean>(false)
 // 缓存内容加载
 const loadingInfo = ref<boolean>(false)
+// 删除进行中（清空整组/单key/内容删除三个入口共用，兼防连点重复提交）
+const removing = ref<boolean>(false)
 
 // 加载内存占用
 const initMemoryInfo = async () => {
@@ -228,16 +236,35 @@ const loadCacheInfo = async (key: string) => {
   }
 }
 
+// 过期时间展示：后端 remainTimeToLive 语义——-1 永不过期、-2 key 不存在（选中后恰好过期/被删）
+const formatExpireMinutes = (expireMinutes?: number) => {
+  if (expireMinutes == null) {
+    return ''
+  }
+  if (expireMinutes === -1) {
+    return '永久'
+  }
+  if (expireMinutes === -2) {
+    return '已失效'
+  }
+  return expireMinutes + ' 分钟'
+}
+
 // 删除缓存
 const removeCacheInfo = async (key: string) => {
-  const resp = await remove(key);
-  if (resp.code === 200) {
-    message.success(resp.msg)
-    if (targetKeyType.value) {
-      await loadKeyList(targetKeyType.value)
+  removing.value = true
+  try {
+    const resp = await remove(key);
+    if (resp.code === 200) {
+      message.success(resp.msg)
+      if (targetKeyType.value) {
+        await loadKeyList(targetKeyType.value)
+      }
+    } else {
+      message.error(resp.msg)
     }
-  } else {
-    message.error(resp.msg)
+  } finally {
+    removing.value = false
   }
 }
 
