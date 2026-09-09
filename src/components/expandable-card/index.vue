@@ -403,6 +403,9 @@ const init = () => {
   const showMask = ref<boolean>(false)
   // 关闭动画进行中标志，用于忽略重复的关闭请求，并阻止关闭中触发展开完成
   const closing = ref<boolean>(false)
+  // 展开落定标志：容器展开飞行已结束且尚未开始关闭——complete 态恒真，异步模式下 loading 驻留
+  // （activity）期亦真；驱动 resize 重同步的挂载窗口（飞行中由打断续跑机制接管，不响应 resize）
+  const expandedSettled = ref<boolean>(false)
   // overview 层样式：ready 态无定位（流内）；过渡期绝对定位 + 实测宽高 + 相交渐变透明度
   const overviewStyle = ref<CSSProperties>({})
   // detail 层样式：显式最终宽度（内容按最终尺寸渲染）+ 相交渐变透明度
@@ -543,6 +546,8 @@ const init = () => {
         handoverTimer = window.setTimeout(fadeExpandHandover, TRANSITION.fade.handoverExpand * TRANSITION.spring.duration)
       },
       onComplete: () => {
+        // 容器飞行落定：进入 resize 重同步窗口（异步模式 loading 驻留在 activity，同样需要）
+        expandedSettled.value = true
         // 展开完成：仅在 activity 状态放行（kill=被关闭打断，complete=watch 已处理过 isComplete）
         if ((props.autoComplete || props.isComplete) && showStatus.value === 'activity') {
           handleExpandComplete()
@@ -621,6 +626,8 @@ const init = () => {
             : `scale(${overviewSx0})`
       }
     }
+    // 关闭开始：退出展开落定窗口（停用 resize 重同步，返回飞行接管布局）
+    expandedSettled.value = false
     // 执行主要动画
     animateTo(containerRef.value, {
       width: px(bounding?.width),
@@ -707,13 +714,14 @@ const init = () => {
     }
   }
 
-  // 展开（complete）态下按当前视口整体重同步展开布局——幂等：
+  // 展开（complete / 异步 loading 驻留）落定窗口下按当前视口整体重同步展开布局——幂等：
   // 容器四值 + detail 层钉扎 + detail 关闭飞行分母（flightFinalW/H）一次刷新，
   // 消除 resize 后"层还钉着展开时刻旧尺寸"的贴边/内容不复原
-  // 仅 complete 态生效：ready 无展开态可同步，activity/kill 飞行中的值由打断续跑机制接管
-  // （overview 层无需同步：complete 态 opacity 0 不可见，关闭起点由"容器盒÷占位盒"当帧重算）
+  // 仅落定窗口生效：ready 无展开态可同步，飞行中的值由打断续跑机制接管
+  // （overview 层无需同步：不可见，关闭起点由"容器盒÷占位盒"当帧重算；loading 期同步的 detail 布局，
+  //   让数据到达后的淡入即为正确尺寸，无需二次重排）
   const syncExpandedLayout = () => {
-    if (showStatus.value !== 'complete' || !containerRef.value) {
+    if (!expandedSettled.value || !containerRef.value) {
       return
     }
     const {width, height, top, left} = getExpandLayout()
@@ -749,6 +757,7 @@ const init = () => {
     showStatus,
     showMask,
     closing,
+    expandedSettled,
     style,
     overviewStyle,
     detailStyle,
@@ -765,7 +774,7 @@ const init = () => {
     syncExpandedLayout
   }
 }
-const {showStatus, showMask, closing, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, expandCard, handleExpandComplete, syncExpandedLayout} = init()
+const {showStatus, showMask, closing, expandedSettled, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, expandCard, handleExpandComplete, syncExpandedLayout} = init()
 
 
 // 悬停上浮：位移 + 阴影升档，配 readyStyle 的 box-shadow/transform 过渡形成连续浮起感；
@@ -815,18 +824,24 @@ const getExpandLayout = () => {
   return {width, height, top, left}
 }
 
-// 全局监听按需挂载：keydown（esc 关闭）仅在非就绪态需要，resize（重定位展开中的卡片）仅在展开态需要，
+// 全局监听按需挂载：keydown（esc 关闭）仅在非就绪态需要，
 // 就绪态不挂任何全局监听——首页多卡片实例平时零监听开销；随展开/关闭的状态流转自动挂载与卸载
 watch(showStatus, (status, previous) => {
-  if (status === 'complete') {
-    window.addEventListener('resize', windowWidthResize)
-  } else if (previous === 'complete') {
-    window.removeEventListener('resize', windowWidthResize)
-  }
   if (status === 'ready') {
     window.removeEventListener('keydown', keydownClose)
   } else if (previous === 'ready') {
     window.addEventListener('keydown', keydownClose)
+  }
+})
+
+// resize（重定位展开中的卡片）挂在"展开落定窗口"上（complete 态或异步模式 loading 驻留期）——
+// 原实现只认 showStatus==='complete'，异步模式 loading 驻留 activity 期间 resize 不被响应（不自适应）；
+// 飞行中不挂（打断续跑机制接管布局），关闭开始即卸载
+watch(expandedSettled, (settled) => {
+  if (settled) {
+    window.addEventListener('resize', windowWidthResize)
+  } else {
+    window.removeEventListener('resize', windowWidthResize)
   }
 })
 
@@ -852,7 +867,7 @@ const windowWidthResize = () => {
   }
   resizeRafId = requestAnimationFrame(() => {
     resizeRafId = null
-    if (showStatus.value !== 'complete' || !containerRef.value) {
+    if (!expandedSettled.value || !containerRef.value) {
       return
     }
     // 展开状态下若 resize 引发页面回流出现滚动条，补充隐藏（Mask 打开时已隐藏过一次，此处幂等）
