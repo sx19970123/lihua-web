@@ -10,7 +10,7 @@ import {message} from "@/antd-adapter";
 import {type RouteLocationNormalizedLoaded} from "vue-router";
 
 /**
- * 初始化应用：用户信息 → 服务端主题（唯一事实源，无本地缓存）→ 动态路由 → 菜单 → viewTabs
+ * 初始化应用：用户信息 → 服务端主题（唯一事实源，亮暗档位除外——只认 localStorage）→ 动态路由 → 菜单 → viewTabs
  */
 export const initApp = async (): Promise<void> => {
   const userStore = useUserStore()
@@ -22,7 +22,8 @@ export const initApp = async (): Promise<void> => {
   const resp = await userStore.initUserInfo()
   const metaRouterList = resp.data?.routers || []
 
-  // 主题：服务端为唯一事实源，纯服务端初始化（页面渲染由路由守卫等待本函数，无需本地缓存防闪）
+  // 主题：服务端为唯一事实源（亮暗档位除外——只认 localStorage['theme-mode']，见 theme.ts 序列化解耦），
+  // 纯服务端初始化（页面渲染由路由守卫等待本函数，无需本地缓存防闪）
   themeStore.init(userStore.$state.userInfo.theme)
   // 挂接主题变更防抖同步（幂等）
   userStore.subscribeThemeSync()

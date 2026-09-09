@@ -6,10 +6,12 @@ import {debounce} from "lodash-es";
 
 /**
  * 主题持久化序列化：剔除运行时字段（窗口尺寸随缩放变化、小窗/服务端加载标记随宿主环境变化，均非用户配置），
- * 服务端保存与跨窗广播共用同一形态，保证字符串可直接比较
+ * 服务端保存与跨窗广播共用同一形态，保证字符串可直接比较；
+ * 亮暗档位跨端解耦不序列化（themeMode/isDarkTheme）——档位唯一事实源是 localStorage['theme-mode']：
+ * 服务端不存（换浏览器登录不带回暗色档，档位跟浏览器走不跟账号走），广播不传（同源窗口共享同一份 localStorage）
  */
 export const serializeThemeState = (state: object): string => {
-    return JSON.stringify(state, (key, value) => ['isSmallWindow', 'isMiniWindow', 'isServerLoad'].includes(key) ? undefined : value)
+    return JSON.stringify(state, (key, value) => ['isSmallWindow', 'isMiniWindow', 'isServerLoad', 'themeMode', 'isDarkTheme'].includes(key) ? undefined : value)
 }
 
 // 跨窗主题同步（主窗与小窗画中画 iframe 同源）：BroadcastChannel 全量广播，
@@ -195,6 +197,9 @@ export const useThemeStore = defineStore('theme',{
         // 初始化样式
         init(themeJson?: string) {
             this.initState(themeJson)
+            // 亮暗档位只认 localStorage（跨端解耦）：initState 可能已被 JSON 中的同名键污染
+            // （存量服务端主题仍含 themeMode），此处以 localStorage 现值覆盖回来——档位不随远端数据走
+            this.$state.themeMode = localStorage.getItem('theme-mode') as ThemeMode ?? settings.themeMode
             // 旧版主题 JSON 的圆角只存于 token 内，回读后同步到顶层字段，保持字段与 token 一致
             this.$state.borderRadius = this.$state.themeConfig.token.borderRadius ?? settings.themeConfig.token.borderRadius
             this.applyThemeMode()
