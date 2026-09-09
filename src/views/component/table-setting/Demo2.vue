@@ -15,7 +15,7 @@
   </a-table>
 </template>
 <script lang="ts" setup>
-import type {TableColumnsType} from 'ant-design-vue';
+import type {TableColumnsType} from '@/antd-adapter';
 import {ref} from "vue";
 import TableSetting from "@/components/table-setting/index.vue";
 
@@ -30,7 +30,7 @@ type TableDataType = {
   companyName: string;
   gender: string;
 };
-const columns = ref<TableColumnsType> ([
+const columns = ref<TableColumnsType<TableDataType> > ([
   {
     title: 'Name',
     dataIndex: 'name',

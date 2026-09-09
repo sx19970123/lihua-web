@@ -5,6 +5,7 @@
       <a-flex wrap="wrap" gap="small">
         <user-show
             v-for="user in userList"
+            :key="user.id"
             :avatar-json="user.avatar"
             :nickname="user.nickname"/>
       </a-flex>

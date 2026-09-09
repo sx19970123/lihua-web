@@ -5,7 +5,7 @@
   </a-typography-paragraph>
   <a-flex :gap="16" wrap="wrap" align="flex-start">
     <div>
-      <expandable-card style="width: 300px"
+      <expandable-card class="w-[300px]"
                        :expanded-width="600"
                        :expanded-height="400"
                        :auto-complete="false"
@@ -22,7 +22,7 @@
           </div>
         </template>
         <template #detail>
-          <div class="scrollbar" style="padding: var(--ant-padding-lg)">
+          <div class="scrollbar p-ant-lg">
             <a-typography-title :level="4">今日订单概览</a-typography-title>
             <a-flex :gap="32" wrap="wrap" style="margin-top: var(--ant-margin)">
               <a-statistic title="订单总数" :value="3128"/>
@@ -31,15 +31,15 @@
               <a-statistic title="退款" :value="140"/>
             </a-flex>
             <a-alert style="margin-top: var(--ant-margin-lg)" type="success" show-icon
-                     message="数据在展开动画结束前返回：等待层先出现、飞行途中换上详情，动画播完时内容已就位"/>
+                     title="数据在展开动画结束前返回：等待层先出现、飞行途中换上详情，动画播完时内容已就位"/>
           </div>
         </template>
       </expandable-card>
-      <a-typography-text type="secondary" :style="{display: 'block', marginTop: '8px'}">数据先于动画完成 · 无等待层</a-typography-text>
+      <a-typography-text type="secondary" :styles="{root: {display: 'block', marginTop: '8px'}}">数据先于动画完成 · 无等待层</a-typography-text>
     </div>
 
     <div>
-      <expandable-card style="width: 300px"
+      <expandable-card class="w-[300px]"
                        :expanded-width="600"
                        :expanded-height="400"
                        :auto-complete="false"
@@ -55,7 +55,7 @@
           </div>
         </template>
         <template #detail>
-          <div class="scrollbar" style="padding: var(--ant-padding-lg)">
+          <div class="scrollbar p-ant-lg">
             <a-typography-title :level="4">在线用户</a-typography-title>
             <a-table :columns="columns" :data-source="dataSource" :pagination="false" size="middle"/>
           </div>
@@ -68,7 +68,7 @@
           </a-flex>
         </template>
       </expandable-card>
-      <a-typography-text type="secondary" :style="{display: 'block', marginTop: '8px'}">数据晚于动画完成 · 自定义 loading</a-typography-text>
+      <a-typography-text type="secondary" :styles="{root: {display: 'block', marginTop: '8px'}}">数据晚于动画完成 · 自定义 loading</a-typography-text>
     </div>
   </a-flex>
 </template>

@@ -4,7 +4,7 @@
     v-model:expanded 由外部驱动开合（类似 Modal 的 open）：置 true 展开、置 false 关闭；点击/Esc/蒙版等内部触发同样会回写同步状态。
   </a-typography-paragraph>
   <a-flex :gap="16" wrap="wrap" align="flex-start">
-    <expandable-card style="width: 300px"
+    <expandable-card class="w-[300px]"
                      v-model:expanded="expanded"
                      :expanded-width="600"
                      :expanded-height="400"
@@ -17,7 +17,7 @@
         </div>
       </template>
       <template #detail>
-        <div class="scrollbar" style="padding: var(--ant-padding-lg)">
+        <div class="scrollbar p-ant-lg">
           <a-typography-title :level="4">内存占用详情</a-typography-title>
           <a-progress style="margin-top: var(--ant-margin)" :percent="42" :stroke-color="themeStore.getColorPrimary()"/>
           <a-descriptions style="margin-top: var(--ant-margin)" :column="1" size="small" bordered>

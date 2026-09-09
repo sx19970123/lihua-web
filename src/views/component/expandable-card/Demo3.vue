@@ -5,7 +5,7 @@
   </a-typography-paragraph>
   <a-flex :gap="16" wrap="wrap" align="flex-start">
     <div>
-      <expandable-card style="width: 300px"
+      <expandable-card class="w-[300px]"
                        :expanded-width="600"
                        :expanded-height="400"
       >
@@ -17,7 +17,7 @@
           </div>
         </template>
         <template #detail>
-          <div class="scrollbar" style="padding: var(--ant-padding-lg)">
+          <div class="scrollbar p-ant-lg">
             <a-typography-title :level="4">磁盘吞吐明细</a-typography-title>
             <a-timeline style="margin-top: var(--ant-margin)">
               <a-timeline-item>00:00 - 06:00 峰值 388 MB/s（定时备份）</a-timeline-item>
@@ -28,10 +28,10 @@
           </div>
         </template>
       </expandable-card>
-      <a-typography-text type="secondary" :style="{display: 'block', marginTop: '8px'}">可展开 · 悬停上浮</a-typography-text>
+      <a-typography-text type="secondary" :styles="{root: {display: 'block', marginTop: '8px'}}">可展开 · 悬停上浮</a-typography-text>
     </div>
     <div>
-      <expandable-card style="width: 300px" :is-detail-visible="false">
+      <expandable-card class="w-[300px]" :is-detail-visible="false">
         <template #overview>
           <div class="face">
             <div class="min-w-0">
@@ -43,7 +43,7 @@
         </template>
         <!-- 静态卡没有 detail：不配置 expanded 尺寸，也不会展开 -->
       </expandable-card>
-      <a-typography-text type="secondary" :style="{display: 'block', marginTop: '8px'}">静态卡 · 平面呈现</a-typography-text>
+      <a-typography-text type="secondary" :styles="{root: {display: 'block', marginTop: '8px'}}">静态卡 · 平面呈现</a-typography-text>
     </div>
   </a-flex>
 </template>
@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import ExpandableCard from '@/components/expandable-card/index.vue'
 import {computed} from "vue";
-import {DashboardOutlined} from '@ant-design/icons-vue'
+import {DashboardOutlined} from '@antdv-next/icons'
 import {useThemeStore} from "@/stores/theme.ts";
 
 const themeStore = useThemeStore()
