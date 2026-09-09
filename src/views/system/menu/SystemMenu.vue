@@ -320,6 +320,7 @@ import {flattenTree} from "@/utils/tree.ts"
 import {message, type FormInstance, type Rule, type TableColumnsType} from "@/antd-adapter";
 import {cloneDeep} from 'lodash-es';
 import {useThemeStore} from "@/stores/theme";
+import {ROOT_PARENT_ID} from "@/stores/permission";
 import type {SysMenu, SysMenuVO} from "@/api/system/menu/type/sys-menu.ts";
 import {type BaseModalActiveType} from "@/api/global/type.ts";
 import TableSetting from "@/components/table-setting/index.vue";
@@ -665,7 +666,7 @@ const initSave = () => {
       cache: '0',
       status: '0',
       linkOpenType: 'inner',
-      parentId: '0',
+      parentId: ROOT_PARENT_ID,
       viewTab: '0'
     }
   }
@@ -679,7 +680,7 @@ const initSave = () => {
       // 表单树
       parentMenuTree.value = [{
         label: '根节点',
-        id: '0',
+        id: ROOT_PARENT_ID,
         menuType: 'directory',
         children: menuTree
       }]

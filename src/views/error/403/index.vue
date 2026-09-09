@@ -1,7 +1,6 @@
 <template>
-  <a-card>
+  <a-card :styles="{root: {height: '100vh'}, body: {height: '100%', 'box-sizing': 'border-box'}}">
     <div class="error-container">
-      <component is="XiaoMiaoHappy" style="font-size: 96px"/>
       <a-typography-title>403 Forbidden Access</a-typography-title>
       <a-typography-text type="secondary">您没有权限访问此页面</a-typography-text>
     </div>
@@ -13,7 +12,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: calc(100vh - 50px);
+  height: 100%;
   text-align: center;
 }
 </style>

@@ -14,6 +14,9 @@ import {useThemeStore} from "@/stores/theme.ts";
 
 let themeStore: ReturnType<typeof useThemeStore> | null = null;
 
+// 树形数据根节点的父级标识，与后端 TreeUtils.ROOT_PARENT_ID 保持同值（数据层约定，勿改动单侧）
+export const ROOT_PARENT_ID = '0';
+
 // 获取 views 下的所有 vue 组件
 const modules = import.meta.glob("../views/**/*.vue")
 
@@ -115,7 +118,7 @@ const handleRouterComponent = (metaRouterList: Array<RouterType>) => {
                     route.component = IFrame
                 } else {
                     // 顶级节点
-                    if (route.parentId === '0') {
+                    if (route.parentId === ROOT_PARENT_ID) {
                         route.component = Layout
                     }
                     // 非顶级节点

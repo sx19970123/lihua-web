@@ -1,9 +1,8 @@
 <template>
   <iframe class="lihua-iframe" v-if="isInner" :src="src"/>
   <div v-else>
-    <a-card class="lihua-iframe">
-      <a-flex :gap="16" justify="center" vertical align="center" style="margin-top: 48px">
-        <component is="XiaoMiaoHappy" style="font-size: 96px"/>
+    <a-card class="lihua-iframe" :styles="{body: {height: '100%', 'box-sizing': 'border-box'}}">
+      <a-flex :gap="16" justify="center" vertical align="center" class="h-full">
         <a-typography-title style="margin: 0">页面已加载至浏览器新标签页</a-typography-title>
         <a-typography-link @click="open">再次打开</a-typography-link>
       </a-flex>
