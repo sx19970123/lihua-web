@@ -15,12 +15,13 @@
           <a-typography-title ellipsis :level="5" :styles="{root: {marginTop: 'var(--ant-margin-xs)'}}">
             {{latestVersion.updateDate}}
           </a-typography-title>
+          <!-- 预览行数与左侧「后端相关依赖文档」卡等高对齐（多一行会把整行卡片撑高） -->
           <div v-for="(item,index) in latestVersion.updateContent" :key="index">
-            <a-typography-text ellipsis v-if="index < 5">
+            <a-typography-text ellipsis v-if="index < 4">
               {{item}}
             </a-typography-text>
           </div>
-          <a-typography-text ellipsis v-if="latestVersion.updateContent.length > 5">
+          <a-typography-text ellipsis v-if="latestVersion.updateContent.length > 4">
             ...
           </a-typography-text>
         </a-flex>
