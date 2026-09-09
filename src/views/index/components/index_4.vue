@@ -1,32 +1,32 @@
 <template>
-  <expandable-card :stretch="false" style="width: 100%"
+  <expandable-card :stretch="false" class="w-full"
              :expanded-width="600"
              :expanded-height="610"
   >
     <template #overview>
-      <div class="card-background" style="height: 108px; padding: var(--ant-padding-lg); box-sizing: border-box">
+      <div class="card-background h-[108px] p-ant-lg box-border">
         <a-typography-title :level="4" ellipsis>前端</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">当前Vue版本为 </a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{versionInfo.vueVersion}}</a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}">{{versionInfo.vueVersion}}</a-typography-text>
         </a-typography-text>
       </div>
     </template>
     <template #detail>
-      <div class="scrollbar card-background" style="padding: var(--ant-padding-lg)">
+      <div class="scrollbar card-background p-ant-lg">
         <a-typography-title :level="4" ellipsis>前端</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">当前Vue版本为 </a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{versionInfo.vueVersion}}</a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}">{{versionInfo.vueVersion}}</a-typography-text>
         </a-typography-text>
-        <div class="scrollbar" style="height: 484px;margin-top: var(--ant-margin-xs)">
+        <div class="scrollbar h-[484px] mt-ant-xs">
           <a-typography-title :level="5">
             技术概览
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               前端采用 Vue 3.x 框架进行开发，使用 TypeScript 语言，集成了 Pinia 进行状态管理、VueRouter 进行路由管理，
-              前端组件库为 Ant Design Vue 4.x。项目中提供了多种集成组件：选择卡片、小组件展示卡片、字典标签、图标选择器、颜色选择器、用户选择器等。
+              前端组件库为 Antdv Next（antdv-next），对齐 Ant Design v6 设计体系。项目中提供了多种集成组件：选择卡片、小组件展示卡片、字典标签、图标选择器、颜色选择器、用户选择器等。
             </p>
           </a-typography-text>
 
@@ -37,7 +37,7 @@
             <a-descriptions-item label="前端框架">vue</a-descriptions-item>
             <a-descriptions-item label="vue路由">vue-router</a-descriptions-item>
             <a-descriptions-item label="状态管理工具">pinia</a-descriptions-item>
-            <a-descriptions-item label="ui框架">ant-design-vue</a-descriptions-item>
+            <a-descriptions-item label="ui框架">antdv-next</a-descriptions-item>
             <a-descriptions-item label="浏览器指纹">@fingerprintjs/fingerprintjs</a-descriptions-item>
             <a-descriptions-item label="异步请求">axios</a-descriptions-item>
             <a-descriptions-item label="数据加密">crypto-js</a-descriptions-item>

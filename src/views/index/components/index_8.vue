@@ -1,21 +1,21 @@
 <template>
-  <expandable-card :stretch="false" style="width: 100%; height: 100%"
+  <expandable-card :stretch="false" class="w-full h-full"
              :expanded-width="600"
              :expanded-height="610"
              @beforeCardClose="resetContent"
   >
     <template #overview>
-      <div class="card-background" style="padding: var(--ant-padding-lg)">
+      <div class="p-ant-lg">
         <a-typography-title :level="4" ellipsis>更新日志</a-typography-title>
         <a-flex vertical>
           <a-typography-text ellipsis type="secondary">
             <a-typography-text ellipsis type="secondary">最新版本为：</a-typography-text>
-            <a-typography-text ellipsis :style="{color:themeStore.getColorPrimary()}">{{latestVersion.version}}</a-typography-text>
+            <a-typography-text ellipsis :styles="{root: {color: themeStore.getColorPrimary()}}">{{latestVersion.version}}</a-typography-text>
           </a-typography-text>
-          <a-typography-title ellipsis :level="5" style="margin-top: var(--ant-margin-xs)">
+          <a-typography-title ellipsis :level="5" :styles="{root: {marginTop: 'var(--ant-margin-xs)'}}">
             {{latestVersion.updateDate}}
           </a-typography-title>
-          <div v-for="(item,index) in latestVersion.updateContent">
+          <div v-for="(item,index) in latestVersion.updateContent" :key="index">
             <a-typography-text ellipsis v-if="index < 5">
               {{item}}
             </a-typography-text>
@@ -27,13 +27,13 @@
       </div>
     </template>
     <template #detail>
-      <div class="card-background scrollbar" style="padding: var(--ant-padding-lg)">
+      <div class="scrollbar p-ant-lg">
         <a-typography-title :level="4" ellipsis>更新日志</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">最新版本为：</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{latestVersion.version}}</a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}">{{latestVersion.version}}</a-typography-text>
         </a-typography-text>
-        <div class="scrollbar" id="lihua-index-8-content" style="height: 484px;margin-top: var(--ant-margin-xs)">
+        <div ref="contentRef" class="scrollbar h-[484px] mt-ant-xs">
           <!-- antdv-next 的 Timeline 按内部标记只认 a-timeline-item 直接子节点，包装元素会被过滤为空；
                条目过滤用 slice（v-if 优先级高于 v-for，不能同元素引用 v-for 变量），按钮移出时间轴 -->
           <a-timeline style="margin-top: var(--ant-margin-xs)">
@@ -42,8 +42,8 @@
                 {{item.version}}
                 <a-typography-text type="secondary">{{item.updateDate}}</a-typography-text>
               </a-typography-title>
-              <a-alert v-if="item.title" strong :message="item.title" style="margin-bottom: var(--ant-margin-xs);margin-right: var(--ant-margin-xs)">{{item.title}}</a-alert>
-              <a-flex v-for="content in item.updateContent" vertical>
+              <a-alert v-if="item.title" :title="item.title" style="margin-bottom: var(--ant-margin-xs);margin-right: var(--ant-margin-xs)"/>
+              <a-flex v-for="(content, contentIndex) in item.updateContent" :key="contentIndex" vertical>
                 <a-typography-text>{{content}}</a-typography-text>
               </a-flex>
             </a-timeline-item>
@@ -53,7 +53,7 @@
                       style="margin: auto"
                       :disabled="versionInfo.lihuaUpdateLog.length === showIndex" @click="handleShowMore">
               <template #icon v-if="versionInfo.lihuaUpdateLog.length !== showIndex">
-                <DoubleRightOutlined style="rotate: 90deg" />
+                <DoubleRightOutlined class="rotate-90" />
               </template>
               {{versionInfo.lihuaUpdateLog.length === showIndex ? '已显示全部' : '显示更多' }}
             </a-button>
@@ -72,6 +72,7 @@ import {versionInfo} from "@/views/index/setting.ts";
 const latestVersion = versionInfo.lihuaUpdateLog[0]
 const themeStore = useThemeStore();
 const showIndex = ref<number>(4)
+const contentRef = ref<HTMLElement | null>(null)
 // 显示更多
 const handleShowMore = () => {
   if (versionInfo.lihuaUpdateLog.length - showIndex.value >= 5) {
@@ -82,18 +83,9 @@ const handleShowMore = () => {
 }
 // 重置内容
 const resetContent = () => {
-  const e = document.getElementById('lihua-index-8-content');
-  if (e) {
-    e.scrollTop = 0
+  if (contentRef.value) {
+    contentRef.value.scrollTop = 0
     showIndex.value = 4
   }
 }
 </script>
-<style scoped>
-.card-background {
-  background-position-y: 10px; /* 增加10像素间距 */
-  background-position-x: calc(100% - 10px); /* 保持右对齐 */
-  background-repeat: no-repeat;
-  background-size: 36px 36px;
-}
-</style>

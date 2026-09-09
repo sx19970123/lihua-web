@@ -3,10 +3,24 @@
  * 项目开发可以将 views/index 中内容删除，在 router 中重新配置首页即可
  */
 export const versionInfo = {
-    springBootVersion: ' 4.1.0',
+    springBootVersion: ' 4.1.1',
     vueVersion: ' 3.5.38',
     lihuaUpdateLog: [
         // 每次更新版本在集合头部新增一条
+        {
+            version: '3.0.0',
+            updateDate: '2026-09-30',
+            title: "🎉🎉3.0.0 Web 端组件库整体迁移至 Antdv Next，对齐 Ant Design v6 设计体系",
+            updateContent: [
+                '1. Web 端组件库由 ant-design-vue 4.2.6 迁移至 antdv-next，样式体系引入 UnoCSS 原子化工具类',
+                '2. 后端主要组件升级：Spring Boot 4.1.1、MyBatis-Plus 3.5.17、Redisson 4.7.0、java-jwt 4.6.0、springdoc 3.1.0、Snail Job 2.0.2、MySQL Connector/J 26.7.0',
+                '3. 逐模块后端接口体检与优化，单体与微服务双仓库同步修复多项存量问题',
+                '4. 字典类型新增业务域分类；个人中心新增常用页面维护功能',
+                '5. 服务监控移除 oshi 依赖，改用 JDK 内置接口；通知公告已读名单分页化',
+                '6. 登录页视觉重设计，支持分时段氛围背景与入场动画',
+                '7. 其他依赖版本更新和细节优化',
+            ]
+        },
         {
             version: '2.2.0',
             updateDate: '2026-06-25',
@@ -169,9 +183,8 @@ export const versionInfo = {
                 '2.附件下载新增目录穿越安全校验',
                 '3.修复用户编辑时默认部门丢失的bug',
                 '4.修改用户中，当用户修改自己时，保存数据会立即触发数据更新',
-                '5.selectable-card组件新增悬浮样式，可通过showHoverStyle属性开关',
-                '6.view-tabs拖动时幽灵标签添加背景颜色，更容易定位到目标位置',
-                '7.优化菜单搜索在高级材质下的展示效果'
+                '5.view-tabs拖动时幽灵标签添加背景颜色，更容易定位到目标位置',
+                '6.优化菜单搜索在高级材质下的展示效果'
             ]
         },
         {

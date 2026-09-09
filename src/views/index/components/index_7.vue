@@ -3,43 +3,43 @@
     <a-card title="前端相关依赖文档">
       <a-card-grid >
         <a-typography-link ellipsis href="https://cn.vuejs.org/guide/introduction.html" target="_blank">
-          <img src="../static/vue.png" style="width: 16px;height: 16px">
+          <img src="../static/vue.png" class="size-4"/>
           Vue
         </a-typography-link>
       </a-card-grid>
       <a-card-grid >
         <a-typography-link ellipsis href="https://router.vuejs.org/zh/guide/" target="_blank">
-          <img src="../static/vue.png" style="width: 16px;height: 16px">
+          <img src="../static/vue.png" class="size-4"/>
           Vue Router
         </a-typography-link>
       </a-card-grid>
       <a-card-grid >
         <a-typography-link ellipsis href="https://pinia.vuejs.org/zh/introduction.html" target="_blank">
-          <img src="https://pinia.vuejs.org/logo.svg" style="width: 16px;height: 16px">
+          <img src="https://pinia.vuejs.org/logo.svg" class="size-4"/>
           Pinia
         </a-typography-link>
       </a-card-grid>
       <a-card-grid >
-        <a-typography-link ellipsis href="https://antdv.com/components/overview-cn" target="_blank">
-          <img src="https://antdv.com/assets/logo.1ef800a8.svg" style="width: 16px;height: 16px">
-          Ant Design Vue
+        <a-typography-link ellipsis href="https://antdv-next.com/index-cn" target="_blank">
+          <img src="https://avatars.githubusercontent.com/u/178967077?v=4" class="size-4"/>
+          Antdv Next
         </a-typography-link>
       </a-card-grid>
       <a-card-grid >
         <a-typography-link ellipsis href="https://www.lodashjs.com/#:~:text=Lodash%20%E6%98%AF%E4%B8%80%E4%B8%AA" target="_blank">
-          <img src="https://th.bing.com/th?id=ODLS.2871bf84-a83f-47b6-9643-23bb1422c135&w=32&h=32&qlt=90&pcl=fffffa&o=6&cb=13&pid=1.2" style="width: 16px;height: 16px">
+          <img src="https://th.bing.com/th?id=ODLS.2871bf84-a83f-47b6-9643-23bb1422c135&w=32&h=32&qlt=90&pcl=fffffa&o=6&cb=13&pid=1.2" class="size-4"/>
           lodash
         </a-typography-link>
       </a-card-grid>
       <a-card-grid >
         <a-typography-link ellipsis href="https://www.tiny.cloud/tinymce/" target="_blank">
-          <img src="https://ts1.tc.mm.bing.net/th/id/ODF.IeBbbwXbgEJ8DVeCETQDGw" style="width: 16px;height: 16px">
+          <img src="https://ts1.tc.mm.bing.net/th/id/ODF.IeBbbwXbgEJ8DVeCETQDGw" class="size-4"/>
           tinymce
         </a-typography-link>
       </a-card-grid>
       <a-card-grid >
         <a-typography-link ellipsis href="https://dayjs.fenxianglu.cn/category/" target="_blank">
-          <img src="https://day.js.org/img/logo.png" style="width: 16px;height: 16px">
+          <img src="https://day.js.org/img/logo.png" class="size-4"/>
           Day.js
         </a-typography-link>
       </a-card-grid>
@@ -49,6 +49,3 @@
 <script setup lang="ts">
 
 </script>
-<style scoped>
-
-</style>

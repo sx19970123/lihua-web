@@ -1,12 +1,12 @@
 <template>
   <expandable-card
-             style="width: 100%"
+             class="w-full"
              :expanded-width="600"
              :is-detail-visible="false"
              :expanded-height="600"
   >
     <template #overview>
-      <div style="padding: var(--ant-padding-lg)">
+      <div class="p-ant-lg">
         <a-flex justify="space-between">
           <a-flex :gap="16">
             <user-avatar
@@ -18,22 +18,17 @@
             />
             <a-flex align="flex-start" vertical>
               <a-row>
-                <a-typography-title :level="3" style="margin: var(--ant-margin-xxs) 0 0;">欢迎回来</a-typography-title>
-                <a-typography-title :level="3" style="margin: var(--ant-margin-xxs) 0 0;" :style="{color: themeStore.getColorPrimary()}">&nbsp;{{userStore.$state.nickname}}</a-typography-title>
+                <a-typography-title :level="3" :styles="{root: {marginTop: 'var(--ant-margin-xxs)'}}">欢迎回来</a-typography-title>
+                <a-typography-title :level="3" :styles="{root: {marginTop: 'var(--ant-margin-xxs)', color: themeStore.getColorPrimary()}}">&nbsp;{{userStore.$state.nickname}}</a-typography-title>
               </a-row>
-              <a-typography-text style="margin-top: var(--ant-margin-xxs)" type="secondary">{{userStore.defaultDeptPosts.map(item => item.name).join(" ")}}</a-typography-text>
+              <a-typography-text :styles="{root: {marginTop: 'var(--ant-margin-xxs)'}}" type="secondary">{{userStore.defaultDeptPosts.map(item => item.name).join(" ")}}</a-typography-text>
             </a-flex>
           </a-flex>
           <a-flex vertical style="margin-top: 10px">
-            <a-typography-title :level="4" style="margin: var(--ant-margin-xxs) 0 0;">{{dayjs(new Date()).format('YYYY-MM-DD HH:mm')}}</a-typography-title>
-            <a-typography-text :level="4" style="margin-top: var(--ant-margin-xxs);" type="secondary">{{daysOfWeek[new Date().getDay()]}}</a-typography-text>
+            <a-typography-title :level="4" :styles="{root: {marginTop: 'var(--ant-margin-xxs)'}}">{{dayjs(new Date()).format('YYYY-MM-DD HH:mm')}}</a-typography-title>
+            <a-typography-text :styles="{root: {marginTop: 'var(--ant-margin-xxs)'}}" type="secondary">{{daysOfWeek[new Date().getDay()]}}</a-typography-text>
           </a-flex>
         </a-flex>
-      </div>
-    </template>
-    <template #detail>
-      <div style="padding: var(--ant-padding-lg)">
-
       </div>
     </template>
   </expandable-card>
@@ -51,6 +46,3 @@ const daysOfWeek = ["星期日", "星期一", "星期二", "星期三", "星期�
 
 
 </script>
-<style scoped>
-
-</style>

@@ -1,30 +1,30 @@
 <template>
-  <expandable-card :stretch="false" style="width: 100%"
+  <expandable-card :stretch="false" class="w-full"
              :expanded-width="600"
              :expanded-height="610"
   >
     <template #overview>
-      <div class="card-background" style="height: 108px; padding: var(--ant-padding-lg); box-sizing: border-box">
+      <div class="card-background h-[108px] p-ant-lg box-border">
         <a-typography-title :level="4" ellipsis>后端</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">当前SpringBoot版本为</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{versionInfo.springBootVersion}}</a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}">{{versionInfo.springBootVersion}}</a-typography-text>
         </a-typography-text>
       </div>
     </template>
     <template #detail>
-      <div class="scrollbar card-background" style="padding: var(--ant-padding-lg)">
+      <div class="scrollbar card-background p-ant-lg">
         <a-typography-title :level="4" ellipsis>后端</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">当前SpringBoot版本为</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}">{{versionInfo.springBootVersion}}</a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}">{{versionInfo.springBootVersion}}</a-typography-text>
         </a-typography-text>
-        <div class="scrollbar" style="height: 484px;margin-top: var(--ant-margin-xs)">
+        <div class="scrollbar h-[484px] mt-ant-xs">
           <a-typography-title :level="5">
             技术概览
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               后端采用了 Spring Boot 4.x 框架进行开发，Java 版本为 25，
               使用 Spring Security 进行权限管理。
               持久层框架采用 MyBatis-Plus，理论上支持 MP 所支持的所有数据库类型，当前使用的是 MySQL 数据库。
@@ -46,7 +46,6 @@
             <a-descriptions-item label="令牌工具">java-jwt</a-descriptions-item>
             <a-descriptions-item label="excel导入导出">fesod</a-descriptions-item>
             <a-descriptions-item label="表单验证">spring-boot-starter-validation</a-descriptions-item>
-            <a-descriptions-item label="服务器信息">oshi-core</a-descriptions-item>
             <a-descriptions-item label="定时任务">Snail Job</a-descriptions-item>
           </a-descriptions>
         </div>

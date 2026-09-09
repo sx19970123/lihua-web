@@ -1,53 +1,55 @@
 <template>
-  <expandable-card :stretch="false" style="width: 100%"
+  <expandable-card :stretch="false" class="w-full"
              :expanded-width="600"
              :expanded-height="610"
   >
     <template #overview>
-      <div class="card-background" style="height: 108px; padding: var(--ant-padding-lg); box-sizing: border-box">
+      <div class="card-background h-[108px] p-ant-lg box-border"
+           :style="{backgroundImage: `url(${themeStore.isDarkTheme ? logoHei : logoMiao})`}">
         <a-typography-title :level="4" ellipsis>关于</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">狸花猫是一款基于</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}"> SpringBoot </a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}"> SpringBoot </a-typography-text>
           <a-typography-text type="secondary">和</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}"> Vue </a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}"> Vue </a-typography-text>
           <a-typography-text type="secondary">的权限管理系统</a-typography-text>
         </a-typography-text>
       </div>
     </template>
     <template #detail>
-      <div class="card-background scrollbar" style="padding: var(--ant-padding-lg)">
+      <div class="card-background scrollbar p-ant-lg"
+           :style="{backgroundImage: `url(${themeStore.isDarkTheme ? logoHei : logoMiao})`}">
         <a-typography-title :level="4" ellipsis>关于</a-typography-title>
         <a-typography-text ellipsis type="secondary">
           <a-typography-text type="secondary">狸花猫是一款基于</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}"> SpringBoot </a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}"> SpringBoot </a-typography-text>
           <a-typography-text type="secondary">和</a-typography-text>
-          <a-typography-text :style="{color:themeStore.getColorPrimary()}"> Vue </a-typography-text>
+          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}"> Vue </a-typography-text>
           <a-typography-text type="secondary">的权限管理系统</a-typography-text>
         </a-typography-text>
-        <div class="scrollbar" style="height: 484px;margin-top: var(--ant-margin-xs);overflow-x: hidden">
+        <div class="scrollbar h-[484px] mt-ant-xs overflow-x-hidden">
           <a-typography-title :level="5">
             为什么叫狸花猫
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               家里养了两只狸花猫，想以他们作为系统的主题。用任何一只的名字命名都不太好，干脆就按品种来命名了。
               <a-typography-link @click="showLihua = !showLihua">{{!showLihua ? '看看猫猫' : '不看了'}}</a-typography-link>
             </p>
           </a-typography-text>
           <a-carousel arrows style="margin: var(--ant-margin)" autoplay v-show="showLihua">
             <div class="dark-overlay">
-              <img src="../static/miaomiao.jpg" style="width: 100%;border-radius: var(--ant-border-radius-lg)">
+              <img :src="logoMiao" class="w-full rounded-ant-lg" alt="狸花猫小喵子">
             </div>
             <div class="dark-overlay">
-              <img src="../static/heihei.jpg" style="width: 100%;border-radius: var(--ant-border-radius-lg)">
+              <img :src="logoHei" class="w-full rounded-ant-lg" alt="狸花猫小黑子">
             </div>
           </a-carousel>
           <a-typography-title :level="5">
             系统功能
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               系统包含完整的基于角色控制的 RBAC 权限管理系统，包括菜单管理、角色管理和用户管理。此外，还提供部门和岗位管理，适用于大多数业务场景，用户支持多部门并可指定默认部门，前后端均提供接口获取用户的默认信息。
             </p>
           </a-typography-text>
@@ -55,7 +57,7 @@
             字典管理
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               系统字典支持普通字典和树形字典，并提供工具类用于获取和翻译字典信息，前端还提供 dict-tag 组件，可以通过字典 value 直接展示字典 label，并自动匹配 tag 样式。
             </p>
           </a-typography-text>
@@ -63,15 +65,15 @@
             通知公告
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
-              通知公告集成了 Vditor 富文本解析器，并使用 WebSocket 实现了消息的实时发送与接收。
+            <p class="indent-[2em]">
+              通知公告集成了 TinyMCE 富文本编辑器，并使用 WebSocket 实现了消息的实时发送与接收。
             </p>
           </a-typography-text>
           <a-typography-title :level="5">
             个人中心
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               个人中心支持个性化系统主题配置，支持主题、布局、导航等页面设置。
             </p>
           </a-typography-text>
@@ -79,7 +81,7 @@
             系统设置
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               管理员角色用户可以对系统进行进一步配置，包括默认密码设置、定期修改密码、同账号登录限制、自助注册配置、验证码开关、IP 黑名单和灰色模式。
             </p>
           </a-typography-text>
@@ -87,7 +89,7 @@
             其他功能
           </a-typography-title>
           <a-typography-text>
-            <p style="text-indent: 2em">
+            <p class="indent-[2em]">
               系统还提供了日志服务、在线用户监控、缓存监控、服务监控以及定时任务等功能。
             </p>
           </a-typography-text>
@@ -100,13 +102,15 @@
 import ExpandableCard from "@/components/expandable-card/index.vue";
 import {ref} from "vue";
 import {useThemeStore} from "@/stores/theme.ts";
+import logoMiao from '@/assets/logo/logo-miao.png'
+import logoHei from '@/assets/logo/logo-hei.png'
 
 const showLihua = ref<boolean>(false)
 const themeStore = useThemeStore();
 </script>
 <style scoped>
+/* 角标定位规则；background-image 按明暗主题动态绑定（亮 miao / 暗 hei），见模板 :style */
 .card-background {
-  background-image: url("../static/狸花猫-小喵子-酷.svg");
   background-position-y: 10px; /* 增加10像素间距 */
   background-position-x: calc(100% - 10px); /* 保持右对齐 */
   background-repeat: no-repeat;
