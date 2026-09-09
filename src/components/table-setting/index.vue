@@ -17,7 +17,7 @@
             须与 rows 容器并列而非嵌在其 flex 布局内-->
         <DragDropProvider :sensors="sensors" :modifiers="dragModifiers" @drag-end="onDragEnd">
           <a-flex :key="listRenderKey" vertical :gap="8"
-                  class="scrollbar unselectable content max-h-[300px] overflow-x-hidden"
+                  class="scrollbar unselectable content max-h-[300px]"
                   :class="enableWidthSetting ? 'w-[300px]' : 'w-[200px]'">
             <SettingRow v-for="(tableSetting, index) in tableSettings"
                         :key="tableSetting.key || `row-${index}`"
@@ -603,5 +603,9 @@ onMounted(() => {
 }
 .content {
   padding-bottom: 2px;
+  /* 压过 .scrollbar 的 overflow:auto 简写（custom.css 晚于 uno.css 加载，同特异性下工具类
+     overflow-x-hidden 必被反杀，须用 scoped (0,2,0) 收口）：行内图钉 a-rate 悬浮
+     scale(1.1) 的视觉溢出会闪现横向滚动条，列表本身无横向滚动需求 */
+  overflow-x: hidden;
 }
 </style>
