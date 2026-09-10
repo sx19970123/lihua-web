@@ -81,6 +81,11 @@ const TRANSITION = {
     stiffness: 800,
     damping: 57,
     mass: 1,
+    // 初速度注入（行程/秒）：起步速度 v₀，0 = 静止起步纯物理。
+    // 5 ≈ 复刻数值积分时代的起飞加成（与旧欧拉曲线全程偏差 <1.7%，首帧即 ~5.8% 行程），
+    // 语义同 Apple UISpringTimingParameters 的 initialVelocity（手势动量传入弹簧）——
+    // 零酝酿的即时响应感来源；v₀ 需 ~25 量级才会推过终点，5 无回弹
+    initialVelocity: 5,
     // 采样帧数（duration/frames ≈ 每 8.5ms 一帧，linear 插值平滑）
     frames: 40,
   },
@@ -143,31 +148,48 @@ type AnimateOptions = {
   onComplete?: () => void
 }
 
-// 阻尼弹簧进度序列（半隐式欧拉数值解，0→1，末项精确 1）——
+// 阻尼弹簧阶跃响应的闭式解（真实物理曲线，目标位移 1，携带初速度 v₀ 起步），按阻尼比 ζ 分三支：
+//   临界 / 欠阻尼（回弹）/ 过阻尼（当前参数 ζ≈1.008 走此支）公式均含 v₀ 初条件（x(0)=0、v(0)=v₀），
+//   v₀=0 退化为静止起步。ζ 落在 1±1e-6 邻域按临界处理——过阻尼式在判别式→0 时存在灾难性相消，必须兜住
+const springPosition = (t: number): number => {
+  const {stiffness: k, damping: c, mass: m, initialVelocity: v0} = TRANSITION.spring
+  const omega = Math.sqrt(k / m)
+  const zeta = c / (2 * Math.sqrt(k * m))
+  if (Math.abs(zeta - 1) < 1e-6) {
+    return 1 - (1 + (omega - v0) * t) * Math.exp(-omega * t)
+  }
+  if (zeta < 1) {
+    const damped = omega * Math.sqrt(1 - zeta * zeta)
+    return 1 - Math.exp(-zeta * omega * t) * (Math.cos(damped * t) + ((zeta * omega - v0) / damped) * Math.sin(damped * t))
+  }
+  const root = Math.sqrt(c * c - 4 * k * m)
+  const s1 = (-c + root) / (2 * m)
+  const s2 = (-c - root) / (2 * m)
+  // x-1 = a1·e^(s1·t) + a2·e^(s2·t)，由 x(0)=0、v(0)=v₀ 解出两系数
+  const a1 = (v0 + s2) / (s1 - s2)
+  const a2 = -1 - a1
+  return 1 + a1 * Math.exp(s1 * t) + a2 * Math.exp(s2 * t)
+}
+
+// 弹簧进度序列（解析解采样，0→1，末项精确 1）——
 // 容器布局帧与内容 zoom 帧共用同一序列 + 同 duration/linear，实现逐帧自同步
-// 尾段修理（唯一改动，曲线其余部分逐位保留原解）：数值阻尼在该步长下偏大，末段 ~85ms 以
-// 亚感知速度（<2px/帧）爬行完最后 ~6px、末帧强制收敛再补一小跳（收尾钝感来源）——
-// 自剩余行程进入爬行区（TAIL.from）的采样点起，改用三次 Hermite 平滑刹停：
-// 位置/速度与原曲线连续衔接、落定速度恰为 0，其后采样恒 1（纯静止保持，无爬行、无跳变）
+// 尾段修理：解析解渐近收敛永不到 1——末段以亚像素速度漂向终点（340ms 处残差 ~0.09%），
+// 末帧强制写 1 仍有亚像素级跳变。自剩余行程进入刹停区（TAIL.from）的采样点起，
+// 改用三次 Hermite 平滑刹停：位置/速度与原曲线连续衔接、落定速度恰为 0，
+// 其后采样恒 1（纯静止保持，无爬行、无跳变）
 const springProgress = (): number[] => {
-  const {duration, stiffness, damping, mass, frames} = TRANSITION.spring
+  const {duration, frames} = TRANSITION.spring
   const step = duration / frames / 1000
-  let progress = 0
-  let velocity = 0
   const result: number[] = []
   for (let i = 0; i <= frames; i++) {
-    // 末项强制精确 1，消除积分残差（弹簧参数与 duration 配套时此处已收敛，无可见跳变）
-    result.push(i === frames ? 1 : progress)
-    // 目标位移 1：加速度 = (-刚度·(x-1) - 阻尼·v) / 质量
-    const force = (-stiffness * (progress - 1) - damping * velocity) / mass
-    velocity += force * step
-    progress += velocity * step
+    // 末项强制精确 1，消除渐近残差（弹簧参数与 duration 配套时此处已亚像素，无可见跳变）
+    result.push(i === frames ? 1 : springPosition(i * step))
   }
   // ===== 尾段修理 =====
   const TAIL = {from: 0.985, brake: 7}
   const splice = result.findIndex(p => p >= TAIL.from)
   if (splice >= 1 && splice + TAIL.brake < frames) {
-    // 衔接点位置与速度（速度取前向差分，与数值曲线同斜率，衔接零折角）
+    // 衔接点位置与速度（速度取前向差分，与解析曲线同斜率，衔接零折角）
     const p0 = result[splice]
     const v0 = (result[splice] - result[splice - 1]) / step
     const span = TAIL.brake * step
