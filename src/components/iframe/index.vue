@@ -2,7 +2,8 @@
   <iframe class="lihua-iframe" v-if="isInner" :src="src"/>
   <div v-else>
     <a-card class="lihua-iframe" :styles="{body: {height: '100%', 'box-sizing': 'border-box'}}">
-      <a-flex :gap="16" justify="center" vertical align="center" class="h-full">
+      <a-flex :gap="16" justify="flex-start" vertical align="center" class="h-full linkopen-container">
+        <img class="linkopen-image" :src="themeStore.isDarkTheme ? linkopenHei : linkopenMiao" alt="页面已在新标签页打开">
         <a-typography-title style="margin: 0">页面已加载至浏览器新标签页</a-typography-title>
         <a-typography-link @click="open">再次打开</a-typography-link>
       </a-flex>
@@ -12,8 +13,14 @@
 <script setup lang="ts">
 import {useRoute} from "vue-router";
 import {onMounted, onUnmounted, ref} from "vue";
+import {useThemeStore} from "@/stores/theme";
+import linkopenMiao from '@/assets/error/linkopen-miao.png'
+import linkopenHei from '@/assets/error/linkopen-hei.png'
 
 const route = useRoute()
+
+// 外链插画：亮色模式 miao / 暗色模式 hei
+const themeStore = useThemeStore()
 const props = defineProps<{
   src?: string,
   isInner?: boolean
@@ -75,5 +82,16 @@ onUnmounted(() =>  sessionStorage.removeItem('isRefreshed' + src.value))
  */
 .lihua-iframe {
   height: calc(100vh - var(--layout-display-height) - var(--tab-display-height) - var(--ant-margin) - var(--ant-margin) - 3px - var(--footer-display-height));
+}
+</style>
+<style scoped>
+.linkopen-container {
+  box-sizing: border-box;
+  padding-top: 8vh;
+}
+.linkopen-image {
+  height: 240px;
+  width: auto;
+  max-width: 100%;
 }
 </style>
