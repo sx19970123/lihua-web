@@ -67,7 +67,90 @@ import {hiddenOverflowY} from "@/utils/scrollbar.ts";
  *   - overview 层的 transform-gpu 是承重墙（圆角裁切走合成器遮罩，防角部毛刺，见模板注释）
  */
 
-// ===== 用 Web Animations API 实现的动画时长与曲线，收拢一处便于统调 =====
+// ===== 对外 API：props / slots / emits =====
+
+// 接受父组件参数
+const {
+  expandedWidth = 0,
+  expandedHeight = 0,
+  expandedTop = 100,
+  stretch = true,
+  autoComplete = true,
+  isComplete,
+  isDetailVisible = true,
+  minWindowSpace = 16,
+  bordered = true,
+  // elevated/expanded 的"缺省"必须是 undefined 而非 false（联动判定走 ??、非受控识别靠 === undefined），
+  // 显式 = undefined 编译为 default: undefined，避免 Boolean prop 被布尔转换兜底成 false
+  elevated = undefined,
+  expanded = undefined,
+} = defineProps<{
+  // 展开后的宽度（可展开卡必配：缺失时点击展开被拒绝并告警；静态卡 isDetailVisible=false 可免填）
+  expandedWidth?: number,
+  // 展开后的高度（同 expandedWidth）
+  expandedHeight?: number,
+  // 展开后距离页面顶端像素
+  expandedTop?: number,
+  // overview 过渡期贴合方式：true 拉伸填满容器（非等比双轴，适合整面纯色/渐变背景的卡片，默认）；
+  // false 等比缩放（宽比驱动，底部按比例留白，适合纯文字内容卡片）
+  stretch?: boolean,
+  // 自动完成：展开动画结束后是否直接显示 detail
+  // 设置为 false 时走异步等待：动画播完停在 activity 态、居中播放 spin，
+  // 由外部通过 isComplete 控制内容显示（如异步响应返回后置 true）
+  autoComplete?: boolean,
+  // 当 autoComplete 为 false 时，isComplete 置 true 触发 spin 渐隐、detail 渐显（即关闭 loading）；
+  // 关闭后应由外部在 afterCardClose 中复位为 false，供下一轮展开复用
+  isComplete?: boolean,
+  // 是否可展开（拥有点击展开详情的能力；历史名 isDetailVisible，语义即"可展开"）：
+  // false = 静态卡——点击仅抛 cardClick 事件、无键盘语义、不进 tab 序，
+  // elevated 缺省时跟随此值联动去浮起
+  isDetailVisible?: boolean,
+  // 窗口缩小时的最小间距
+  minWindowSpace?: number,
+  // 边框开关（默认有）：底色/圆角/阴影恒走主题 token 不可配，仅边框可关；
+  // 配置时定死使用，运行时切换随下一次开/关周期生效
+  bordered?: boolean,
+  // 卡片浮起外观（阴影 + 悬停上浮 + 可聚焦的按钮语义）：默认跟随 isDetailVisible——
+  // 可展开的卡才有"点我展开"的浮起邀请，不可展开的静态卡平面呈现；显式传入可解耦覆盖
+  // （如可展开但不浮起、或静态卡仍要浮起）
+  elevated?: boolean,
+  // v-model:expanded 受控开关（类似 Modal 的 open）：外部置 true 展开、置 false 关闭，
+  // 挂载时携带 true 亦会直接展开；不绑定时组件非受控，点击/Esc/蒙版行为照旧。
+  // 内部触发同样经 update:expanded 回写同步；关闭进行中收到的展开指令被忽略，
+  // 并在关闭完成时回写 false 覆盖
+  expanded?: boolean,
+}>()
+
+// 插槽：
+// overview  卡片封面（必传）：ready 态在流内撑起卡片自然尺寸，内容按契约只管满铺背景与排版，
+//           不写圆角/边框/阴影（表面由组件 SURFACE 常驻提供，写了展示异常自负）
+// detail    展开后的详情（可展开卡必传）：按最终尺寸渲染，首个子元素会被加滚动条样式并钉最终高度
+// loading   异步等待层内容（可选）：autoComplete=false 且数据未就绪时居中展示，默认 a-spin
+
+// 定义向外抛出的函数
+/**
+ * cardClick          点击卡片触发（卡片就绪状态下点击卡片触发，参数标记该卡是否可展开）
+ * beforeCardExpand   卡片展开前触发（点击或 v-model:expanded 编程式展开）
+ * afterCardExpand    卡片展开完成后触发
+ * beforeCardClose    卡片关闭前触发（Esc/蒙版/编程式关闭）
+ * afterCardClose     卡片关闭完成后触发
+ * update:expanded    v-model:expanded 的状态回写（展开开始置 true、关闭完成置 false）
+ * */
+const emit = defineEmits<{
+  cardClick: [expandable: boolean],
+  beforeCardExpand: [],
+  afterCardExpand: [],
+  beforeCardClose: [],
+  afterCardClose: [],
+  'update:expanded': [value: boolean],
+}>()
+
+// 动画状态类型
+type StatusType = 'ready' | 'activity' | 'complete' | 'kill'
+
+// ===== 动画引擎 =====
+
+// 用 Web Animations API 实现的动画时长与曲线，收拢一处便于统调
 const TRANSITION = {
   // 非弹簧动画的默认缓动
   easeOut: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
@@ -116,20 +199,6 @@ const SURFACE: CSSProperties = {
 
 // 参与动画的 css 属性（gsap 的 scale 映射为 transform）
 const ANIMATE_PROPS = ['width', 'height', 'left', 'right', 'top', 'opacity', 'transform'] as const
-
-// ready 态样式（init 初值与关闭复位共用）：表面 + 高度链 + 悬停过渡。
-// 非浮起（elevated 判定失败，即不可展开的静态卡）去阴影——底色/圆角/边框保留，卡片身份仍在。
-// 过渡只挂 box-shadow/transform——容器飞行的 onfinish 会直写布局内联值（width/height/top/left），
-// 挂到布局属性会让落定值被过渡拖出漂移尾
-const readyStyle = (elevated: boolean): CSSProperties => ({
-  position: 'static',
-  ...surface.value,
-  ...(elevated ? {} : {boxShadow: undefined}),
-  height: '100%',
-  transitionProperty: 'box-shadow, transform',
-  transitionTimingFunction: 'ease-out',
-  transitionDuration: '180ms',
-})
 
 // 进行中的动画集合（容器主动画 + 内容层 zoom 动画），新飞行开始前全部取消
 // （对应 gsap 被 kill 后不再触发 onComplete；zoom 随容器一并取消，打断时由新飞行从计算值续跑）
@@ -305,107 +374,33 @@ const computedScale = (el: HTMLElement | null): {sx: number, sy: number} => {
   return {sx: matrix.a, sy: matrix.d}
 }
 
-// 接受父组件参数
-const props = defineProps({
-  // 展开后的宽度（可展开卡必配：缺失时点击展开被拒绝并告警；静态卡 isDetailVisible=false 可免填）
-  expandedWidth: {
-    type: Number,
-    default: 0
-  },
-  // 展开后的高度（同 expandedWidth）
-  expandedHeight: {
-    type: Number,
-    default: 0
-  },
-  // 展开后距离页面顶端像素
-  expandedTop: {
-    type: Number,
-    default: 100
-  },
-  // overview 过渡期贴合方式：true 拉伸填满容器（非等比双轴，适合整面纯色/渐变背景的卡片，默认）；
-  // false 等比缩放（宽比驱动，底部按比例留白，适合纯文字内容卡片）
-  stretch: {
-    type: Boolean,
-    default: true
-  },
-  // 自动完成：展开动画结束后是否直接显示 detail
-  // 设置为 false 时走异步等待：动画播完停在 activity 态、居中播放 spin，
-  // 由外部通过 isComplete 控制内容显示（如异步响应返回后置 true）
-  autoComplete: {
-    type: Boolean,
-    default: true
-  },
-  // 当 autoComplete 为 false 时，isComplete 置 true 触发 spin 渐隐、detail 渐显（即关闭 loading）；
-  // 关闭后应由外部在 afterCardClose 中复位为 false，供下一轮展开复用
-  isComplete: {
-    type: Boolean
-  },
-  // 是否可展开（拥有点击展开详情的能力；历史名 isDetailVisible，语义即"可展开"）：
-  // false = 静态卡——点击仅抛 cardClick 事件、无键盘语义、不进 tab 序，
-  // elevated 缺省时跟随此值联动去浮起
-  isDetailVisible: {
-    type: Boolean,
-    default: true
-  },
-  // 窗口缩小时的最小间距
-  minWindowSpace: {
-    type: Number,
-    default: 16
-  },
-  // 边框开关（默认有）：底色/圆角/阴影恒走主题 token 不可配，仅边框可关；
-  // 配置时定死使用，运行时切换随下一次开/关周期生效
-  bordered: {
-    type: Boolean,
-    default: true
-  },
-  // 卡片浮起外观（阴影 + 悬停上浮 + 可聚焦的按钮语义）：默认跟随 isDetailVisible——
-  // 可展开的卡才有"点我展开"的浮起邀请，不可展开的静态卡平面呈现；显式传入可解耦覆盖
-  // （如可展开但不浮起、或静态卡仍要浮起）
-  elevated: {
-    type: Boolean,
-    default: undefined
-  },
-  // v-model:expanded 受控开关（类似 Modal 的 open）：外部置 true 展开、置 false 关闭，
-  // 挂载时携带 true 亦会直接展开；不绑定时组件非受控，点击/Esc/蒙版行为照旧。
-  // 内部触发同样经 update:expanded 回写同步；关闭进行中收到的展开指令被忽略，
-  // 并在关闭完成时回写 false 覆盖
-  expanded: {
-    type: Boolean,
-    default: undefined
-  }
-})
+// ===== props 派生 =====
 
 // 浮起判定：显式 elevated 优先，缺省跟随 isDetailVisible
-const isElevated = computed(() => props.elevated ?? props.isDetailVisible)
+const isElevated = computed(() => elevated ?? isDetailVisible)
 
 // 表面装配：底色/圆角/阴影恒走主题 token（主题切换自动跟随），仅边框可配——
 // 边框经 outline 绘制不占布局盒，关闭时整体移除该键（Vue 对 undefined 样式值按清除处理）
 const surface = computed<CSSProperties>(() => ({
   ...SURFACE,
-  ...(props.bordered ? {} : {outline: undefined, outlineOffset: undefined})
+  ...(bordered ? {} : {outline: undefined, outlineOffset: undefined})
 }))
 
-// 动画状态类型
-type StatusType = 'ready' | 'activity' | 'complete' | 'kill'
+// ready 态样式（init 初值与关闭复位共用）：表面 + 高度链 + 悬停过渡。
+// 非浮起（elevated 判定失败，即不可展开的静态卡）去阴影——底色/圆角/边框保留，卡片身份仍在。
+// 过渡只挂 box-shadow/transform——容器飞行的 onfinish 会直写布局内联值（width/height/top/left），
+// 挂到布局属性会让落定值被过渡拖出漂移尾
+const readyStyle = (elevated: boolean): CSSProperties => ({
+  position: 'static',
+  ...surface.value,
+  ...(elevated ? {} : {boxShadow: undefined}),
+  height: '100%',
+  transitionProperty: 'box-shadow, transform',
+  transitionTimingFunction: 'ease-out',
+  transitionDuration: '180ms',
+})
 
-// 插槽：
-// overview  卡片封面（必传）：ready 态在流内撑起卡片自然尺寸，内容按契约只管满铺背景与排版，
-//           不写圆角/边框/阴影（表面由组件 SURFACE 常驻提供，写了展示异常自负）
-// detail    展开后的详情（可展开卡必传）：按最终尺寸渲染，首个子元素会被加滚动条样式并钉最终高度
-// loading   异步等待层内容（可选）：autoComplete=false 且数据未就绪时居中展示，默认 a-spin
-
-// 定义向外抛出的函数
-/**
- * cardClick          点击卡片触发（卡片就绪状态下点击卡片触发，参数标记该卡是否可展开）
- * beforeCardExpand   卡片展开前触发（点击或 v-model:expanded 编程式展开）
- * afterCardExpand    卡片展开完成后触发
- * beforeCardClose    卡片关闭前触发（Esc/蒙版/编程式关闭）
- * afterCardClose     卡片关闭完成后触发
- * update:expanded    v-model:expanded 的状态回写（展开开始置 true、关闭完成置 false）
- * */
-const emits = defineEmits(['cardClick','beforeCardExpand','afterCardExpand','beforeCardClose','afterCardClose','update:expanded'])
-
-// 初始化ref
+// ===== 核心状态机（初始化ref） =====
 const init = () => {
   // 占位元素的ref
   const placeholderRef = useTemplateRef<HTMLElement>("placeholderRef")
@@ -442,7 +437,7 @@ const init = () => {
   // 展开方向交接：overview → detail（数据已就绪）/ spin（异步等待中）
   const fadeExpandHandover = () => {
     overviewStyle.value = {...overviewStyle.value, opacity: 0}
-    if (props.autoComplete || props.isComplete) {
+    if (autoComplete || isComplete) {
       detailStyle.value = {...detailStyle.value, opacity: 1}
     } else {
       spinStyle.value = {...spinStyle.value, opacity: 1}
@@ -477,16 +472,39 @@ const init = () => {
   // 卸载时清除未触发的交接定时器
   onUnmounted(clearHandoverTimer)
 
+  // 依据当前视口（实时读取，无需缓存）与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
+  // 宽度：视口容不下（展开宽度 + 两侧最小间距）时按视口收缩，之后水平居中（收缩时居中即为最小间距）
+  // 高度：设定高度 + top 超出视口（扣除上下最小间距）时优先压缩 top 垂直居中，仍放不下则 top 压到最小值并按视口收缩高度
+  const getExpandLayout = () => {
+    const viewWidth = window.innerWidth
+    const viewHeight = window.innerHeight
+    const width = expandedWidth > viewWidth - minWindowSpace * 2
+        ? viewWidth - minWindowSpace * 2
+        : expandedWidth
+    const left = viewWidth / 2 - width / 2
+    let height = expandedHeight
+    let top = expandedTop
+    if (height + top > viewHeight - minWindowSpace * 2) {
+      if (height < viewHeight - minWindowSpace * 2) {
+        top = (viewHeight - height) / 2
+      } else {
+        top = minWindowSpace
+        height = viewHeight - minWindowSpace * 2
+      }
+    }
+    return {width, height, top, left}
+  }
+
   // 展开执行体：采集布局并起飞（点击与 v-model:expanded 编程式展开共用）
   const expandCard = () => {
     // 可展开卡尺寸缺失（静态卡免填 / 可展开卡漏配）直接拒绝并告警，避免 NaN 布局飞入视口
-    if (!(props.expandedWidth > 0) || !(props.expandedHeight > 0)) {
+    if (!(expandedWidth > 0) || !(expandedHeight > 0)) {
       console.warn('[expandable-card] 可展开卡片必须配置 expanded-width / expanded-height')
       return
     }
     // 即将执行动画前触发 + 受控状态回写（无 v-model 监听者时为 no-op）
-    emits('beforeCardExpand')
-    emits('update:expanded', true)
+    emit('beforeCardExpand')
+    emit('update:expanded', true)
     // 采集卡片布局位置作为展开起点（无 hover 缩放，实测即精确布局盒）
     const bounding = containerRef.value?.getBoundingClientRect()
     // container 设置为固定定位；表面常驻（surface），飞行悬浮态升一档阴影；
@@ -555,7 +573,7 @@ const init = () => {
           // 内容层缩放飞行：与容器主动画同帧启动、同一弹簧进度序列逐帧同步
           // overview 拉伸填满（stretch）：双轴独立贴合容器；等比时宽比驱动、底部按比例留白由容器表面兜底；
           // detail 恒为拉伸填满
-          if (props.stretch) {
+          if (stretch) {
             transformFlight(overviewRef.value, takeoffW / srcW, width / srcW, takeoffH / srcH, height / srcH, radius)
           } else {
             const scaleFrom = takeoffW / srcW
@@ -571,7 +589,7 @@ const init = () => {
         // 容器飞行落定：进入 resize 重同步窗口（异步模式 loading 驻留在 activity，同样需要）
         expandedSettled.value = true
         // 展开完成：仅在 activity 状态放行（kill=被关闭打断，complete=watch 已处理过 isComplete）
-        if ((props.autoComplete || props.isComplete) && showStatus.value === 'activity') {
+        if ((autoComplete || isComplete) && showStatus.value === 'activity') {
           handleExpandComplete()
         }
       }
@@ -581,9 +599,9 @@ const init = () => {
   // 点击卡片（展开的内部触发口之一；cardClick 的 visible 标记供调用方过滤不可展开卡的点击）
   const handleClickCard = () => {
     // 详情可见
-    const detailVisible = showStatus.value === 'ready' && props.isDetailVisible
+    const detailVisible = showStatus.value === 'ready' && isDetailVisible
     // 卡片点击事件抛出
-    emits('cardClick', detailVisible)
+    emit('cardClick', detailVisible)
 
     // 只有就绪状态才可点击
     if (!detailVisible) {
@@ -591,6 +609,29 @@ const init = () => {
     }
 
     expandCard()
+  }
+
+  // 悬停上浮：位移 + 阴影升档，配 readyStyle 的 box-shadow/transform 过渡形成连续浮起感；
+  // 仅浮起卡（elevated 判定）的 ready 态生效——静态卡无"点我"暗示（无指针手势/无位移/无阴影），
+  // 展开后容器是覆盖层同样不动，门控顺带修复展开态移出鼠标会把悬浮卡阴影降到 tertiary 的旧问题
+  // （mouseenter 不冒泡，进出各触发一次）；进快出慢（过渡取目标态时长）
+  const handleMouseEnterCard = () => {
+    if (showStatus.value !== 'ready' || !isElevated.value) {
+      return
+    }
+    style.value.cursor = 'pointer'
+    style.value.transitionDuration = '180ms'
+    style.value.transform = 'translateY(-3px)'
+    style.value.boxShadow = 'var(--ant-box-shadow-secondary)'
+  }
+  const handleMouseLeaveCard = () => {
+    if (showStatus.value !== 'ready' || !isElevated.value) {
+      return
+    }
+    style.value.cursor = ''
+    style.value.transitionDuration = '240ms'
+    style.value.transform = ''
+    style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
   }
 
   // 监听键盘触发关闭
@@ -639,11 +680,11 @@ const init = () => {
     let overviewSy0 = 0
     if (bounding && bounding.width > 0 && bounding.height > 0 && box && box.width > 0 && box.height > 0) {
       overviewSx0 = box.width / bounding.width
-      overviewSy0 = props.stretch ? box.height / bounding.height : overviewSx0
+      overviewSy0 = stretch ? box.height / bounding.height : overviewSx0
       overviewStyle.value = {...overviewStyle.value, width: px(bounding.width), height: px(bounding.height)}
       if (overviewRef.value) {
         // 起始 transform 先行内持位（transformFlight 首帧即刻接管）
-        overviewRef.value.style.transform = props.stretch
+        overviewRef.value.style.transform = stretch
             ? `scale(${overviewSx0}, ${overviewSy0})`
             : `scale(${overviewSx0})`
       }
@@ -666,13 +707,13 @@ const init = () => {
           showStatus.value = 'activity'
         }
         // 卡片关闭前触发
-        emits('beforeCardClose')
+        emit('beforeCardClose')
         // 关闭遮罩
         showMask.value = false
         // 内容层缩放续降（与容器同序列逐帧同步）：overview 自容器当前盒缩向占位盒，
         // 终态即自然态 scale(1,1)（stretch 逐轴贴合 / 等比宽比驱动）；detail 恒拉伸填满
         if (overviewRef.value && overviewSx0 > 0) {
-          if (props.stretch) {
+          if (stretch) {
             transformFlight(overviewRef.value, overviewSx0, 1, overviewSy0, 1, closeRadius)
           } else {
             transformFlight(overviewRef.value, overviewSx0, 1, overviewSx0, 1, closeRadius)
@@ -710,9 +751,9 @@ const init = () => {
         // 动画执行完成后，状态修改为就绪
         showStatus.value = 'ready'
         // 卡片关闭动画完成后抛出
-        emits('afterCardClose')
+        emit('afterCardClose')
         // 受控状态回写：关闭完成
-        emits('update:expanded', false)
+        emit('update:expanded', false)
         // 悬停态重放：Esc/受控关闭后鼠标可能仍停在卡片上（从未移出，mouseenter 不会再次派发），
         // 依 :hover 命中补一次进入态——恢复小手、上浮与升档阴影；nextTick 等复位 patch 落地后再判定
         nextTick(() => {
@@ -768,7 +809,7 @@ const init = () => {
   // 处理展开完成
   const handleExpandComplete = () => {
     showStatus.value = 'complete'
-    emits('afterCardExpand')
+    emit('afterCardExpand')
     // 动画结束/数据就绪时切换内容：overview/spin 渐隐，detail 渐显
     overviewStyle.value = {...overviewStyle.value, opacity: 0}
     spinStyle.value = {...spinStyle.value, opacity: 0}
@@ -791,140 +832,98 @@ const init = () => {
     keydownClose,
     handleClose,
     handleClickCard,
+    handleMouseEnterCard,
+    handleMouseLeaveCard,
     expandCard,
     handleExpandComplete,
     syncExpandedLayout
   }
 }
-const {showStatus, showMask, closing, expandedSettled, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, expandCard, handleExpandComplete, syncExpandedLayout} = init()
+const {showStatus, showMask, closing, expandedSettled, style, overviewStyle, detailStyle, spinStyle, placeholderRef, containerRef, overviewRef, detailRef, keydownClose, handleClose, handleClickCard, handleMouseEnterCard, handleMouseLeaveCard, expandCard, handleExpandComplete, syncExpandedLayout} = init()
 
-
-// 悬停上浮：位移 + 阴影升档，配 readyStyle 的 box-shadow/transform 过渡形成连续浮起感；
-// 仅浮起卡（elevated 判定）的 ready 态生效——静态卡无"点我"暗示（无指针手势/无位移/无阴影），
-// 展开后容器是覆盖层同样不动，门控顺带修复展开态移出鼠标会把悬浮卡阴影降到 tertiary 的旧问题
-// （mouseenter 不冒泡，进出各触发一次）；进快出慢（过渡取目标态时长）
-const handleMouseEnterCard = () => {
-  if (showStatus.value !== 'ready' || !isElevated.value) {
-    return
-  }
-  style.value.cursor = 'pointer'
-  style.value.transitionDuration = '180ms'
-  style.value.transform = 'translateY(-3px)'
-  style.value.boxShadow = 'var(--ant-box-shadow-secondary)'
-}
-const handleMouseLeaveCard = () => {
-  if (showStatus.value !== 'ready' || !isElevated.value) {
-    return
-  }
-  style.value.cursor = ''
-  style.value.transitionDuration = '240ms'
-  style.value.transform = ''
-  style.value.boxShadow = 'var(--ant-box-shadow-tertiary)'
-}
-
-// 依据当前视口（实时读取，无需缓存）与 props 计算展开后的完整布局（展开时与窗口 resize 共用同一份适配规则）
-// 宽度：视口容不下（展开宽度 + 两侧最小间距）时按视口收缩，之后水平居中（收缩时居中即为最小间距）
-// 高度：设定高度 + top 超出视口（扣除上下最小间距）时优先压缩 top 垂直居中，仍放不下则 top 压到最小值并按视口收缩高度
-const getExpandLayout = () => {
-  const minWindowSpace = props.minWindowSpace
-  const viewWidth = window.innerWidth
-  const viewHeight = window.innerHeight
-  const width = props.expandedWidth > viewWidth - minWindowSpace * 2
-      ? viewWidth - minWindowSpace * 2
-      : props.expandedWidth
-  const left = viewWidth / 2 - width / 2
-  let height = props.expandedHeight
-  let top = props.expandedTop
-  if (height + top > viewHeight - minWindowSpace * 2) {
-    if (height < viewHeight - minWindowSpace * 2) {
-      top = (viewHeight - height) / 2
-    } else {
-      top = minWindowSpace
-      height = viewHeight - minWindowSpace * 2
-    }
-  }
-  return {width, height, top, left}
-}
-
-// 全局监听按需挂载：keydown（esc 关闭）仅在非就绪态需要，
-// 就绪态不挂任何全局监听——首页多卡片实例平时零监听开销；随展开/关闭的状态流转自动挂载与卸载
-watch(showStatus, (status, previous) => {
-  if (status === 'ready') {
-    window.removeEventListener('keydown', keydownClose)
-  } else if (previous === 'ready') {
-    window.addEventListener('keydown', keydownClose)
-  }
-})
-
-// resize（重定位展开中的卡片）挂在"展开落定窗口"上（complete 态或异步模式 loading 驻留期）——
-// 原实现只认 showStatus==='complete'，异步模式 loading 驻留 activity 期间 resize 不被响应（不自适应）；
-// 飞行中不挂（打断续跑机制接管布局），关闭开始即卸载
-watch(expandedSettled, (settled) => {
-  if (settled) {
-    window.addEventListener('resize', windowWidthResize)
-  } else {
-    window.removeEventListener('resize', windowWidthResize)
-  }
-})
-
-// 卸载组件前删除监听函数（防御性移除，未挂载时为 no-op）
-onUnmounted(() => {
-  window.removeEventListener('resize', windowWidthResize)
-  window.removeEventListener("keydown", keydownClose);
-  // 取消进行中的全部动画（容器 + zoom），避免动画结束后向已卸载组件抛出事件
-  cancelActiveAnimations()
-  // 取消尚未执行的 resize 处理
-  if (resizeRafId !== null) {
-    cancelAnimationFrame(resizeRafId)
-  }
-})
-
-// 窗口变化后重新设置展开卡片布局
-// resize 事件在拖拽窗口时高频触发，通过 rAF 合并为每帧最多计算一次；
-// 布局由 getExpandLayout 纯计算得出（无 DOM 读取），读写不再交错触发强制重排
-let resizeRafId: number | null = null
-const windowWidthResize = () => {
-  if (resizeRafId !== null) {
-    return
-  }
-  resizeRafId = requestAnimationFrame(() => {
-    resizeRafId = null
-    if (!expandedSettled.value || !containerRef.value) {
+// ===== 全局监听与生命周期装配 =====
+const initListener = () => {
+  // 窗口变化后重新设置展开卡片布局
+  // resize 事件在拖拽窗口时高频触发，通过 rAF 合并为每帧最多计算一次；
+  // 布局由 getExpandLayout 纯计算得出（无 DOM 读取），读写不再交错触发强制重排
+  let resizeRafId: number | null = null
+  const windowWidthResize = () => {
+    if (resizeRafId !== null) {
       return
     }
-    // 展开状态下若 resize 引发页面回流出现滚动条，补充隐藏（Mask 打开时已隐藏过一次，此处幂等）
-    hiddenOverflowY()
-    syncExpandedLayout()
-  })
-}
-
-// v-model:expanded 受控口：外部驱动的展开/关闭，与内部触发（点击/Esc/蒙版）共用同一执行体，
-// 状态回写经 update:expanded；关闭进行中收到的展开指令被忽略（关闭完成时回写 false 覆盖）
-watch(() => props.expanded, (value) => {
-  if (value === undefined) {
-    return
+    resizeRafId = requestAnimationFrame(() => {
+      resizeRafId = null
+      if (!expandedSettled.value || !containerRef.value) {
+        return
+      }
+      // 展开状态下若 resize 引发页面回流出现滚动条，补充隐藏（Mask 打开时已隐藏过一次，此处幂等）
+      hiddenOverflowY()
+      syncExpandedLayout()
+    })
   }
-  if (value) {
-    if (showStatus.value === 'ready' && props.isDetailVisible) {
+
+  // 全局监听按需挂载：keydown（esc 关闭）仅在非就绪态需要，
+  // 就绪态不挂任何全局监听——首页多卡片实例平时零监听开销；随展开/关闭的状态流转自动挂载与卸载
+  watch(showStatus, (status, previous) => {
+    if (status === 'ready') {
+      window.removeEventListener('keydown', keydownClose)
+    } else if (previous === 'ready') {
+      window.addEventListener('keydown', keydownClose)
+    }
+  })
+
+  // resize（重定位展开中的卡片）挂在"展开落定窗口"上（complete 态或异步模式 loading 驻留期）——
+  // 原实现只认 showStatus==='complete'，异步模式 loading 驻留 activity 期间 resize 不被响应（不自适应）；
+  // 飞行中不挂（打断续跑机制接管布局），关闭开始即卸载
+  watch(expandedSettled, (settled) => {
+    if (settled) {
+      window.addEventListener('resize', windowWidthResize)
+    } else {
+      window.removeEventListener('resize', windowWidthResize)
+    }
+  })
+
+  // 卸载组件前删除监听函数（防御性移除，未挂载时为 no-op）
+  onUnmounted(() => {
+    window.removeEventListener('resize', windowWidthResize)
+    window.removeEventListener("keydown", keydownClose);
+    // 取消进行中的全部动画（容器 + zoom），避免动画结束后向已卸载组件抛出事件
+    cancelActiveAnimations()
+    // 取消尚未执行的 resize 处理
+    if (resizeRafId !== null) {
+      cancelAnimationFrame(resizeRafId)
+    }
+  })
+
+  // v-model:expanded 受控口：外部驱动的展开/关闭，与内部触发（点击/Esc/蒙版）共用同一执行体，
+  // 状态回写经 update:expanded；关闭进行中收到的展开指令被忽略（关闭完成时回写 false 覆盖）
+  watch(() => expanded, (value) => {
+    if (value === undefined) {
+      return
+    }
+    if (value) {
+      if (showStatus.value === 'ready' && isDetailVisible) {
+        expandCard()
+      }
+    } else if (showStatus.value !== 'ready' && !closing.value) {
+      handleClose(null, 'model')
+    }
+  })
+
+  // 挂载时携带初始 expanded=true 直接展开（Modal 的 open 语义；此时容器已挂载，可实测起点）
+  onMounted(() => {
+    if (expanded && showStatus.value === 'ready' && isDetailVisible) {
       expandCard()
     }
-  } else if (showStatus.value !== 'ready' && !closing.value) {
-    handleClose(null, 'model')
-  }
-})
+  })
 
-// 挂载时携带初始 expanded=true 直接展开（Modal 的 open 语义；此时容器已挂载，可实测起点）
-onMounted(() => {
-  if (props.expanded && showStatus.value === 'ready' && props.isDetailVisible) {
-    expandCard()
-  }
-})
-
-// 监听 isComplete 变化，当 autoComplete 为 false 时，isComplete 为true 改变 showStatus 状态
-watch(() => props.isComplete, (value) => {
-  // 关闭动画进行中不处理（异步响应在关闭期间到达时直接忽略，关闭完成后由外部重置 isComplete）
-  if (!props.autoComplete && props.isDetailVisible && !closing.value && showStatus.value === 'activity' && value) {
-    handleExpandComplete()
-  }
-})
+  // 监听 isComplete 变化，当 autoComplete 为 false 时，isComplete 为true 改变 showStatus 状态
+  watch(() => isComplete, (value) => {
+    // 关闭动画进行中不处理（异步响应在关闭期间到达时直接忽略，关闭完成后由外部重置 isComplete）
+    if (!autoComplete && isDetailVisible && !closing.value && showStatus.value === 'activity' && value) {
+      handleExpandComplete()
+    }
+  })
+}
+initListener()
 </script>
