@@ -2,7 +2,7 @@
   <div>
     <a-flex :gap="16" vertical>
       <!--      检索条件-->
-      <a-card :style="{border: 'none'}" :body-style="{'padding-bottom': '0'}">
+      <a-card :styles="{body: {'padding-bottom': '0'}}">
         <a-form :colon="false">
           <a-row :gutter="16">
             <a-col>
@@ -17,23 +17,17 @@
             </a-col>
             <a-col>
               <a-form-item label="附件状态">
-                <a-select placeholder="请选择附件状态" v-model:value="attachmentQuery.status" allowClear>
-                  <a-select-option v-for="item in sys_attachment_status" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择附件状态" v-model:value="attachmentQuery.status" allowClear :options="sys_attachment_status"/>
               </a-form-item>
             </a-col>
             <a-col>
               <a-form-item label="上传方式">
-                <a-select placeholder="请选择上传方式" v-model:value="attachmentQuery.uploadMode" allowClear>
-                  <a-select-option v-for="item in sys_attachment_upload_mode" :value="item.value">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select placeholder="请选择上传方式" v-model:value="attachmentQuery.uploadMode" allowClear :options="sys_attachment_upload_mode"/>
               </a-form-item>
             </a-col>
             <a-col>
               <a-form-item label="客户端类型">
-                <a-select v-model:value="attachmentQuery.clientType" placeholder="请选择" style="width: 120px" allow-clear>
-                  <a-select-option :value="item.value" v-for="item in sys_client_type">{{item.label}}</a-select-option>
-                </a-select>
+                <a-select v-model:value="attachmentQuery.clientType" placeholder="请选择" style="width: 120px" allow-clear :options="sys_client_type"/>
               </a-form-item>
             </a-col>
             <a-col>
@@ -63,10 +57,11 @@
         </a-form>
       </a-card>
       <!--      列表-->
+      <a-card :styles="{body: {padding: 0}}">
       <a-table :pagination="false"
                :data-source="attachmentList"
                :row-selection="attachmentRowSelectionType"
-               :custom-row="handleRowClick"
+               :on-row="handleRowClick"
                :columns="attachmentColumn"
                :loading="tableLoad"
                row-class-name="hover-cursor-pointer"
@@ -133,7 +128,7 @@
                 <DownOutlined />
                 更多
               </a>
-              <template #overlay>
+              <template #popupRender>
                 <a-menu>
                   <a-menu-item>
                     <a-popconfirm title="删除后不可恢复，是否删除？"
@@ -192,10 +187,11 @@
           </a-flex>
         </template>
       </a-table>
+      </a-card>
     </a-flex>
 <!--    详情模态框-->
     <a-modal v-model:open="showInfoModal" @cancel="handleCloseInfoModal" width="1000px" :footer="null">
-      <a-descriptions title="附件详情" bordered :label-style="{width: '110px'}">
+      <a-descriptions title="附件详情" bordered :styles="{label: {width: '110px'}}">
         <!-- 文件信息 -->
         <a-descriptions-item label="附件名称" :span="1">
           <a-typography-link v-if="attachmentInfo.status === '0' && attachmentInfo.type?.startsWith('image')" @click="() => handlePreview(attachmentInfo.id, attachmentInfo.type)">{{attachmentInfo.originalName}}</a-typography-link>
@@ -256,7 +252,7 @@
           />
         </a-form-item>
         <a-form-item label="附件链接">
-          <a-textarea :auto-size="{ minRows: 3 }"
+          <a-textarea :auto-size="{ minRows: 8 }"
                       v-model:value="shareUrl"
                       placeholder="有效时间失去焦点以获取分享链接"
                       readonly/>
@@ -277,10 +273,9 @@
 <script setup lang="ts">
 
 // 查询列表
-import type {ColumnsType} from "ant-design-vue/es/table/interface";
 import {computed, onUnmounted, ref} from "vue";
 import type {SysAttachment, SysAttachmentDTO, SysAttachmentVO} from "@/api/system/attachment/type/sys-attachment.ts";
-import {message} from "@/antd-adapter";
+import {message, type TableColumnsType} from "@/antd-adapter";
 import {deleteData, forceDeleteData, getDownloadURL, queryById, queryPage} from "@/api/system/attachment/attachment.ts";
 import dayjs from "dayjs";
 import {initDict} from "@/helpers/dict.ts";
@@ -324,7 +319,7 @@ const initSearch = () => {
     }
   }
 
-  const attachmentColumn = ref<ColumnsType>([
+  const attachmentColumn = ref<TableColumnsType>([
     {
       title: '附件名称',
       key: 'originalName',
