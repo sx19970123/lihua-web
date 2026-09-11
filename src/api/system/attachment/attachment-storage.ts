@@ -2,14 +2,10 @@ import request from "@/utils/request.ts";
 import type {SysAttachment} from "@/api/system/attachment/type/sys-attachment.ts";
 
 // 根据md5查询附件是否存在
-export const existsAttachmentByMd5 = (md5: string, originFileName: string) => {
+export const existsAttachmentByMd5 = (md5: string) => {
     return request<boolean>({
-        url: `system/attachment/storage/exists`,
-        method: "post",
-        data: {
-            md5,
-            originFileName,
-        }
+        url: `system/attachment/storage/exists/${md5}`,
+        method: "get",
     })
 }
 

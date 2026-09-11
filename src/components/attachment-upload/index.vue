@@ -395,7 +395,7 @@ const initUpload = () => {
         return
       }
       // 2. 根据md5向后端查询数据库，判断附件是否需要上传
-      const resp = await existsAttachmentByMd5(md5, file.name)
+      const resp = await existsAttachmentByMd5(md5)
       if (resp.code === 200) {
         if (resp.data) {
           awaitHandleFile.value = true
@@ -706,7 +706,7 @@ const initChunkUpload = () => {
 
       if (needFetch) {
         // 根据md5 查询数据库数据
-        existsAttachmentByMd5(md5, file.name).then(async resp => {
+        existsAttachmentByMd5(md5).then(async resp => {
           if (resp.code === 200) {
             // 数据存在，返回false
             if (resp.data) {
