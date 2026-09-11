@@ -72,13 +72,16 @@ export const fastUpload = (data: SysAttachment) => {
     })
 }
 
+// 分片上传 URL 中标记附件 md5 的查询参数名（attachment-upload 组件判别同 md5 分片请求是否在途）
+export const CHUNK_MD5_QUERY = "lh+attachment_md5="
+
 // 分片文件上传
 export const chunksUpload = (file: Blob, uploadId: string, md5: string, index: number, callback: Function) => {
     const formData = new FormData();
     formData.append('file', file)
 
     return request({
-        url: `system/attachment/storage/chunk/upload/${uploadId}/${index}?lh+attachment_md5=${md5}`,
+        url: `system/attachment/storage/chunk/upload/${uploadId}/${index}?${CHUNK_MD5_QUERY}${md5}`,
         method: 'post',
         data: formData,
         headers: {

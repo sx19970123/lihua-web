@@ -31,6 +31,6 @@ export type {
 // antdv-next 顶层无导出：本地定义或内部子包转发
 /** Menu 列表项类型，由 items 属性派生 */
 export type ItemType = NonNullable<MenuProps['items']>[number]
-export type {UploadRequestOption} from '@v-c/upload'
+export type {UploadRequestOption, VcFile} from '@v-c/upload'
 // Tag 语义化样式类型（root/icon/content/close）
 export type {TagStylesType} from 'antdv-next/dist/tag/index'

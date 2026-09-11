@@ -81,11 +81,12 @@
 </template>
 
 <script setup lang="ts">
-import {message, Modal, Upload, type UploadFile} from "@/antd-adapter";
-import {h, ref, watch} from "vue";
+import {message, Modal, Upload, type UploadFile, type VcFile} from "@/antd-adapter";
+import {h, onUnmounted, ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import token from "@/helpers/token.ts";
 import {
+  CHUNK_MD5_QUERY,
   chunksMerge,
   chunksUpload,
   chunksUploadedIndex,
@@ -110,6 +111,10 @@ const videoExtensions = ["mp4", "avi", "mkv", "mov", "wmv", "flv", "webm"]
 const baseAPI = import.meta.env.VITE_APP_BASE_API
 const uploadURL = `${baseAPI}/system/attachment/storage/upload`
 const chunk_upload_prefix = "upload-record-"
+// 上传方式字典 sys_attachment_upload_mode 的值域（0=一般上传 1=分片 2=秒传）
+const UPLOAD_MODE = {COMMON: "0", CHUNK: "1", FAST: "2"} as const
+// hash 计算的读取分片大小（MB）：仅为 web worker 流式读取，与上传分片大小（chunkSize）无关
+const HASH_CHUNK_SIZE_MB = 10
 const authorization = 'Bearer ' + getToken()
 const router = useRoute()
 const themeStore = useThemeStore()
@@ -153,12 +158,39 @@ const {mode = 'button', icon, text, uploadType = [], description, maxCount = 10,
   autoRemove?: boolean,
 }>()
 
+// 双向绑定空值容错：null/undefined 按空串处理，调用方初始化缺陷以 console 暴露（throw 会击穿整页渲染）
 if (modelValue === null || modelValue === undefined) {
-  throw new Error("请检查附件双向绑定对象是否为 null 或 undefined，如无初值请赋值为 ''");
+  console.error("附件双向绑定值为 null/undefined，已按空串处理；如无初值请赋值为 ''")
 }
 
 // 方法
-const emits = defineEmits(["update:modelValue", "uploadError", "uploadSuccess","exceedMaxCount", "remove"])
+const emits = defineEmits<{
+  // v-model 双向绑定回写（逗号分隔的附件 id）
+  'update:modelValue': [value: string],
+  // 上传失败（errorMsg 有无取决于失败环节）
+  uploadError: [file: UploadFile, errorMsg?: string],
+  // 上传成功
+  uploadSuccess: [payload: { file: UploadFile, fileList: UploadFile[] }],
+  // 超出最大上传数被拒收
+  exceedMaxCount: [file: VcFile],
+  // 附件移除：列表内移除回调整文件对象；autoRemove 确认删除回传业务结果
+  remove: [payload: UploadFile | { id: string, status: string }]
+}>()
+
+// 轮询类定时器登记：异常路径统一在组件卸载时兜底清理
+const pendingTimers = new Set<ReturnType<typeof setInterval>>()
+const registerInterval = (id: ReturnType<typeof setInterval>) => {
+  pendingTimers.add(id)
+  return id
+}
+const clearRegisteredInterval = (id: ReturnType<typeof setInterval>) => {
+  pendingTimers.delete(id)
+  clearInterval(id)
+}
+onUnmounted(() => {
+  pendingTimers.forEach(id => clearInterval(id))
+  pendingTimers.clear()
+})
 
 // 附件对象
 const sysAttachment = ref<SysAttachment>({})
@@ -168,7 +200,7 @@ const handleSysAttachment = (file: UploadFile, md5: string, uploadMode?: string)
   sysAttachment.value = {
     businessCode: businessCode ?? router.name?.toString(),
     businessName: businessName ?? router.meta.label as string,
-    uploadMode: uploadMode ?? "0",
+    uploadMode: uploadMode ?? UPLOAD_MODE.COMMON,
     // 组件中是否指定了附件名称，指定的情况下使用指定名称 + 原附件类型
     originalName: fileName ? fileName + getAttachmentExpandedName(file) : file.name,
     size: file.size? file.size.toString() : "",
@@ -191,12 +223,18 @@ const getAttachmentExpandedName = (file: UploadFile) => {
 const fileList = ref<UploadFile[]>([])
 // 附件秒传轮询等待变量
 const awaitHandleFile = ref<boolean>(false)
+// 外部连续变更双向绑定时的乱序防护：仅最新一次变更的响应允许回写
+let initVModelVersion = 0
 // 初始化双向绑定
 const initVModel = async () => {
-  const ids = modelValue.split(",").filter(Boolean)
+  const version = ++initVModelVersion
+  const ids = (modelValue ?? "").split(",").filter(Boolean)
   if (ids && ids.length > 0) {
     // 初次加载数据时根据双向绑定内容请求附件信息
     const resp = await queryAttachmentInfoByIds(ids)
+    if (version !== initVModelVersion) {
+      return
+    }
     if (resp.code === 200) {
       // 组合fileList
       // 数据回显
@@ -219,8 +257,8 @@ const initVModel = async () => {
 
 // 初始化附件上传
 const initUpload = () => {
-  // 附件上传前检验，同时进行不同上传逻辑的区分
-  const beforeUpload = async (file: UploadFile, currentFileList: UploadFile[]) => {
+  // 附件上传前检验，同时进行不同上传逻辑的区分（beforeUpload 实参为 VcFile：原生 File + uid）
+  const beforeUpload = async (file: VcFile, currentFileList: VcFile[]) => {
     // 获取附件数据异常
     if (!file || !file.name || !file.size) {
       message.error("获取附件数据异常")
@@ -232,9 +270,8 @@ const initUpload = () => {
       return Upload.LIST_IGNORE;
     }
 
-    // 控制附件上传最大数
-    const index = currentFileList.findIndex(item => item === file)
-    if (index >= maxCount - fileList.value.length) {
+    // 控制附件上传最大数（currentFileList 已包含本次进入的文件）
+    if (currentFileList.length > maxCount) {
       emits("exceedMaxCount", file)
       return Upload.LIST_IGNORE;
     }
@@ -249,10 +286,9 @@ const initUpload = () => {
     }
   };
 
-  // 检查附件大小
+  // 检查附件大小（字节直接比较：Math.ceil 会把 1 字节文件按 1MB 判定）
   const checkSize = (size: number): boolean => {
-    const sizeMB = Math.ceil(size / 1024 / 1024)
-    const flag = maxSize >= sizeMB
+    const flag = maxSize * 1024 * 1024 >= size
     if (!flag) {
       message.error("仅允许上传" + maxSize + "MB以内的附件")
     }
@@ -262,8 +298,8 @@ const initUpload = () => {
   // 检查附件类型
   const checkType = (fileName: string): boolean => {
     const split = fileName.split(".")
-    // 附件没有后缀
-    if (split.length === 0) {
+    // 附件没有后缀（split 结果恒非空，无后缀时为单元素）
+    if (split.length === 1) {
       message.error("未知的附件类型")
       return false;
     }
@@ -346,11 +382,18 @@ const initUpload = () => {
   }
 
   // 一般附件上传，返回true由a-upload进行上传，返回false执行附件秒传逻辑
-  const startUpload = (file: UploadFile) => {
+  const startUpload = (file: VcFile) => {
     return new Promise(async (resolve) => {
 
-      // 1. 获取附件md5
-      const md5 = await handleCalculateHash(file) as string
+      // 1. 获取附件md5（失败时终止本次上传并标记错误，不让异常逃逸到 a-upload）
+      let md5: string
+      try {
+        md5 = await handleCalculateHash(file) as string
+      } catch {
+        handleUploadError(file, "附件哈希计算失败")
+        resolve(false)
+        return
+      }
       // 2. 根据md5向后端查询数据库，判断附件是否需要上传
       const resp = await existsAttachmentByMd5(md5, file.name)
       if (resp.code === 200) {
@@ -376,17 +419,17 @@ const initUpload = () => {
   // 处理附件秒传
   const handleFastUpload = (file: UploadFile, md5: string) => {
     // 构建 sysAttachment
-    handleSysAttachment(file, md5, "2")
+    handleSysAttachment(file, md5, UPLOAD_MODE.FAST)
     fastUpload(sysAttachment.value).then((resp) => {
-      // 轮询等待awaitHandleFile值变化
-      const checkInterval = setInterval(() => {
+      // 轮询等待awaitHandleFile值变化（100ms 高频：秒传响应先到、handleChange 复位信号紧随其后）
+      const checkInterval = registerInterval(setInterval(() => {
         if (!awaitHandleFile.value) {
           // 清除轮询
-          clearInterval(checkInterval)
+          clearRegisteredInterval(checkInterval)
           if (resp.code === 200) {
             const id = resp.data
             if (id) {
-              fileList.value.some(item => {
+              fileList.value.forEach(item => {
                 if (item.uid === file.uid) {
                   item.url = id
                   item.status = "done"
@@ -394,7 +437,7 @@ const initUpload = () => {
               })
               // 处理双向绑定
               handleModelValue(file, fileList.value)
-              emits("uploadSuccess", {file, fileList})
+              emits("uploadSuccess", {file, fileList: fileList.value})
               uploading.value = false
             } else {
               handleUploadError(file, resp.msg)
@@ -403,7 +446,7 @@ const initUpload = () => {
             handleUploadError(file, resp.msg)
           }
         }
-      }, 100)
+      }, 100))
     })
   }
 
@@ -446,10 +489,16 @@ const initChunkUpload = () => {
   }
 
   // 开始进行分片上传
-  const startChunkUpload = async (file: UploadFile) => {
+  const startChunkUpload = async (file: VcFile) => {
     uploading.value = true
-    // 1. 获取附件md5值
-    const md5 = await handleCalculateHash(file) as string
+    // 1. 获取附件md5值（失败时终止本次上传，handleUploadError 内复位 loading）
+    let md5: string
+    try {
+      md5 = await handleCalculateHash(file) as string
+    } catch {
+      handleUploadError(file, "附件哈希计算失败")
+      return
+    }
     // 2. 判断是否进行附件上传
     let allow = await allowUpload(file, md5);
     // 允许上传附件
@@ -463,7 +512,7 @@ const initChunkUpload = () => {
   }
 
   // 处理分片上传逻辑
-  const handleChunkUpload = async (file: UploadFile, md5: string) => {
+  const handleChunkUpload = async (file: VcFile, md5: string) => {
     status.value = "UPDATE"
     progress.value = 0
     // 获取浏览器缓存中记录的分片上传信息
@@ -491,8 +540,10 @@ const initChunkUpload = () => {
     // 4. 创建各种计数器
     // 分片上传计数器
     let uploadedChunkNum = 0
-    // 已上传大小计数器
-    let uploadedChunkSize = uploadedIndexList.length * chunkSize * 1024 * 1024
+    // 已上传大小计数器（按分片实际大小累计：尾片不足整片大小）
+    let uploadedChunkSize = uploadedIndexList.reduce((sum, index) => sum + (chunks[index - 1]?.chunk.size ?? 0), 0)
+    // 分片维度的已上传字节（进度回调的 bytes 为该分片内累积值，跨回调直接累加会重复计数）
+    const chunkUploadedBytes = new Map<number, number>()
 
     // 没有需要上传的情况，直接调用合并
     if (needUploadChunks.length === 0) {
@@ -509,14 +560,19 @@ const initChunkUpload = () => {
       try {
         // 调用分片上传接口
         const resp = await chunksUpload(chunk, recordObj.uploadId, md5, index, (bytes: number) => {
-          // 上传状态显示，并实时更新上传进度
-          uploadedChunkSize = bytes + uploadedChunkSize
+          // 上传状态显示，并实时更新上传进度（bytes 为该分片内累积值，取增量累加）
+          const last = chunkUploadedBytes.get(index) ?? 0
+          chunkUploadedBytes.set(index, bytes)
+          uploadedChunkSize += bytes - last
           recordObj.uploadedChunkSize = Math.trunc(uploadedChunkSize / 1024 / 1024)
           recordObj.totalSize = Math.trunc(file.size ? file.size / 1024 / 1024 : 0 )
           localStorage.setItem(chunk_upload_prefix + md5, JSON.stringify(recordObj))
-          progress.value = Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100)
+          progress.value = recordObj.totalSize ? Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100) : 0
         })
         if (resp.code === 200) {
+          // 分片完成按实际大小结算，消除进度回调可能漏报的尾差
+          uploadedChunkSize += chunk.size - (chunkUploadedBytes.get(index) ?? 0)
+          chunkUploadedBytes.set(index, chunk.size)
           // 修改状态为已上传
           needUploadChunks[i].status = "completed"
           // 计数器 + 1
@@ -546,7 +602,7 @@ const initChunkUpload = () => {
     // 6. 初始化chunkUploadCount个上传任务
     const queue: Promise<any>[] = [];
     for (let i = 0; i < Math.min(chunkUploadCount, needUploadChunks.length); i++) {
-      queue.push(uploadChunk(i++));
+      queue.push(uploadChunk(i));
     }
 
     await Promise.all(queue).catch((e) => {
@@ -561,17 +617,24 @@ const initChunkUpload = () => {
 
   // 同步分片上传状态
   const handleSyncChunkUploadStatus = (file: UploadFile, md5: string) => {
-    const record = localStorage.getItem(chunk_upload_prefix + md5)
-    if (record) {
-      const interval = setInterval(() => {
+    const recordKey = chunk_upload_prefix + md5
+    if (localStorage.getItem(recordKey)) {
+      // 1000ms 低频：断点续传状态由其他上传方推进 localStorage，同步进度即可
+      const interval = registerInterval(setInterval(() => {
+        // 每次重读记录：进度由并发上传方推进，闭包快照会恒为旧值导致轮询永不结束
+        const record = localStorage.getItem(recordKey)
+        if (!record) {
+          clearRegisteredInterval(interval)
+          return
+        }
         const recordObj: UploadRecordType = JSON.parse(record)
-        progress.value = Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100)
+        progress.value = recordObj.totalSize ? Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100) : 0
         // 检测到上传状态为completed时，执行附件秒传获取数据
         if (recordObj.status === "completed") {
+          clearRegisteredInterval(interval)
           handleFastUpload(file, md5)
-          clearInterval(interval);
         }
-      }, 1000)
+      }, 1000))
     } else {
       // 没有本地记录直接调用附件秒传
       handleFastUpload(file, md5)
@@ -579,34 +642,43 @@ const initChunkUpload = () => {
   }
 
   // 处理分片
-  const handleChunk = (file: UploadFile, size: number): Blob[] => {
+  const handleChunk = (file: VcFile, size: number): Blob[] => {
     const chunks:Blob[] = []
     if (file.size) {
       size = size * 1024 * 1024
       for (let i = 0; i < file.size; i = size + i) {
-        chunks.push((file as any).slice(i, size + i))
+        chunks.push(file.slice(i, size + i))
       }
     }
     return chunks;
   }
 
   // 计算附件哈希
-  const handleCalculateHash = (file: UploadFile) => {
+  const handleCalculateHash = (file: VcFile) => {
     status.value = "MD5"
     progress.value = 0
 
-    const chunks = handleChunk(file, 10)
-    return new Promise(resolve => {
+    const chunks = handleChunk(file, HASH_CHUNK_SIZE_MB)
+    return new Promise((resolve, reject) => {
       // 通过webWorker后台处理hash计算，防止ui阻塞
       const worker = new Worker(new URL("./hash-worker.ts", import.meta.url), {type: "module"})
+      // worker 加载/运行异常兜底：不处理则 promise 永不落定、上传流程永久卡死
+      worker.onerror = () => {
+        reject(new Error("附件哈希计算失败"))
+        worker.terminate()
+      }
       // 接收hash计算完成后的结果
       worker.onmessage = (event) => {
         const resp = event.data
         if (typeof resp === "string") {
           resolve(resp)
           worker.terminate()
-        } else {
+        } else if (typeof resp === "number") {
           progress.value = resp
+        } else if (resp && typeof resp === "object" && resp.type === "error") {
+          // worker 内分片读取失败的主动上报（协议：{type: 'error', message}）
+          reject(new Error(resp.message ?? "附件哈希计算失败"))
+          worker.terminate()
         }
       }
       worker.postMessage(chunks)
@@ -622,7 +694,7 @@ const initChunkUpload = () => {
         const uploadRecord: UploadRecordType = JSON.parse(record)
         // 缓存对象为上传中状态，检查当前正在进行的请求，post:开头，包含md5是否存在，存在即处于正在上传状态，不存在即为中途断开状态
         if (uploadRecord.status === "in_progress") {
-          resolve(![... currentRequests].some(url => url.startsWith("post:") && url.includes("?lh+attachment_md5=" + md5)))
+          resolve(![... currentRequests].some(url => url.startsWith("post:") && url.includes("?" + CHUNK_MD5_QUERY + md5)))
         } else {
           // 已完成上传，从数据库查询对应信息
           needFetch = true
@@ -653,7 +725,7 @@ const initChunkUpload = () => {
         })
         // 新建localStorage缓存数据
         async function _initChunkUploadStorage() {
-          handleSysAttachment(file, md5, "1")
+          handleSysAttachment(file, md5, UPLOAD_MODE.CHUNK)
           // 从后端获取updateId
           const resp = await chunksUploadStart(sysAttachment.value)
           if (resp.code === 200) {
@@ -678,12 +750,16 @@ const initChunkUpload = () => {
   // 处理附件合并
   const handleChunksMerge = (file: UploadFile, recordObj: UploadRecordType, md5: string) => {
     status.value = "MERGE"
+    // 进入合并前把本地记录置为 completed（分片已全部就绪）：合并期间会话中断（刷新/关闭）后，
+    // 重传会经 existsAttachmentByMd5 命中秒传闭环，而非把已消费的 uploadId 当全新任务全量重传
+    recordObj.status = "completed"
+    localStorage.setItem(chunk_upload_prefix + md5, JSON.stringify(recordObj))
     chunksMerge({id: recordObj.attachmentId, originalName: file.name, md5: md5, uploadId:  recordObj.uploadId}, recordObj.chunkSize).then((resp) => {
       if (resp.code === 200) {
         // 上传成功后删除浏览器缓存记录
         localStorage.removeItem(chunk_upload_prefix + md5)
         // fileList重新赋值
-        fileList.value.some(item => {
+        fileList.value.forEach(item => {
           if (item.uid === file.uid) {
             item.url = resp.data
             item.status = "done"
@@ -691,7 +767,7 @@ const initChunkUpload = () => {
         })
         // 处理双向绑定
         handleModelValue(file, fileList.value)
-        emits("uploadSuccess", {file, fileList})
+        emits("uploadSuccess", {file, fileList: fileList.value})
       } else {
         handleUploadError(file, resp.msg)
       }
@@ -756,7 +832,7 @@ const initPreview = () => {
       if (resp.code === 200) {
         url = handleThumbUrl(resp.data)
         // 为fileList中thumbUrl赋值
-        fileList.value.some(item => {
+        fileList.value.forEach(item => {
           if (item.url === file.url) {
             item.thumbUrl = url
           }
