@@ -296,12 +296,13 @@ export const useThemeStore = defineStore('theme',{
         getColorPrimary(): string {
             return this.$state.antColorPrimary || document.documentElement.style.getPropertyValue("--colorPrimary")
         },
-        // 主题重置（grayModel 为管理员级全局配置（哀悼等场景全站置灰），不随用户主题重置）
+        // 主题重置（grayModel 为管理员级全局配置（哀悼等场景全站置灰），不随用户主题重置；
+        // 亮暗档位同样不重置——唯一事实源 localStorage/当前值，档位跟浏览器走不跟账号走，
+        // 实际态 isDarkTheme 由末尾的 applyThemeMode 按当前档位重新推导）
         resetState() {
             this.$state.layoutType = settings.layoutType
             this.$state.componentSize = settings.componentSize
             this.$state.showViewTabs = settings.showViewTabs
-            this.$state.themeMode = settings.themeMode
             this.$state.colorPrimary = settings.themeConfig.token.colorPrimary
             this.$state.borderRadius = settings.themeConfig.token.borderRadius
             this.$state.siderTheme = settings.siderTheme

@@ -20,10 +20,12 @@ import {createWindowGuard} from "@/utils/window-guard.ts";
 // 认证失效联动（清用户态+跳转+提示）的单飞窗：token 过期时并发 401 只执行一次，窗口自动复位
 const authFailureGuard = createWindowGuard(5000)
 
-// 主题防抖同步（幂等挂接）：服务端为唯一事实源，主题变更后延迟合并同步，
-// 避免拖动色板/圆角等连续调整的高频请求；窗口内的兜底见 handleLogout 的 flush 与样式布局页卸载时的即时同步
+// 主题防抖同步（随登录会话挂接/登出拆除）：服务端为唯一事实源，主题变更后延迟合并同步，
+// 避免拖动色板/圆角等连续调整的高频请求；登出不保存主题（clearUserInfo 拆除订阅并丢弃 pending），
+// 防抖窗口内未发出的变更随之丢弃——主题为非关键数据，可接受
 let themeSyncSubscribed = false
 let debouncedThemeSync: ReturnType<typeof debounce> | undefined
+let themeSyncUnsubscribe: (() => void) | undefined
 
 export const useUserStore = defineStore('user', {
     state: () => {
@@ -113,16 +115,22 @@ export const useUserStore = defineStore('user', {
             debouncedThemeSync = debounce(() => {
                 this.saveTheme(serializeThemeState(themeStore.$state)).catch(() => {})
             }, 800)
-            themeStore.$subscribe(() => debouncedThemeSync!())
+            themeSyncUnsubscribe = themeStore.$subscribe(() => debouncedThemeSync!())
         },
-        // 退出登录
+        // 拆除主题变更同步（clearUserInfo 登出时调用）：cancel 丢弃未到期的 pending（登出不保存主题），
+        // 复位幂等标志供重登重新挂接
+        unsubscribeThemeSync() {
+            themeSyncUnsubscribe?.()
+            themeSyncUnsubscribe = undefined
+            debouncedThemeSync?.cancel()
+            debouncedThemeSync = undefined
+            themeSyncSubscribed = false
+        },
+        // 退出登录（不保存主题：登录期间防抖同步已即时持久化，clearUserInfo 拆除同步并丢弃 pending）
         async handleLogout() {
             // 关闭 websocket 连接
             try {
                 closeConnect()
-                // 登出前冲刷防抖窗口内未发出的主题同步：清 token 后防抖与组件卸载的同步都会失败；
-                // 无 pending 说明服务端已是最新（或本无变更），无需补发
-                debouncedThemeSync?.flush()
                 await logout()
             } finally {
                 this.clearUserInfo()
@@ -168,6 +176,9 @@ export const useUserStore = defineStore('user', {
             userState.defaultDeptPosts = []
 
             token.removeToken()
+            // 拆除主题变更同步：登出（主动退出/被动 401/守卫异常）后 resetState 与登录页切档
+            // 只走本地，不再向服务端发保存请求（无 token 必 401）
+            this.unsubscribeThemeSync()
         },
         // 更新默认部门
         updateDefaultDept(defaultDept: SysDept) {
@@ -181,6 +192,11 @@ export const useUserStore = defineStore('user', {
         // 保存主题修改（服务端为唯一事实源，与已知服务端值相同则静默跳过；成功静默，失败由调用方提示）
         saveTheme(themeJson: string) {
             return new Promise((resolve, reject) => {
+                // 未登录直接静默跳过：无 token 的保存必 401
+                if (!token.getToken()) {
+                    resolve("未登录，跳过主题保存")
+                    return
+                }
                 if (themeJson !== this.userInfo.theme) {
                     saveTheme(themeJson).then(resp => {
                         if (resp.code === 200) {

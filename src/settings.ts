@@ -19,9 +19,9 @@ export type ThemeMode = 'light' | 'dark' | 'auto'
 export type ClickEffect = 'none' | 'wave' | 'inset' | 'shake' | 'happy'
 
 /**
- * 启动时持久化的外观模式（配置态）；缺省跟随系统
+ * 启动时持久化的外观模式（配置态）；缺省亮色（用户显式选择前不跟随系统，auto 档仍可选）
  */
-const themeMode: ThemeMode = localStorage.getItem("theme-mode") as ThemeMode ?? 'auto'
+const themeMode: ThemeMode = localStorage.getItem("theme-mode") as ThemeMode ?? 'light'
 
 /**
  * 系统信息配置
