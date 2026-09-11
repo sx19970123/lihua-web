@@ -1,20 +1,21 @@
 <template>
-  <a-spin v-model:spinning="uploading">
+  <!-- description 容器随内容收缩，不设最小宽度时进度条会缩到与文案同宽 -->
+  <a-spin :spinning="uploading" :styles="{description: {minWidth: '200px', textAlign: 'center'}}">
     <!--  分片进度条loading  -->
-    <template #tip>
+    <template #description>
       <!--   计算md5   -->
       <div v-if="status === 'MD5'">
-        正在处理
+        <div class="mb-ant-xxs">正在处理</div>
         <a-progress :stroke-color="themeStore.getColorPrimary()" status="active" :show-info="false" :percent="progress"/>
       </div>
       <!--   上传   -->
       <div v-if="status === 'UPDATE'">
-        正在上传
+        <div class="mb-ant-xxs">正在上传</div>
         <a-progress :stroke-color="themeStore.getColorPrimary()" status="active" :show-info="false" :percent="progress"/>
       </div>
       <!--   合并   -->
       <div v-if="status === 'MERGE'">
-        正在合并
+        <div class="mb-ant-xxs">正在合并</div>
         <a-progress :stroke-color="themeStore.getColorPrimary()" status="active" :show-info="false" :percent="100"/>
       </div>
     </template>
@@ -34,14 +35,11 @@
               @change="handleChange"
               @remove="handleRemove"
     >
-      <!--      picture模式下预览图标变化-->
+      <!--      picture 模式预览图标按文件类型切换；动作按钮外框（text 型小按钮 + item-action hover 样式）与预览点击由 UploadList 统一渲染，插槽只提供图标-->
       <template #previewIcon="data">
-        <a-button class="css-dev-only-do-not-override-2qvcno ant-btn ant-btn-text ant-btn-sm ant-upload-list-item-action ant-btn-icon-only" type="link">
-          <CloudDownloadOutlined class="anticon anticon-eye"
-                                 v-if="!imageExtensions.includes(data.file.name.toLowerCase().split('.').pop()) &&
-                                  !videoExtensions.includes(data.file.name.toLowerCase().split('.').pop())"/>
-          <EyeOutlined class="anticon anticon-eye" v-else/>
-        </a-button>
+        <CloudDownloadOutlined v-if="!imageExtensions.includes(data.file.name.toLowerCase().split('.').pop()) &&
+                                     !videoExtensions.includes(data.file.name.toLowerCase().split('.').pop())"/>
+        <EyeOutlined v-else/>
       </template>
       <!--    按钮上传-->
       <a-button v-if="mode === 'button'">
@@ -83,9 +81,8 @@
 </template>
 
 <script setup lang="ts">
-import {Upload, type UploadFile} from "ant-design-vue";
-import {message, Modal} from "@/antd-adapter";
-import {createVNode, ref, watch} from "vue";
+import {message, Modal, Upload, type UploadFile} from "@/antd-adapter";
+import {h, ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import token from "@/helpers/token.ts";
 import {
@@ -826,7 +823,7 @@ const initRemove = () => {
         if (autoRemove) {
           Modal.confirm({
             title: '附件删除',
-            icon: createVNode(ExclamationCircleOutlined),
+            icon: h(ExclamationCircleOutlined),
             content: '删除后无法恢复，是否删除？',
             // 确认删除
             onOk: async () => {

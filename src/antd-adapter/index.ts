@@ -11,6 +11,9 @@ import {message as staticMessage, notification as staticNotification, Modal as s
 
 export * from './types'
 
+// 组件值出口：Upload 带 LIST_IGNORE 静态属性（beforeUpload 拒收文件用）
+export {Upload} from 'antdv-next'
+
 // <a-app> 组件 ref 上暴露的三个上下文内实例
 export type AppApi = {
     message: typeof staticMessage
