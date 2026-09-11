@@ -1,4 +1,4 @@
-import request, {blobRequest} from "@/utils/request.ts";
+import request from "@/utils/request.ts";
 import type {SysAttachment} from "@/api/system/attachment/type/sys-attachment.ts";
 
 // 根据md5查询附件是否存在
@@ -19,17 +19,6 @@ export const queryAttachmentInfoByIds = (ids: string[]) => {
         url: "system/attachment/storage/info",
         method: "post",
         data: ids
-    })
-}
-
-// 获取文件下载链接
-export const getDownloadURL = (id: string, expireTime?: string) => {
-    return request<string>({
-        url: `system/attachment/storage/url/${id}`,
-        method: "get",
-        params: {
-            expireTime: expireTime
-        }
     })
 }
 
@@ -56,26 +45,6 @@ export const chunksUploadedIndex = (uploadId: string) => {
     return request<number[]>({
         url: `system/attachment/storage/chunk/uploadedIndex/${uploadId}`,
         method: "get",
-    })
-}
-
-//  附件上传
-export const upload = (file: File, businessCode: string, businessName: string) => {
-    const formData = new FormData();
-    formData.append('file', file)
-    formData.append('businessCode', businessCode)
-    formData.append('businessName', businessName)
-    formData.append('originalName', file.name)
-    formData.append('uploadMode', "0")
-    formData.append('size', file.size.toString())
-    formData.append('type', file.type)
-    return request<string>({
-        url: "system/attachment/storage/upload",
-        method: "post",
-        data: formData,
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        },
     })
 }
 
@@ -127,13 +96,5 @@ export const chunksMerge = (data: SysAttachment, index: number) => {
         url: `system/attachment/storage/chunk/merge/${index}`,
         method: 'post',
         data: data
-    })
-}
-
-// 公开附件下载
-export const publicAttachmentDownload = (id: string) => {
-    return blobRequest({
-        url: `system/attachment/storage/download/p/${id}`,
-        method: 'get'
     })
 }

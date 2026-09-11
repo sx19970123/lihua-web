@@ -97,7 +97,7 @@
             {{convertFileSize(record[column.key])}}
           </template>
           <template v-if="column.key === 'createTime'">
-            {{dayjs(record[column.key]).format('YYYY-MM-DD HH:mm')}}
+            {{record[column.key] ? dayjs(record[column.key]).format('YYYY-MM-DD HH:mm') : ''}}
           </template>
           <template v-if="column.key === 'status'">
             <dict-tag :dict-data-value="record[column.key]" :dict-data-option="sys_attachment_status"/>
@@ -123,7 +123,8 @@
               分享
             </a-button>
             <a-divider type="vertical"/>
-            <a-dropdown>
+            <a-dropdown :open="openMoreMenuId === record.id"
+                        @open-change="(open: boolean) => handleMoreMenuOpenChange(open, record.id)">
               <a class="ant-dropdown-link" @click="(event: MouseEvent) => event.stopPropagation()">
                 <DownOutlined />
                 更多
@@ -136,6 +137,7 @@
                                   ok-text="确 定"
                                   cancel-text="取 消"
                                   @confirm="handleDelete(record.id)"
+                                  @open-change="handleMenuConfirmOpenChange"
                     >
                       <a-button type="link" size="small" danger @click="(event:MouseEvent) => event.stopPropagation()">
                         <template #icon>
@@ -147,11 +149,11 @@
                   </a-menu-item>
                   <a-menu-item>
                     <a-popconfirm placement="bottomRight"
-                                  :ok-text="countdown === 0 ? '确 认' : '确 认 ' + countdown"
+                                  :ok-text="countdown ? '确 认 ' + countdown : '确 认'"
                                   :okButtonProps="{disabled: countdown !== 0}"
                                   cancel-text="取 消"
                                   @confirm="handleForceDelete(record.id)"
-                                  @open-change="(open: boolean) => startForceDeleteCountdown(open, 5)"
+                                  @open-change="handleForceDeletePopconfirmOpenChange"
                     >
                       <template #icon>
                         <InfoCircleFilled :style="{color: themeStore.isDarkTheme ? '#dc4446' : '#ff4d4f'}"/>
@@ -214,7 +216,7 @@
 
         <!-- 上传信息 -->
         <a-descriptions-item label="上传用户" :span="1">{{attachmentInfo.uploadName}}</a-descriptions-item>
-        <a-descriptions-item label="上传时间" :span="1">{{dayjs(attachmentInfo.createTime).format("YYYY-MM-DD HH:mm:ss")}}</a-descriptions-item>
+        <a-descriptions-item label="上传时间" :span="1">{{attachmentInfo.createTime ? dayjs(attachmentInfo.createTime).format("YYYY-MM-DD HH:mm:ss") : ''}}</a-descriptions-item>
         <a-descriptions-item label="上传方式" :span="1">
           <dict-tag :dict-data-value="attachmentInfo.uploadMode ? attachmentInfo.uploadMode : ''" :dict-data-option="sys_attachment_upload_mode"/>
         </a-descriptions-item>
@@ -273,7 +275,7 @@
 <script setup lang="ts">
 
 // 查询列表
-import {computed, onUnmounted, ref} from "vue";
+import {computed, nextTick, onUnmounted, ref} from "vue";
 import type {SysAttachment, SysAttachmentDTO, SysAttachmentVO} from "@/api/system/attachment/type/sys-attachment.ts";
 import {message, type TableColumnsType} from "@/antd-adapter";
 import {deleteData, forceDeleteData, getDownloadURL, queryById, queryPage} from "@/api/system/attachment/attachment.ts";
@@ -525,6 +527,37 @@ const initDelete = () => {
       message.error(resp.msg)
     }
   }
+
+  // 「更多」菜单受控展开：hover 关闭会把菜单隐藏（不销毁），菜单内确认弹层的锚点随之失效漂移到左上角，
+  // 因此确认弹层打开期间拦截关闭；确认/取消后鼠标往往已离开菜单，也需在此主动收起
+  const openMoreMenuId = ref<string>()
+  const menuConfirmOpen = ref(false)
+  const handleMoreMenuOpenChange = (open: boolean, id: string) => {
+    if (open) {
+      // 已有确认弹层打开时不切换目标行（旧行菜单隐藏会让该弹层失去锚点）
+      if (!menuConfirmOpen.value) {
+        openMoreMenuId.value = id
+      }
+    } else if (!menuConfirmOpen.value) {
+      openMoreMenuId.value = undefined
+    }
+  }
+  const handleMenuConfirmOpenChange = (open: boolean) => {
+    menuConfirmOpen.value = open
+    if (!open) {
+      // 同一次点击可能在两个确认弹层间切换（后开者已重新置位），下一拍仍无打开者时再收起菜单
+      nextTick(() => {
+        if (!menuConfirmOpen.value) {
+          openMoreMenuId.value = undefined
+        }
+      })
+    }
+  }
+  // 强删确认弹层打开变化：倒计时联动 + 菜单保持联动
+  const handleForceDeletePopconfirmOpenChange = (open: boolean) => {
+    startForceDeleteCountdown(open, 5)
+    handleMenuConfirmOpenChange(open)
+  }
   return {
     openDeletePopconfirm,
     countdown,
@@ -533,11 +566,15 @@ const initDelete = () => {
     handleDelete,
     openPopconfirm,
     handleForceDelete,
-    startForceDeleteCountdown
+    startForceDeleteCountdown,
+    openMoreMenuId,
+    handleMoreMenuOpenChange,
+    handleMenuConfirmOpenChange,
+    handleForceDeletePopconfirmOpenChange
   }
 }
 
-const {openDeletePopconfirm, countdown, interval, closePopconfirm, handleDelete, openPopconfirm, handleForceDelete, startForceDeleteCountdown} = initDelete()
+const {openDeletePopconfirm, countdown, interval, closePopconfirm, handleDelete, openPopconfirm, handleForceDelete, startForceDeleteCountdown, openMoreMenuId, handleMoreMenuOpenChange, handleMenuConfirmOpenChange, handleForceDeletePopconfirmOpenChange} = initDelete()
 
 const initShare = () => {
   const showShareModal = ref<boolean>(false)
@@ -572,18 +609,23 @@ const initShare = () => {
       const resp = await getDownloadURL(shareId.value, shareValidTime.value.toString())
       if (resp.code === 200) {
         const timeoutTime = dayjs(new Date()).add(shareValidTime.value, "minute").format('YYYY-MM-DD HH:mm:ss')
-        shareUrl.value = resp.data.startsWith("/") ? window.location.origin + baseAPI + resp.data : resp.data + `### 附件名称 ${shareName.value} 有效期至 ${timeoutTime} --来自狸花猫后台管理系统`
+        const fullUrl = resp.data.startsWith("/") ? window.location.origin + baseAPI + resp.data : resp.data
+        shareUrl.value = `${fullUrl}### 附件名称 ${shareName.value} 有效期至 ${timeoutTime} --来自狸花猫后台管理系统`
       } else {
         message.error(resp.msg)
       }
     }
   }
 
-  // 处理复制到剪贴板
+  // 处理复制到剪贴板（失败保留弹窗，便于从输入框手动复制）
   const handleCopyToClipboard = () => {
     if (shareUrl.value) {
-      navigator.clipboard.writeText(shareUrl.value).then(() => message.success('复制成功')).catch(() => message.success('复制失败'));
-      handleCloseShareModal()
+      navigator.clipboard.writeText(shareUrl.value)
+        .then(() => {
+          message.success('复制成功')
+          handleCloseShareModal()
+        })
+        .catch(() => message.error('复制失败'))
     } else {
       message.error("分享链接获取失败")
     }
@@ -603,11 +645,13 @@ const initShare = () => {
 
 const {showShareModal, shareName, shareUrl, shareValidTime, handleShowShareModal, handleCloseShareModal,handleGetShareUrl, handleCopyToClipboard} = initShare()
 
-const intiInfo = () => {
+const initInfo = () => {
   const showInfoModal = ref<boolean>(false)
   const attachmentInfo = ref<SysAttachmentVO>({})
   const previewUrlMap = ref<Map<string, string>>(new Map<string, string>())
   const visible = ref<boolean>(false)
+  // 详情图片预览链接的签发时效（分钟）：7 天，覆盖会话期；链接缓存在 previewUrlMap，仅卸载时清理
+  const PREVIEW_URL_EXPIRE_MINUTES = 10080
 
   // 处理打开模态框
   const handleOpenInfoModal = async (event: MouseEvent, id: string) => {
@@ -635,7 +679,7 @@ const intiInfo = () => {
     }
     const url = previewUrlMap.value.get(id)
     if (!url) {
-      const resp = await getDownloadURL(id, '10080')
+      const resp = await getDownloadURL(id, PREVIEW_URL_EXPIRE_MINUTES.toString())
       if (resp.code === 200) {
         previewUrlMap.value.set(id, resp.data.startsWith("/") ? baseAPI + resp.data : resp.data)
       } else {
@@ -656,7 +700,7 @@ const intiInfo = () => {
   }
 }
 
-const {showInfoModal, attachmentInfo, previewUrlMap, visible, handleOpenInfoModal, handleCloseInfoModal, handlePreview} = intiInfo()
+const {showInfoModal, attachmentInfo, previewUrlMap, visible, handleOpenInfoModal, handleCloseInfoModal, handlePreview} = initInfo()
 
 // 下载
 const handleDownload = async (event: MouseEvent, id: string, status: string) => {
