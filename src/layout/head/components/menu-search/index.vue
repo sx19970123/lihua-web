@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div @click="open = true" v-show="!open">
+    <div @click="open = true">
       <a-tooltip title="菜单搜索" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
         <a-input placeholder="搜索" readonly class="title-search-input" v-if="!themeStore.isSmallWindow">
           <template #prefix>
