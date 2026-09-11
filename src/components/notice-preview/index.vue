@@ -80,7 +80,7 @@ import dayjs from "dayjs";
 import {message} from "@/antd-adapter";
 import type {SysUser} from "@/api/system/user/type/sys-user.ts";
 
-const props = defineProps<{
+const {noticeId, showReadUser} = defineProps<{
   noticeId: string,
   showReadUser?: boolean
 }>()
@@ -104,7 +104,7 @@ const initReadInfo = (readFlag: '0' | '1') => {
     loading.value = true
     try {
       const resp = await queryReadInfo({
-        noticeId: props.noticeId,
+        noticeId,
         readFlag: readFlag,
         pageNum: pageNum.value,
         pageSize: READ_INFO_PAGE_SIZE
@@ -156,7 +156,6 @@ const handlePopoverOpen = (open: boolean) => {
 // 预览
 const handlePreview = async () => {
   spinning.value = true
-  const noticeId = props.noticeId
   // 后端查询预览
   const resp = await preview(noticeId)
   if (resp.code === 200) {
@@ -171,7 +170,7 @@ onMounted(() => {
   handlePreview()
 })
 
-watch(() => props.noticeId, () => {
+watch(() => noticeId, () => {
   readInfoLoaded = false
   handlePreview()
 })

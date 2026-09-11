@@ -68,7 +68,7 @@ const {modelValue, placeholder, progressWidth = 90, height, prefixIcon = false, 
   showProgress?: boolean
 }>()
 
-const emits = defineEmits<{
+const emit = defineEmits<{
   // v-model 双向绑定
   'update:modelValue': [value?: string]
 }>()
@@ -93,7 +93,7 @@ const handleChangePassword = () => {
   } else {
     passwordLevel.value = STRENGTH_LEVELS.none
   }
-  emits('update:modelValue', passwordValue)
+  emit('update:modelValue', passwordValue)
 }
 
 onMounted(() => {

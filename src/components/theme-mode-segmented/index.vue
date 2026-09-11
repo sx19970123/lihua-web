@@ -1,7 +1,7 @@
 <template>
   <div class="pr-ant-base">
     <a-segmented :value="themeStore.themeMode" shape="round" :options="themeOptions"
-                 :class="{'translucent-segmented': props.translucent}"
+                 :class="{'translucent-segmented': translucent}"
                  @change="(mode: string | number) => themeStore.changeThemeMode(mode as ThemeMode)"/>
   </div>
 </template>
@@ -13,7 +13,7 @@ import {useThemeStore} from "@/stores/theme";
 import {type ThemeMode} from "@/settings";
 
 // 半透明玻璃样式，用于玻璃/透明底面场景
-const props = defineProps<{
+const {translucent} = defineProps<{
   translucent?: boolean
 }>()
 

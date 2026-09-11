@@ -5,7 +5,7 @@
       description="新用户首次登录需要录入基础信息"
       :skip="false"
       @next="handleNext"
-      @back="emits('back')"
+      @back="emit('back')"
   >
     <template #content>
       <a-form ref="userBasicRef" :model="profileInfo" :rules="userRoles">
@@ -50,7 +50,10 @@ import {checkEmail, checkPhoneNumber} from "@/api/system/user/user.ts";
 const userStore = useUserStore()
 const {user_gender} = initDict("user_gender")
 // 向外抛出函数
-const emits = defineEmits(['back', 'next'])
+const emit = defineEmits<{
+  back: [],
+  next: [loading: boolean]
+}>()
 
 // 初始化数据
 const init = () => {
@@ -137,7 +140,7 @@ const handleNext = async (loading:Ref<boolean>) => {
       loading.value = false
       // 重新加载用户信息
       await userStore.initUserInfo()
-      emits('next', loading.value)
+      emit('next', loading.value)
     } else {
       message.warning(resp.msg)
     }

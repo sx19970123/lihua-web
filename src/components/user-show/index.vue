@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ 'cursor-pointer': clickable }" @click="emits('click')">
+  <div :class="{ 'cursor-pointer': clickable }" @click="emit('click')">
     <div class="lihua-user-select relative inline-block border border-solid border-[var(--ant-color-border)] rounded-20px p-[2px] m-ant-xxs shadow-[var(--ant-box-shadow-tertiary)] unselectable">
 <!--      整颗 chip 悬停浮层：内容与行为由插槽消费方决定，组件只提供定位与显隐（贴合 chip 圆角）-->
       <span v-if="hasHoverSlot" class="chip-hover-layer">
@@ -14,7 +14,7 @@
             :background-color="avatar.backgroundColor"
         />
 <!--        昵称-->
-        <a-typography class="nickname" ellipsis v-if="props.nickname">{{props.nickname}}</a-typography>
+        <a-typography class="nickname" ellipsis v-if="nickname">{{nickname}}</a-typography>
       </a-flex>
     </div>
   </div>
@@ -29,12 +29,12 @@ import {attachmentUrl, getTemporaryPath} from "@/utils/attachment-url.ts";
 
 const userStore = useUserStore();
 
-const props = defineProps<{
+const {avatarJson, nickname} = defineProps<{
   avatarJson?: string,
   nickname?: string
 }>()
 
-const emits = defineEmits(['click'])
+const emit = defineEmits<{click: []}>()
 
 const slots = useSlots()
 const hasHoverSlot = computed(() => !!slots.hover)
@@ -46,8 +46,8 @@ const clickable = computed(() => !!instance?.vnode.props?.onClick)
 // 回显头像
 const avatar = ref<AvatarType>({})
 try {
-  if (props.avatarJson) {
-    avatar.value = JSON.parse(props.avatarJson)
+  if (avatarJson) {
+    avatar.value = JSON.parse(avatarJson)
     // 处理图片类型头像
     if (avatar.value.value && avatar.value.type === 'image') {
       getTemporaryPath(attachmentUrl(avatar.value.value)).then(path => {
@@ -56,12 +56,12 @@ try {
     }
   } else {
     avatar.value = userStore.getDefaultAvatar()
-    avatar.value.value = props.nickname
+    avatar.value.value = nickname
   }
 } catch (e) {
   console.error("头像获取异常，重置为默认头像")
   avatar.value = userStore.getDefaultAvatar()
-  avatar.value.value = props.nickname
+  avatar.value.value = nickname
 }
 
 </script>

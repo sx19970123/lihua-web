@@ -6,7 +6,7 @@
                             :skip="false"
                             @next="handleNext"
                             @skip="handleSkip"
-                            @back="emits('back')"
+                            @back="emit('back')"
   >
     <template #content>
       <a-form :colon="false" ref="resetPasswordRef" :model="password" :rules="rules">
@@ -43,7 +43,11 @@ import {updatePassword} from "@/api/system/profile/profile.ts";
 
 const resetPasswordRef = useTemplateRef<FormInstance>("resetPasswordRef")
 // 向外抛出函数
-const emits = defineEmits(['back', 'skip', 'next'])
+const emit = defineEmits<{
+  back: [],
+  skip: [loading: boolean],
+  next: [loading: boolean]
+}>()
 
 type passwordType = {
   oldPassword: string,
@@ -94,7 +98,7 @@ const handleNext = async (loading:Ref<boolean>) => {
     const resp = await updatePassword(password.oldPassword,password.newPassword,password.confirmPassword)
     loading.value = false
     if (resp.code === 200) {
-      emits('next', loading.value)
+      emit('next', loading.value)
     } else {
       message.error(resp.msg)
     }
@@ -105,7 +109,7 @@ const handleNext = async (loading:Ref<boolean>) => {
 // 跳过
 const handleSkip = (loading:Ref<boolean>) => {
   loading.value = false
-  emits('skip', loading.value)
+  emit('skip', loading.value)
 }
 </script>
 

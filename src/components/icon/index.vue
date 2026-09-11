@@ -1,8 +1,8 @@
 <template>
-  <component :is="props.icon"/>
+  <component :is="icon"/>
 </template>
 <script setup lang="ts">
-const props = defineProps<{
+const {icon} = defineProps<{
   icon: string
 }>()
 </script>

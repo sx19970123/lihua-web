@@ -28,7 +28,12 @@ type ResType = {
 }
 
 // 抛出的方法：校验成功/校验失败/刷新/关闭
-const emits = defineEmits(['success', 'fail', 'refresh', 'close'])
+const emit = defineEmits<{
+  success: [id: string],
+  fail: [res: ResType],
+  refresh: [],
+  close: []
+}>()
 
 // 向外部抛出函数
 defineExpose({
@@ -52,24 +57,24 @@ const captchaConfig = {
   bindEl: "#lihua-tian-captcha",
   // 验证成功回调
   validSuccess: (res: ResType, c: any, tac: any) => {
-    emits('success', res.data.id)
+    emit('success', res.data.id)
     showMask.value = false
     tac.destroyWindow()
   },
   // 验证失败的回调函数(可忽略，如果不自定义 validFail 方法时，会使用默认的)
   validFail: (res: ResType, c: any, tac: any) => {
-    emits('fail', res)
+    emit('fail', res)
     // 验证失败后重新拉取验证码
     tac.reloadCaptcha()
   },
   // 刷新按钮回调事件
   btnRefreshFun: (el: any, tac: any) => {
-    emits('refresh')
+    emit('refresh')
     tac.reloadCaptcha()
   },
   // 关闭按钮回调事件
   btnCloseFun: (el: any, tac: any) => {
-    emits('close')
+    emit('close')
     showMask.value = false
     tac.destroyWindow()
   }

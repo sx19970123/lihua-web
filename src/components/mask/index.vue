@@ -17,10 +17,12 @@ const {showMask, zIndex = 1000} = defineProps<{
   showMask: boolean,
   zIndex?: number
 }>()
-const emits = defineEmits(['click'])
+const emit = defineEmits<{
+  click: [event: KeyboardEvent | MouseEvent, source: string]
+}>()
 // 遮罩点击事件
 const handleClickMask = (event: KeyboardEvent | MouseEvent) => {
-  emits('click', event, 'mask')
+  emit('click', event, 'mask')
 }
 
 // 组件卸载时处理显示滚动条

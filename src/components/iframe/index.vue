@@ -17,26 +17,28 @@ import {useThemeStore} from "@/stores/theme";
 import linkopenMiao from '@/assets/error/linkopen-miao.png'
 import linkopenHei from '@/assets/error/linkopen-hei.png'
 
-const route = useRoute()
-
-// 外链插画：亮色模式 miao / 暗色模式 hei
-const themeStore = useThemeStore()
-const props = defineProps<{
+// prop 名与本地 src/isInner ref 同名，解构重命名避免冲突（image-cropper 先例）
+const {src: srcProp, isInner: isInnerProp} = defineProps<{
   src?: string,
   isInner?: boolean
 }>()
 
+const route = useRoute()
+
+// 外链插画：亮色模式 miao / 暗色模式 hei
+const themeStore = useThemeStore()
+
 const src = ref<string>()
 const isInner = ref<boolean>()
 
-if (props.src) {
-  src.value = props.src
+if (srcProp) {
+  src.value = srcProp
 } else {
   src.value = route.meta.link as string
 }
 
-if (props.isInner) {
-  isInner.value = props.isInner
+if (isInnerProp) {
+  isInner.value = isInnerProp
 } else {
   isInner.value = route.meta.linkOpenType === 'inner'
 }

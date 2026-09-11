@@ -171,7 +171,12 @@ const tableStyles = {
   }
 }
 
-const emits = defineEmits(['update:id','update:nickname','update:username','change'])
+const emit = defineEmits<{
+  'update:id': [ids: (string | undefined)[]],
+  'update:nickname': [nicknames: (string | undefined)[]],
+  'update:username': [usernames: (string | undefined)[]],
+  change: [users: SysUser[]]
+}>()
 
 // 三栏宽度受控：拖拽时 onResize 回传 px 数组；双击拖拽条重置为默认比例（Splitter 只提供双击回调，重置需自行实现）
 const DEFAULT_SPLITTER_SIZES = ['30%', '40%', '30%']
@@ -410,10 +415,10 @@ watch(() => selectedIds.value, (value, oldValue) => {
     selectUsers.value = selectUsers.value.filter(user => user.id && !decreaseIds.has(user.id))
   }
 
-  emits('update:nickname', selectUsers.value.map(user => user.nickname))
-  emits('update:id', selectUsers.value.map(user => user.id))
-  emits('update:username', selectUsers.value.map(user => user.username))
-  emits('change', selectUsers.value)
+  emit('update:nickname', selectUsers.value.map(user => user.nickname))
+  emit('update:id', selectUsers.value.map(user => user.id))
+  emit('update:username', selectUsers.value.map(user => user.username))
+  emit('change', selectUsers.value)
 })
 
 onMounted(() => {

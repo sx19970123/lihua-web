@@ -4,7 +4,7 @@
       <div class="relative h-[43px] w-[53px] cursor-pointer rounded-ant-lg bg-ant-layout shadow-ant-ter" @click="handleClockNavType('side-navigation')">
         <div class="float-right h-[30%] w-[70%] rounded-tr-ant-lg bg-ant-container"/>
         <div class="nav-select-menu-left"/>
-        <CheckOutlined class="absolute bottom-1.5 right-1.5 font-bold text-ant" :style="{color: themeStore.colorPrimary}" v-if="props.modelValue === 'side-navigation'"/>
+        <CheckOutlined class="absolute bottom-1.5 right-1.5 font-bold text-ant" :style="{color: themeStore.colorPrimary}" v-if="modelValue === 'side-navigation'"/>
       </div>
     </a-tooltip>
 
@@ -12,14 +12,14 @@
       <div class="relative h-[43px] w-[53px] cursor-pointer rounded-ant-lg bg-ant-layout shadow-ant-ter" @click="handleClockNavType('mix-navigation')">
         <div class="h-[30%] w-full rounded-t-ant-lg bg-ant-container"/>
         <div class="nav-select-menu-sub-left"/>
-        <CheckOutlined class="absolute bottom-1.5 right-1.5 font-bold text-ant" :style="{color: themeStore.colorPrimary}" v-if="props.modelValue === 'mix-navigation'"/>
+        <CheckOutlined class="absolute bottom-1.5 right-1.5 font-bold text-ant" :style="{color: themeStore.colorPrimary}" v-if="modelValue === 'mix-navigation'"/>
       </div>
     </a-tooltip>
 
     <a-tooltip title="顶部导航">
       <div class="relative h-[43px] w-[53px] cursor-pointer rounded-ant-lg bg-ant-layout shadow-ant-ter" @click="handleClockNavType('top-navigation')">
         <div class="nav-select-menu-top"/>
-        <CheckOutlined class="absolute bottom-1.5 right-1.5 font-bold text-ant" :style="{color: themeStore.colorPrimary}" v-if="props.modelValue === 'top-navigation'"/>
+        <CheckOutlined class="absolute bottom-1.5 right-1.5 font-bold text-ant" :style="{color: themeStore.colorPrimary}" v-if="modelValue === 'top-navigation'"/>
       </div>
     </a-tooltip>
   </a-flex>
@@ -28,17 +28,21 @@
 <script setup lang="ts">
 import {useThemeStore} from "@/stores/theme.ts";
 
-const props = defineProps<{
+const {modelValue} = defineProps<{
   modelValue: string
 }>()
-const emits = defineEmits(['update:modelValue','click','change'])
+const emit = defineEmits<{
+  'update:modelValue': [value: string],
+  click: [key: string],
+  change: [key: string]
+}>()
 
 const themeStore = useThemeStore()
 
 const handleClockNavType = (key: string) => {
-  emits('update:modelValue',key)
-  emits('click',key)
-  emits('change',key)
+  emit('update:modelValue',key)
+  emit('click',key)
+  emit('change',key)
 }
 </script>
 

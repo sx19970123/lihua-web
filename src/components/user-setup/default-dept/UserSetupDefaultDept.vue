@@ -6,7 +6,7 @@
                                 :skip="!userStore.$state.defaultDeptCode"
                                 @next="handleNext"
                                 @skip="handleSkip"
-                                @back="emits('back')"
+                                @back="emit('back')"
   >
     <template #content>
       <default-dept @dept-select="handleChangeDept" :show-dept-code="false" :show-tooltip="false"/>
@@ -17,22 +17,28 @@
 import UserSetupBaseComponent from "@/components/user-setup/UserSetupBaseComponent.vue";
 import DefaultDept from "@/components/default-dept-select/index.vue"
 import type {Ref} from "vue";
+import type {ResponseType} from "@/api/global/type.ts";
+import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
 import {message} from "@/antd-adapter";
 import {useUserStore} from "@/stores/user.ts";
 
 const userStore = useUserStore();
 // 向外抛出函数
-const emits = defineEmits(['back', 'skip', 'next'])
+const emit = defineEmits<{
+  back: [],
+  skip: [loading: boolean],
+  next: [loading: boolean]
+}>()
 
-// 处理更新默认部门
-const handleChangeDept = (loading:Ref<boolean>) => {
-  loading.value = false
+// 处理更新默认部门（历史写法：对响应对象写 value 属性无实际作用，保持原行为仅对齐类型）
+const handleChangeDept = (resp: ResponseType<SysDept> & { value?: boolean }) => {
+  resp.value = false
 }
 
 // 处理下一步
 const handleNext = (loading:Ref<boolean>) => {
   if (userStore.$state.defaultDeptCode) {
-    emits('next', loading.value)
+    emit('next', loading.value)
   } else {
     message.warning('请选择默认部门')
   }
@@ -41,7 +47,7 @@ const handleNext = (loading:Ref<boolean>) => {
 // 处理上一步
 const handleSkip = (loading:Ref<boolean>) => {
   loading.value = false
-  emits('skip', loading.value)
+  emit('skip', loading.value)
 }
 </script>
 

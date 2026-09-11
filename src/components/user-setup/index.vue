@@ -26,7 +26,7 @@ import {useUserStore} from "@/stores/user.ts";
 import userSetup from "@/helpers/user-setup.ts"
 import router from "@/router";
 
-const emits = defineEmits(['goLogin'])
+const emit = defineEmits<{goLogin: []}>()
 
 // 需要加载的设置项集合
 const componentList = [
@@ -34,11 +34,11 @@ const componentList = [
   'UserSetupComplete'
 ]
 // 接收需要加载的配置项
-const props = defineProps<{
+const {componentNames} = defineProps<{
   componentNames: string[];
 }>()
 // 组合配置项
-componentList.splice(1, 0, ...props.componentNames)
+componentList.splice(1, 0, ...componentNames)
 // 用户store
 const userStore = useUserStore();
 // 走马灯组件ref
@@ -84,7 +84,7 @@ const handleGoLogin = async () => {
   // 调用退出接口
   await userStore.handleLogout()
   // 调用父方法
-  emits('goLogin')
+  emit('goLogin')
 }
 </script>
 

@@ -84,7 +84,10 @@ const {modelValue, minWidth = 80, maxWidth = 400, settingKey = "", anchor} = def
   // 组件放在 a-table 子树外时必须提供
   anchor?: string | HTMLElement | (() => string | HTMLElement | null | undefined)
 }>()
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  // 双向绑定回写
+  'update:modelValue': [columns: SettingColumnType[]]
+}>()
 // 组件名称
 const componentName = router.currentRoute.value.name as string
 // 表格设置key

@@ -123,7 +123,7 @@ const {treeData, fieldNames = {
 
 // update:modelValue：v-model 双向绑定
 // change 双向绑定值发生变化时触发
-const emits = defineEmits<{
+const emit = defineEmits<{
   'update:modelValue': [value: any[] | any],
   'change': [value: any[] | any]
 }>()
@@ -333,14 +333,14 @@ const handleUpdateModelValue = (selected: any[]) => {
   const value = cloneDeep(selected)
   // 多选情况下，v-model绑定数组
   if (multiple) {
-    emits('update:modelValue', value)
-    emits('change', value)
+    emit('update:modelValue', value)
+    emit('change', value)
   }
   // 反之绑定单个元素
   else {
     const single = value[0] ?? null
-    emits('update:modelValue', single)
-    emits('change', single)
+    emit('update:modelValue', single)
+    emit('change', single)
   }
 }
 

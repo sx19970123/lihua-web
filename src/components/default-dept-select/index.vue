@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
+import type {ResponseType} from "@/api/global/type.ts";
 import {ref} from "vue";
 import {useUserStore} from "@/stores/user.ts";
 import {useThemeStore} from "@/stores/theme.ts";
@@ -58,7 +59,10 @@ const {showDeptCode = true, showTooltip = true} = defineProps<{
   showTooltip?: boolean;
 }>()
 
-const emits = defineEmits(['keywordChange','deptSelect'])
+const emit = defineEmits<{
+  keywordChange: [keyword: string],
+  deptSelect: [resp: ResponseType<SysDept>]
+}>()
 
 // 鼠标移入
 const handleMouseOver = (id: string) => {
@@ -75,7 +79,7 @@ const handleSetDefaultDept = async (deptId: string) => {
   if (resp.code === 200) {
     // 更新默认部门
     userStore.updateDefaultDept(resp.data)
-    emits('deptSelect', resp)
+      emit('deptSelect', resp)
   } else {
     message.error(resp.msg)
   }

@@ -45,6 +45,7 @@
 <script setup lang="ts">
 import {useThemeStore} from "@/stores/theme.ts";
 import {ref} from "vue";
+import type {Ref} from "vue";
 
 const themeStore = useThemeStore();
 // 父组件传值配置
@@ -74,24 +75,29 @@ const mainBtnLoading = ref<boolean>(false)
 // 跳过按钮加载
 const skipBtnLoading = ref<boolean>(false)
 
-// 抛出函数
-const emits = defineEmits(['back', 'skip', 'next','goLogin'])
+// 抛出函数：next/skip 载荷为按钮 loading 的 Ref 本体——包装组件接收后写 .value 控制按钮加载态
+const emit = defineEmits<{
+  next: [loading: Ref<boolean>],
+  skip: [loading: Ref<boolean>],
+  back: [],
+  goLogin: []
+}>()
 
 // 下一步
 const handleNext = () => {
-  emits("next", mainBtnLoading)
+  emit("next", mainBtnLoading)
 }
 // 跳过
 const handleSkip = () => {
-  emits("skip", skipBtnLoading)
+  emit("skip", skipBtnLoading)
 }
 // 返回
 const handleBack = () => {
-  emits("back")
+  emit("back")
 }
 // 退回登录
 const handleGoLogin = () => {
-  emits('goLogin')
+  emit('goLogin')
 }
 </script>
 

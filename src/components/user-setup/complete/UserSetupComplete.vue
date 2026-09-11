@@ -6,11 +6,11 @@
                                 :show-main-btn-icon="false"
                                 :back="false"
                                 :skip="false"
-                                @next="emits('complete')"
+                                @next="emit('complete')"
   />
 </template>
 
 <script setup lang="ts">
 import UserSetupBaseComponent from "@/components/user-setup/UserSetupBaseComponent.vue";
-const emits = defineEmits(['complete'])
+const emit = defineEmits<{complete: []}>()
 </script>

@@ -7,14 +7,14 @@
                                 :show-main-btn-icon="false"
                                 :skip="false"
                                 :showGoLoginBtn="true"
-                                @go-login="emits('goLogin')"
-                                @next="emits('next')"
+                                @go-login="emit('goLogin')"
+                                @next="emit('next')"
   />
 </template>
 
 <script setup lang="ts">
 import UserSetupBaseComponent from "@/components/user-setup/UserSetupBaseComponent.vue";
-const emits = defineEmits(['next','goLogin'])
+const emit = defineEmits<{next: [], goLogin: []}>()
 
 
 </script>

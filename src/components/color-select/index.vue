@@ -1,13 +1,13 @@
 <template>
   <a-flex>
-    <template v-for="item in data.dataSource">
+    <template v-for="item in dataSource">
       <a-tooltip :title="item.name" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
         <div class="flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-ant-lg mr-ant-xs" :style="{ background: item.color, boxShadow: swatchShadow(item.color) }" @click="selectedColor(item)">
-          <div v-if="data.color">
-            <CheckOutlined class="c-white font-bold text-ant" :style="checkStyleFor(item)" v-if="item.color === data.color"/>
+          <div v-if="color">
+            <CheckOutlined class="c-white font-bold text-ant" :style="checkStyleFor(item)" v-if="item.color === color"/>
           </div>
-          <div v-else-if="data.value">
-            <CheckOutlined class="c-white font-bold text-ant" :style="checkStyleFor(item)" v-if="item.key === data.value"/>
+          <div v-else-if="value">
+            <CheckOutlined class="c-white font-bold text-ant" :style="checkStyleFor(item)" v-if="item.key === value"/>
           </div>
         </div>
       </a-tooltip>
@@ -15,7 +15,7 @@
     <!-- 自定义颜色入口（仅 v-model:color 模式）：未自定义过显示彩虹占位，此后常显上次选中色；
          非彩虹态点击即直接应用该色（面板仍打开供继续微调，但无需操作）。
          tooltip 须内层直接包色块：ColorPicker 为 Trigger 系 fragment 根，tooltip 套其外层无法定位 -->
-    <a-color-picker v-if="data.allowCustom"
+    <a-color-picker v-if="allowCustom"
                     :value="customColor"
                     format="hex"
                     :allow-clear="false"
@@ -42,15 +42,19 @@ import type {ColorValueType} from "antdv-next";
 
 type ColorSelectItem = { name: string, color: string, key?: string, checkColor?: string }
 // 接收全部颜色 items 和 双向绑定的颜色值 modelValue
-const data = defineProps<{
+const {dataSource, color, value, allowCustom} = defineProps<{
   dataSource: Array<ColorSelectItem>
   color?: string
   value?: string
   // 自定义颜色入口开关（仅 v-model:color 模式生效）：开启后尾部追加取色器项
   allowCustom?: boolean
-}>();
+}>()
 // 使用 update:modelValue 定义 更新v-model 方法
-const emits = defineEmits(['update:color','update:value','click'])
+const emit = defineEmits<{
+  'update:color': [color: string],
+  'update:value': [value: string | undefined],
+  click: [payload: {color: string, name: string, key?: string}]
+}>()
 
 // 仅 rgb()/rgba()/#hex 可解析；var() 等运行时颜色返回 false，走同色光晕
 const isNearWhite = (color: string) => {
@@ -110,9 +114,9 @@ const checkStyleFor = (item: ColorSelectItem) => {
 
 // 点击对应颜色返回颜色值，赋值给v-model。执行 @click 方法
 const selectedColor = ({color, name, key}: ColorSelectItem) => {
-  emits('update:color',color)
-  emits('update:value',key)
-  emits('click',{color, name, key})
+  emit('update:color',color)
+  emit('update:value',key)
+  emit('click',{color, name, key})
 };
 
 // ---------- 自定义颜色（allowCustom） ----------
@@ -130,7 +134,7 @@ const readStoredCustomColor = () => {
 const storedCustomColor = ref<string | undefined>(readStoredCustomColor())
 
 // 选中态：当前主题色即上次自定义色时打勾（hex 精确匹配；预置色板为 rgb() 字符串，同色不等价）
-const isCustomActive = computed(() => !!data.color && !!storedCustomColor.value && data.color === storedCustomColor.value)
+const isCustomActive = computed(() => !!color && !!storedCustomColor.value && color === storedCustomColor.value)
 
 // 块底色：自定义过即常显该色（不随主题切回预置色退回彩虹），未自定义过显示彩虹占位
 const customBackground = computed(() => storedCustomColor.value ?? RAINBOW_GRADIENT)
@@ -140,15 +144,15 @@ const customColor = ref<ColorValueType>()
 
 const handleCustomPanelOpen = (open: boolean) => {
   if (open) {
-    customColor.value = storedCustomColor.value ?? data.color
+    customColor.value = storedCustomColor.value ?? color
   }
 }
 
 // 非彩虹态点击即应用（ColorPicker 面板仍会随点击打开，可继续微调但无需操作）
 const handleCustomSwatchClick = () => {
   if (storedCustomColor.value) {
-    emits('update:color', storedCustomColor.value)
-    emits('click', {color: storedCustomColor.value, name: '自定义'})
+    emit('update:color', storedCustomColor.value)
+    emit('click', {color: storedCustomColor.value, name: '自定义'})
   }
 }
 
@@ -157,8 +161,8 @@ const handleCustomChange = (value: { toHexString: () => string }) => {
   storedCustomColor.value = hex
   localStorage.setItem(CUSTOM_COLOR_STORAGE_KEY, hex)
   customColor.value = hex
-  emits('update:color', hex)
-  emits('click', {color: hex, name: '自定义'})
+  emit('update:color', hex)
+  emit('click', {color: hex, name: '自定义'})
 }
 </script>
 

@@ -85,7 +85,7 @@ const {modelValue, size = 'default', width = '100%', maxHeight = '350px'} = defi
   maxHeight?: string
 }>()
 
-const emits = defineEmits<{
+const emit = defineEmits<{
   // v-model 双向绑定
   'update:modelValue': [value: string | null],
   click: [value: string | null]
@@ -94,8 +94,8 @@ const emits = defineEmits<{
 // 点击已选中图标取消选中，否则选中
 const clickIcon = (icon: string) => {
   const next = modelValue === icon ? null : icon
-  emits('update:modelValue', next)
-  emits('click', next)
+  emit('update:modelValue', next)
+  emit('click', next)
 }
 
 // 显示图标搜索框
