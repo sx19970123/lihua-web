@@ -33,6 +33,9 @@ export const useUploadCore = (ctx: UploadContext & {
       ? new Promise<void>(resolve => { notifyFileListChanged = resolve })
       : Promise.resolve()
 
+  // 本批已接受但尚未进入列表的文件（配额在途计数：文件经 change 入列表后由 fileList 承担，届时对账移除）
+  const batchAcceptedUids = new Set<string>()
+
   // 附件上传前检验，同时进行不同上传逻辑的区分（beforeUpload 实参为 VcFile：原生 File + uid）
   const beforeUpload = async (file: VcFile, currentFileList: VcFile[]) => {
     // 获取附件数据异常
@@ -46,12 +49,14 @@ export const useUploadCore = (ctx: UploadContext & {
       return Upload.LIST_IGNORE;
     }
 
-    // 控制附件上传最大数（currentFileList 已包含本次进入的文件；数量约束由本组件判定，
-    // 不透传给 a-upload 的 maxCount——其整批截断策略会丢弃全部文件而非仅拒收超量部分）
-    if (currentFileList.length > maxCount) {
+    // 控制附件上传最大数（数量约束由本组件判定，不透传给 a-upload 的 maxCount——其整批截断
+    // 策略无超量事件，与组件 exceed 契约不符）。判定基数不能取 currentFileList（它是本批全量，
+    // 批内兄弟文件会被重复计入）：已入列表的由 fileList 计数，本批已接受未入列的由 batchAcceptedUids 计数
+    if (fileList.value.length + batchAcceptedUids.size + 1 > maxCount) {
       emits("exceedMaxCount", file)
       return Upload.LIST_IGNORE;
     }
+    batchAcceptedUids.add(file.uid)
 
     if (chunk) {
       // 分片上传
@@ -132,6 +137,9 @@ export const useUploadCore = (ctx: UploadContext & {
 
   // 处理附件上传变化（uploading：上传中 done：上传成功 error：上传失败 removed：已删除）
   const handleChange = ({file, fileList}: {file: UploadFile, fileList: Array<UploadFile>}) => {
+    // 文件已进入列表：从在途计数移除（配额改由 fileList 承担）；置于状态分支前，任意首个状态都会对账
+    batchAcceptedUids.delete(file.uid)
+
     // 唤醒等待本次 change 的秒传流程
     awaitHandleFile.value = false
     notifyFileListChanged?.()
