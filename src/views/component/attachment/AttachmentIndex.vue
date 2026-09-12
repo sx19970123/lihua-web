@@ -10,6 +10,14 @@
         <demo2/>
         <demo3/>
         <demo4/>
+        <demo5/>
+        <demo6/>
+        <demo7/>
+        <demo8/>
+        <demo9/>
+        <demo10/>
+        <demo11/>
+        <demo12/>
       </a-flex>
     </a-card>
   </a-flex>
@@ -20,6 +28,14 @@ import Demo1 from './Demo1.vue'
 import Demo2 from './Demo2.vue'
 import Demo3 from './Demo3.vue'
 import Demo4 from './Demo4.vue'
+import Demo5 from './Demo5.vue'
+import Demo6 from './Demo6.vue'
+import Demo7 from './Demo7.vue'
+import Demo8 from './Demo8.vue'
+import Demo9 from './Demo9.vue'
+import Demo10 from './Demo10.vue'
+import Demo11 from './Demo11.vue'
+import Demo12 from './Demo12.vue'
 
 const baseDocApi = import.meta.env.VITE_APP_DOC_API
 </script>
