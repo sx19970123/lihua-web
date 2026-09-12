@@ -22,14 +22,11 @@
 
     <a-upload v-if="mode === 'button' || mode === 'picture'"
               v-model:file-list="fileList"
-              :action="uploadURL"
-              :headers="{Authorization: authorization}"
-              :data="sysAttachment"
               :list-type="mode === 'picture' ? 'picture-card' : 'text'"
               :before-upload="beforeUpload"
+              :custom-request="handleCustomRequest"
               :directory="chunk ? false : directory"
               :multiple="chunk ? false : multiple"
-              :max-count="maxCount"
               :isImageUrl="handleShowThumbImage"
               @preview="handlePreview"
               @change="handleChange"
@@ -55,13 +52,10 @@
     <!--    拖拽上传-->
     <a-upload-dragger v-else
                       v-model:file-list="fileList"
-                      :action="uploadURL"
-                      :headers="{Authorization: authorization}"
                       :before-upload="beforeUpload"
-                      :data="sysAttachment"
+                      :custom-request="handleCustomRequest"
                       :directory="chunk ? false : directory"
                       :multiple="chunk ? false : multiple"
-                      :max-count="maxCount"
                       @preview="handlePreview"
                       @change="handleChange"
                       @remove="handleRemove"
@@ -82,24 +76,20 @@
 
 <script setup lang="ts">
 import {message, type UploadFile, type VcFile} from "@/antd-adapter";
-import {onUnmounted, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import {useRoute} from "vue-router";
-import token from "@/helpers/token.ts";
 import {queryAttachmentInfoByIds} from "@/api/system/attachment/attachment-storage.ts";
 import type {SysAttachment} from "@/api/system/attachment/type/sys-attachment.ts";
 import {useThemeStore} from "@/stores/theme.ts";
-import {baseAPI, imageExtensions, UPLOAD_MODE, videoExtensions} from "./composables/constants.ts";
+import {imageExtensions, UPLOAD_MODE, videoExtensions} from "./composables/constants.ts";
 import type {AttachmentEmitFn} from "./composables/types.ts";
+import {splitAttachmentIds} from "./composables/model-value.ts";
 import {useUploadState} from "./composables/use-upload-state.ts";
 import {useUploadCore} from "./composables/use-upload-core.ts";
 import {useChunkUpload} from "./composables/use-chunk-upload.ts";
 import {useUploadPreview} from "./composables/use-upload-preview.ts";
 import {useAttachmentRemove} from "./composables/use-attachment-remove.ts";
 
-const { getToken } = token
-
-const uploadURL = `${baseAPI}/system/attachment/storage/upload`
-const authorization = 'Bearer ' + getToken()
 const router = useRoute()
 const themeStore = useThemeStore()
 const lastModelValue = ref<string>()
@@ -161,21 +151,6 @@ const emits = defineEmits<{
   remove: [payload: UploadFile | { id: string, status: string }],
 }>()
 
-// 轮询类定时器登记：异常路径统一在组件卸载时兜底清理
-const pendingTimers = new Set<ReturnType<typeof setInterval>>()
-const registerInterval = (id: ReturnType<typeof setInterval>) => {
-  pendingTimers.add(id)
-  return id
-}
-const clearRegisteredInterval = (id: ReturnType<typeof setInterval>) => {
-  pendingTimers.delete(id)
-  clearInterval(id)
-}
-onUnmounted(() => {
-  pendingTimers.forEach(id => clearInterval(id))
-  pendingTimers.clear()
-})
-
 // 附件对象
 const sysAttachment = ref<SysAttachment>({})
 
@@ -205,14 +180,12 @@ const getAttachmentExpandedName = (file: UploadFile) => {
 
 // 附件列表
 const fileList = ref<UploadFile[]>([])
-// 附件秒传轮询等待变量
-const awaitHandleFile = ref<boolean>(false)
 // 外部连续变更双向绑定时的乱序防护：仅最新一次变更的响应允许回写
 let initVModelVersion = 0
 // 初始化双向绑定
 const initVModel = async () => {
   const version = ++initVModelVersion
-  const ids = (modelValue ?? "").split(",").filter(Boolean)
+  const ids = splitAttachmentIds(modelValue)
   if (ids && ids.length > 0) {
     // 初次加载数据时根据双向绑定内容请求附件信息
     const resp = await queryAttachmentInfoByIds(ids)
@@ -221,15 +194,16 @@ const initVModel = async () => {
     }
     if (resp.code === 200) {
       // 组合fileList
-      // 数据回显
+      // 数据回显：缩略图走 info 按行选链的 url（公开=永久链，私密=时效签名链）
       fileList.value = resp.data.map(item => {
         const id = item.id
         const uploadFile: UploadFile = {
           uid: id ? id : '',
           name: item.originalName ? item.originalName : '',
-          status: item.status === 'error' ? 'error' : 'done',
+          // info 只回成功行；失败值（附件丢失占位行）按 error 态展示
+          status: item.status === "1" ? 'error' : 'done',
           url: id,
-          thumbUrl: handleThumbUrl(item.path)
+          thumbUrl: handleThumbUrl(item.url)
         }
         return uploadFile;
       })
@@ -247,15 +221,12 @@ const uploadContext = {
   emits: emits as AttachmentEmitFn,
   fileList,
   sysAttachment,
-  buildSysAttachment: handleSysAttachment,
-  registerInterval,
-  clearRegisteredInterval
+  buildSysAttachment: handleSysAttachment
 }
 const core = useUploadCore({
   ...uploadContext,
   uploadState,
   lastModelValue,
-  awaitHandleFile,
   maxCount,
   maxSize,
   uploadType,
@@ -270,7 +241,7 @@ const chunkApi = useChunkUpload({
   chunkUploadCount
 })
 core.bindChunkApi(chunkApi)
-const {beforeUpload, handleChange} = core
+const {beforeUpload, handleChange, handleCustomRequest} = core
 
 const {previewVisible, previewTitle, previewURL, previewType, handlePreview, handleCancel, handleShowThumbImage, handleThumbUrl} = useUploadPreview({fileList})
 const {handleRemove, businessRemove} = useAttachmentRemove({emits: emits as AttachmentEmitFn, autoRemove})

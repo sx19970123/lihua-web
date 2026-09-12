@@ -1,4 +1,5 @@
 import {message, type UploadFile, type VcFile} from "@/antd-adapter"
+import {onUnmounted} from "vue"
 import {
   CHUNK_MD5_QUERY,
   chunksMerge,
@@ -12,6 +13,7 @@ import {currentRequests} from "@/utils/request.ts"
 import type {ChunkUploadApi, UploadContext, UploadCoreApi, UploadRecordType} from "./types.ts"
 import type {UploadState} from "./use-upload-state.ts"
 import {CHUNK_UPLOAD_RECORD_PREFIX, HASH_CHUNK_SIZE_MB, UPLOAD_MODE} from "./constants.ts"
+import {CHUNK_RECORD_EVENT, notifyChunkRecordChange} from "./chunk-record-event.ts"
 
 /**
  * 分片上传链路：哈希计算、断点续传判存、分片上传（游标 worker-pool）与合并
@@ -23,8 +25,12 @@ export const useChunkUpload = (ctx: UploadContext & {
   chunkSize: number
   chunkUploadCount: number
 }) => {
-  const {emits, fileList, sysAttachment, buildSysAttachment, registerInterval, clearRegisteredInterval, uploadState, resetUploadState, core, chunkSize, chunkUploadCount} = ctx
+  const {emits, fileList, sysAttachment, buildSysAttachment, uploadState, resetUploadState, core, chunkSize, chunkUploadCount} = ctx
   const {handleUploadError, handleFastUpload, handleModelValue} = core
+
+  // 运行期注册的记录同步监听，组件卸载时统一移除
+  const recordCleanups: Array<() => void> = []
+  onUnmounted(() => recordCleanups.forEach(fn => fn()))
 
   // 开始进行分片上传
   const startChunkUpload = async (file: VcFile) => {
@@ -101,6 +107,7 @@ export const useChunkUpload = (ctx: UploadContext & {
           recordObj.uploadedChunkSize = Math.trunc(uploadedChunkSize / 1024 / 1024)
           recordObj.totalSize = Math.trunc(file.size ? file.size / 1024 / 1024 : 0 )
           localStorage.setItem(CHUNK_UPLOAD_RECORD_PREFIX + md5, JSON.stringify(recordObj))
+          notifyChunkRecordChange(md5)
           uploadState.progress = recordObj.totalSize ? Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100) : 0
         })
         if (resp.code === 200) {
@@ -147,30 +154,49 @@ export const useChunkUpload = (ctx: UploadContext & {
     })
   }
 
-  // 同步分片上传状态
+  // 同步分片上传状态：其他上传方（本页其他实例或跨页签）推进 localStorage 记录，事件驱动同步进度直至完成
   const handleSyncChunkUploadStatus = (file: UploadFile, md5: string) => {
     const recordKey = CHUNK_UPLOAD_RECORD_PREFIX + md5
-    if (localStorage.getItem(recordKey)) {
-      // 1000ms 低频：断点续传状态由其他上传方推进 localStorage，同步进度即可
-      const interval = registerInterval(setInterval(() => {
-        // 每次重读记录：进度由并发上传方推进，闭包快照会恒为旧值导致轮询永不结束
-        const record = localStorage.getItem(recordKey)
-        if (!record) {
-          clearRegisteredInterval(interval)
-          return
-        }
-        const recordObj: UploadRecordType = JSON.parse(record)
-        uploadState.progress = recordObj.totalSize ? Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100) : 0
-        // 检测到上传状态为completed时，执行附件秒传获取数据
-        if (recordObj.status === "completed") {
-          clearRegisteredInterval(interval)
-          handleFastUpload(file, md5)
-        }
-      }, 1000))
-    } else {
+    if (!localStorage.getItem(recordKey)) {
       // 没有本地记录直接调用附件秒传
       handleFastUpload(file, md5)
+      return
     }
+    const syncRecord = () => {
+      // 每次重读记录：进度由并发上传方推进，闭包快照会恒为旧值
+      const record = localStorage.getItem(recordKey)
+      if (!record) {
+        cleanup()
+        return
+      }
+      const recordObj: UploadRecordType = JSON.parse(record)
+      uploadState.progress = recordObj.totalSize ? Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100) : 0
+      // 检测到上传状态为completed时，执行附件秒传获取数据
+      if (recordObj.status === "completed") {
+        cleanup()
+        handleFastUpload(file, md5)
+      }
+    }
+    // 同页实例推进走 CustomEvent；跨页签写入走 storage 事件（storage 不在写入页自身触发）
+    const onCustomEvent = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === md5) {
+        syncRecord()
+      }
+    }
+    const onStorageEvent = (event: StorageEvent) => {
+      if (event.key === recordKey) {
+        syncRecord()
+      }
+    }
+    const cleanup = () => {
+      window.removeEventListener(CHUNK_RECORD_EVENT, onCustomEvent)
+      window.removeEventListener("storage", onStorageEvent)
+    }
+    recordCleanups.push(cleanup)
+    window.addEventListener(CHUNK_RECORD_EVENT, onCustomEvent)
+    window.addEventListener("storage", onStorageEvent)
+    // 立即同步一次：记录可能已处于 completed
+    syncRecord()
   }
 
   // 处理分片
@@ -270,6 +296,7 @@ export const useChunkUpload = (ctx: UploadContext & {
               totalSize: 0,
               chunkSize: 0
             } as UploadRecordType))
+            notifyChunkRecordChange(md5)
           } else {
             message.error(resp.msg)
             handleUploadError(file, resp.msg)
@@ -286,14 +313,16 @@ export const useChunkUpload = (ctx: UploadContext & {
     // 重传会经 existsAttachmentByMd5 命中秒传闭环，而非把已消费的 uploadId 当全新任务全量重传
     recordObj.status = "completed"
     localStorage.setItem(CHUNK_UPLOAD_RECORD_PREFIX + md5, JSON.stringify(recordObj))
-    chunksMerge({id: recordObj.attachmentId, originalName: file.name, md5: md5, uploadId:  recordObj.uploadId}, recordObj.chunkSize).then((resp) => {
+    notifyChunkRecordChange(md5)
+    chunksMerge({originalName: file.name, md5: md5, uploadId:  recordObj.uploadId}, recordObj.chunkSize).then((resp) => {
       if (resp.code === 200) {
         // 上传成功后删除浏览器缓存记录
         localStorage.removeItem(CHUNK_UPLOAD_RECORD_PREFIX + md5)
+        notifyChunkRecordChange(md5)
         // fileList重新赋值
         fileList.value.forEach(item => {
           if (item.uid === file.uid) {
-            item.url = resp.data
+            item.url = resp.data?.id
             item.status = "done"
           }
         })

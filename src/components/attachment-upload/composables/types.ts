@@ -27,8 +27,6 @@ export interface UploadContext {
   fileList: Ref<UploadFile[]>
   sysAttachment: Ref<SysAttachment>
   buildSysAttachment: (file: UploadFile, md5: string, uploadMode?: string) => void
-  registerInterval: (id: ReturnType<typeof setInterval>) => ReturnType<typeof setInterval>
-  clearRegisteredInterval: (id: ReturnType<typeof setInterval>) => void
 }
 
 // 分片链路对上传核心暴露的入口（beforeUpload/秒传判定依赖；晚绑定注入）

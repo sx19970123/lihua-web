@@ -1,28 +1,37 @@
-import {message, Upload, type UploadFile, type VcFile} from "@/antd-adapter"
-import {existsAttachmentByMd5, fastUpload} from "@/api/system/attachment/attachment-storage.ts"
+import {message, Upload, type UploadFile, type UploadRequestOption, type VcFile} from "@/antd-adapter"
+import {ref} from "vue"
+import {existsAttachmentByMd5, fastUpload, uploadAttachment} from "@/api/system/attachment/attachment-storage.ts"
+import type {AttachmentUploadVO} from "@/api/system/attachment/type/attachment-upload-vo.ts"
 import type {ChunkUploadApi, UploadContext} from "./types.ts"
 import type {UploadState} from "./use-upload-state.ts"
 import {UPLOAD_MODE} from "./constants.ts"
+import {joinAttachmentIds} from "./model-value.ts"
 
 /**
- * 上传核心：上传前置校验、一般上传/秒传分流、双向绑定回写与失败收尾
+ * 上传核心：上传前置校验、一般上传（axios 管线）/秒传分流、双向绑定回写与失败收尾
  */
 export const useUploadCore = (ctx: UploadContext & {
   uploadState: UploadState
   lastModelValue: { value: string | undefined }
-  awaitHandleFile: { value: boolean }
   maxCount: number
   maxSize: number
   uploadType: string[]
   chunk: boolean
 }) => {
-  const {emits, fileList, sysAttachment, buildSysAttachment, awaitHandleFile, registerInterval, clearRegisteredInterval, uploadState, lastModelValue, maxCount, maxSize, uploadType, chunk} = ctx
+  const {emits, fileList, sysAttachment, buildSysAttachment, uploadState, lastModelValue, maxCount, maxSize, uploadType, chunk} = ctx
 
   // 分片链路后于本 composable 创建（其回调依赖此处产物），入口经晚绑定注入
   let chunkApi: ChunkUploadApi | undefined
   const bindChunkApi = (api: ChunkUploadApi) => {
     chunkApi = api
   }
+
+  // 秒传等待「文件进入列表」change 事件的信号：事件驱动，替代定时轮询
+  const awaitHandleFile = ref<boolean>(false)
+  let notifyFileListChanged: (() => void) | undefined
+  const waitFileListChanged = () => awaitHandleFile.value
+      ? new Promise<void>(resolve => { notifyFileListChanged = resolve })
+      : Promise.resolve()
 
   // 附件上传前检验，同时进行不同上传逻辑的区分（beforeUpload 实参为 VcFile：原生 File + uid）
   const beforeUpload = async (file: VcFile, currentFileList: VcFile[]) => {
@@ -37,7 +46,8 @@ export const useUploadCore = (ctx: UploadContext & {
       return Upload.LIST_IGNORE;
     }
 
-    // 控制附件上传最大数（currentFileList 已包含本次进入的文件）
+    // 控制附件上传最大数（currentFileList 已包含本次进入的文件；数量约束由本组件判定，
+    // 不透传给 a-upload 的 maxCount——其整批截断策略会丢弃全部文件而非仅拒收超量部分）
     if (currentFileList.length > maxCount) {
       emits("exceedMaxCount", file)
       return Upload.LIST_IGNORE;
@@ -90,18 +100,18 @@ export const useUploadCore = (ctx: UploadContext & {
       if (item.url) {
         return item.url
       }
-      // 有response数据获取对应的data。code不为200调用上传失败
+      // 有response数据获取统一 VO 的 id。code不为200调用上传失败
       if (item.response) {
-        const resp = item.response
+        const resp = item.response as {code: number, msg: string, data?: AttachmentUploadVO}
         if (resp.code === 200) {
-          const url = resp.data
+          const id = resp.data?.id
           // 向fileList赋值URL
           fileList.forEach(item => {
             if (item.uid === file.uid) {
-              item.url = url
+              item.url = id
             }
           })
-          return url
+          return id
         } else {
           // 后端返回非200，标记为上传失败
           fileList.forEach(item => {
@@ -114,7 +124,7 @@ export const useUploadCore = (ctx: UploadContext & {
       }
     })
 
-    const modelValue = modelValueList.join(",")
+    const modelValue = joinAttachmentIds(modelValueList)
     lastModelValue.value = modelValue
     // 处理双向绑定
     emits("update:modelValue", modelValue)
@@ -122,8 +132,10 @@ export const useUploadCore = (ctx: UploadContext & {
 
   // 处理附件上传变化（uploading：上传中 done：上传成功 error：上传失败 removed：已删除）
   const handleChange = ({file, fileList}: {file: UploadFile, fileList: Array<UploadFile>}) => {
-    // 重置轮询等待状态
+    // 唤醒等待本次 change 的秒传流程
     awaitHandleFile.value = false
+    notifyFileListChanged?.()
+    notifyFileListChanged = undefined
 
     if (!file.status || file.status === "uploading") {
       return
@@ -148,7 +160,22 @@ export const useUploadCore = (ctx: UploadContext & {
     handleModelValue(file, fileList)
   }
 
-  // 一般附件上传，返回true由a-upload进行上传，返回false执行附件秒传逻辑
+  // 一般附件上传管线（axios 统一携带凭证，响应挂到 file.response 供 handleChange/handleModelValue 消费）
+  const handleCustomRequest = async (options: UploadRequestOption) => {
+    const file = options.file as VcFile
+    try {
+      // 业务附件恒私密：public 不传（服务端默认 false）；业务标签取 startUpload 阶段构建的附件对象
+      const resp = await uploadAttachment(file as unknown as File, {
+        businessCode: sysAttachment.value.businessCode,
+        businessName: sysAttachment.value.businessName
+      })
+      options.onSuccess?.(resp, file)
+    } catch (e) {
+      options.onError?.(e as Error, file)
+    }
+  }
+
+  // 一般附件上传前置：返回 true 交由 a-upload 走 handleCustomRequest，返回 false 执行附件秒传逻辑
   const startUpload = (file: VcFile) => {
     return new Promise(async (resolve) => {
 
@@ -183,37 +210,28 @@ export const useUploadCore = (ctx: UploadContext & {
     })
   }
 
-  // 处理附件秒传
+  // 处理附件秒传（uploaded 显式判定：未命中=附件在 exists 与秒传之间被移除的竞态）
   const handleFastUpload = (file: UploadFile, md5: string) => {
     // 构建 sysAttachment
     buildSysAttachment(file, md5, UPLOAD_MODE.FAST)
-    fastUpload(sysAttachment.value).then((resp) => {
-      // 轮询等待awaitHandleFile值变化（100ms 高频：秒传响应先到、handleChange 复位信号紧随其后）
-      const checkInterval = registerInterval(setInterval(() => {
-        if (!awaitHandleFile.value) {
-          // 清除轮询
-          clearRegisteredInterval(checkInterval)
-          if (resp.code === 200) {
-            const id = resp.data
-            if (id) {
-              fileList.value.forEach(item => {
-                if (item.uid === file.uid) {
-                  item.url = id
-                  item.status = "done"
-                }
-              })
-              // 处理双向绑定
-              handleModelValue(file, fileList.value)
-              emits("uploadSuccess", {file, fileList: fileList.value})
-              uploadState.uploading = false
-            } else {
-              handleUploadError(file, resp.msg)
-            }
-          } else {
-            handleUploadError(file, resp.msg)
+    fastUpload(sysAttachment.value).then(async (resp) => {
+      // 等待「文件进入列表」change 事件处理完成（秒传响应先到时保证回写顺序）
+      await waitFileListChanged()
+      if (resp.code === 200 && resp.data?.uploaded) {
+        const id = resp.data.id
+        fileList.value.forEach(item => {
+          if (item.uid === file.uid) {
+            item.url = id
+            item.status = "done"
           }
-        }
-      }, 100))
+        })
+        // 处理双向绑定
+        handleModelValue(file, fileList.value)
+        emits("uploadSuccess", {file, fileList: fileList.value})
+        uploadState.uploading = false
+      } else {
+        handleUploadError(file, resp.code === 200 ? "附件秒传未命中，请重新上传" : resp.msg)
+      }
     })
   }
 
@@ -232,6 +250,7 @@ export const useUploadCore = (ctx: UploadContext & {
     bindChunkApi,
     beforeUpload,
     handleChange,
+    handleCustomRequest,
     handleFastUpload,
     handleModelValue,
     handleUploadError

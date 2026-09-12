@@ -35,8 +35,6 @@ export interface SysAttachment {
     delFlag?: string;
     /** 上传失败原因 */
     errorMsg?: string;
-    /** 原url（通过url上传有该字段） */
-    url?: string;
     /** 客户端类型 */
     clientType?: string;
 }
@@ -65,4 +63,12 @@ export interface SysAttachmentVO extends SysAttachment {
      * 上传用户昵称
      */
     uploadName?: string;
+    /**
+     * 行级公开标记
+     */
+    isPublic?: boolean;
+    /**
+     * 附件访问链接（按行选链：公开=永久链，私密=时效签名链；path 以同值链接形态下发）
+     */
+    url?: string;
 }
