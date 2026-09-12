@@ -77,7 +77,7 @@ import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
 import {cloneDeep, debounce} from 'lodash-es'
 import {useThemeStore} from "@/stores/theme.ts";
 import {ResponseError} from "@/api/global/type.ts";
-import {publicUpload} from "@/api/system/attachment/attachment-storage.ts";
+import {uploadAttachment} from "@/api/system/attachment/attachment-storage.ts";
 import {v4 as uuidv4} from "uuid";
 
 const themeStore = useThemeStore()
@@ -194,7 +194,8 @@ const handleOk = async () => {
           throw new Error('头像不能超过 2MB');
         }
 
-        const resp = await publicUpload(new File([blob],uuidv4() + ".png", { type: "image/png" }), "UserAvatar");
+        // 头像属公开内容：public 由组件内生固定；引用存对象键（运行时由后端解析为可访问 URL 下发）
+        const resp = await uploadAttachment(new File([blob],uuidv4() + ".png", { type: "image/png" }), {public: true, businessCode: "UserAvatar"});
         if (resp.code !== 200) {
           throw new Error(resp.msg);
         }
@@ -203,7 +204,7 @@ const handleOk = async () => {
         ownPreviewUrl = URL.createObjectURL(blob)
         updatedData = {
           url: ownPreviewUrl,
-          value: resp.data,
+          value: resp.data.path,
           type: avatarType.value,
           backgroundColor: avatarColor.value
         };

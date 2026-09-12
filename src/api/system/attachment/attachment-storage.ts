@@ -2,6 +2,9 @@ import request from "@/utils/request.ts";
 import type {SysAttachment, SysAttachmentVO} from "@/api/system/attachment/type/sys-attachment.ts";
 import type {AttachmentUploadVO, FastUploadResultVO} from "@/api/system/attachment/type/attachment-upload-vo.ts";
 
+// 后端 entry 链接（/system/attachment/storage/download?...）加站点代理前缀，得到页面可直接访问的 URL
+export const resolveAttachmentEntryUrl = (entryUrl: string) => `${import.meta.env.VITE_APP_BASE_API}${entryUrl}`
+
 // 根据md5查询附件是否存在
 export const existsAttachmentByMd5 = (md5: string) => {
     return request<boolean>({

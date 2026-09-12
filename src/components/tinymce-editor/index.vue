@@ -18,10 +18,9 @@ import type {Editor as TinyMceEditor} from 'tinymce'
 import {useThemeStore} from "@/stores/theme.ts";
 import {v4 as uuidv4} from "uuid";
 import {useRoute} from "vue-router";
-import {publicUpload} from "@/api/system/attachment/attachment-storage.ts";
+import {uploadAttachment, resolveAttachmentEntryUrl} from "@/api/system/attachment/attachment-storage.ts";
 import type {SysAttachmentUrl} from "@/api/system/attachment/type/sys-attachment-url.ts";
 import {message} from "@/antd-adapter";
-import {attachmentUrl} from "@/utils/attachment-url.ts";
 
 const themeStore = useThemeStore();
 const route = useRoute()
@@ -278,12 +277,12 @@ const handleUpload = async (files: FileList | File | null, type: "file" | "image
   }
 
   try {
-    // 进行附件上传
-    const resp = await publicUpload(file, bCode.value)
-    // 上传成功
+    // 进行附件上传（编辑器插图属公开内容：public 由组件内生固定，不对外暴露）
+    const resp = await uploadAttachment(file, {public: true, businessCode: bCode.value})
+    // 上传成功：正文写入统一 VO 的公开永久链（含站点代理前缀，拿来即用）
     if (resp.code === 200) {
       return {
-        url: attachmentUrl(resp.data),
+        url: resolveAttachmentEntryUrl(resp.data.url),
         name: file.name,
       }
     } else {
