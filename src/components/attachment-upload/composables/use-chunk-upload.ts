@@ -219,7 +219,7 @@ export const useChunkUpload = (ctx: UploadContext & {
     const chunks = handleChunk(file, HASH_CHUNK_SIZE_MB)
     return new Promise((resolve, reject) => {
       // 通过webWorker后台处理hash计算，防止ui阻塞
-      const worker = new Worker(new URL("../hash-worker.ts", import.meta.url), {type: "module"})
+      const worker = new Worker(new URL("./hash-worker.ts", import.meta.url), {type: "module"})
       // worker 加载/运行异常兜底：不处理则 promise 永不落定、上传流程永久卡死
       worker.onerror = () => {
         reject(new Error("附件哈希计算失败"))
