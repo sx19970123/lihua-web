@@ -14,7 +14,7 @@ import {useDictStore} from "@/stores/dict.ts";
 import {serializeThemeState, useThemeStore} from "@/stores/theme.ts";
 import {debounce} from "lodash-es";
 import router from "@/router";
-import {attachmentUrl, getTemporaryPath} from "@/utils/attachment-url.ts";
+import {resolveAttachmentEntryUrl} from "@/api/system/attachment/attachment-storage.ts";
 import {createWindowGuard} from "@/utils/window-guard.ts";
 
 // 认证失效联动（清用户态+跳转+提示）的单飞窗：token 过期时并发 401 只执行一次，窗口自动复位
@@ -213,13 +213,14 @@ export const useUserStore = defineStore('user', {
                 }
             })
         },
-        // 处理头像
-        async handleAvatar() {
+        // 处理头像：图片头像直接消费后端随用户信息下发的 avatarUrl（entry 链 + 站点代理前缀）
+        handleAvatar() {
             const avatar = this.$state.avatar
             if (avatar.type === 'image') {
                 // 当头像类型为 image 但 image不存在时，赋值默认头像
                 if (avatar.value) {
-                    avatar.url = await getTemporaryPath(attachmentUrl(avatar.value))
+                    const avatarUrl = this.$state.userInfo.avatarUrl
+                    avatar.url = avatarUrl ? resolveAttachmentEntryUrl(avatarUrl) : ''
                 } else {
                     this.$state.avatar = this.getDefaultAvatar()
                 }

@@ -30,6 +30,8 @@ export interface AuthInfoType {
  */
 export interface UserInfoType {
     avatar?: string,
+    // 头像可直接访问的 URL（后端随用户信息解析下发；avatar 仍为头像配置 JSON）
+    avatarUrl?: string,
     gender?: string,
     id?: string,
     nickname?: string,

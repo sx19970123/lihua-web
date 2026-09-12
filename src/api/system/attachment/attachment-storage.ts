@@ -5,6 +5,10 @@ import type {AttachmentUploadVO, FastUploadResultVO} from "@/api/system/attachme
 // 后端 entry 链接（/system/attachment/storage/download?...）加站点代理前缀，得到页面可直接访问的 URL
 export const resolveAttachmentEntryUrl = (entryUrl: string) => `${import.meta.env.VITE_APP_BASE_API}${entryUrl}`
 
+// 公开附件对象键 → 页面可直接访问的公开永久链（形态与后端 AttachmentUrlUtils.resolvePublicUrl 对齐）
+export const resolvePublicAttachmentUrl = (objectKey: string) =>
+    resolveAttachmentEntryUrl(`/system/attachment/storage/download?fullPath=${encodeURIComponent(objectKey)}`)
+
 // 根据md5查询附件是否存在
 export const existsAttachmentByMd5 = (md5: string) => {
     return request<boolean>({
@@ -50,21 +54,6 @@ export const uploadAttachment = (file: File, options?: {public?: boolean, busine
     }
     return request<AttachmentUploadVO>({
         url: "system/attachment/storage/upload",
-        method: "post",
-        data: formData,
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    })
-}
-
-// 公开附件上传（公开内容内生场景：tinymce 插图、头像上传）
-export const publicUpload = (file: File, businessCode: string) => {
-    const formData = new FormData();
-    formData.append('file', file)
-    formData.append('businessCode', businessCode)
-    return request<string>({
-        url: "system/attachment/storage/public/upload",
         method: "post",
         data: formData,
         headers: {

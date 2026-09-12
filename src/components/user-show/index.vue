@@ -25,7 +25,7 @@ import UserAvatar from '@/components/user-avatar/index.vue'
 import {useUserStore} from "@/stores/user.ts";
 import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
 import {computed, getCurrentInstance, ref, useSlots} from "vue";
-import {attachmentUrl, getTemporaryPath} from "@/utils/attachment-url.ts";
+import {resolvePublicAttachmentUrl} from "@/api/system/attachment/attachment-storage.ts";
 
 const userStore = useUserStore();
 
@@ -48,11 +48,9 @@ const avatar = ref<AvatarType>({})
 try {
   if (avatarJson) {
     avatar.value = JSON.parse(avatarJson)
-    // 处理图片类型头像
+    // 处理图片类型头像：对象键按公开链直用（不 fetch 转 blob，缓存交由下载端 Cache-Control 接管）
     if (avatar.value.value && avatar.value.type === 'image') {
-      getTemporaryPath(attachmentUrl(avatar.value.value)).then(path => {
-        avatar.value.url = path
-      })
+      avatar.value.url = resolvePublicAttachmentUrl(avatar.value.value)
     }
   } else {
     avatar.value = userStore.getDefaultAvatar()
