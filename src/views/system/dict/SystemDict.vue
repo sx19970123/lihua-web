@@ -167,6 +167,7 @@
     </a-flex>
     <!--    新增编辑对话框-->
     <a-modal v-model:open="modalActive.open"
+             destroy-on-hidden
              ok-text="保 存"
              cancel-text="关 闭"
              :confirm-loading="modalActive.saveLoading"

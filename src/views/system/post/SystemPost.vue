@@ -157,7 +157,7 @@
       </a-card>
     </a-flex>
 
-    <a-modal v-model:open="modalActive.open" @ok="savePost" :confirm-loading="modalActive.saveLoading">
+    <a-modal v-model:open="modalActive.open" @ok="savePost" :confirm-loading="modalActive.saveLoading" destroy-on-hidden>
       <template #title>
         <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>

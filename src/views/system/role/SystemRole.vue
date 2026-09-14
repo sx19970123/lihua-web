@@ -151,7 +151,7 @@
         </a-card>
       </a-flex>
 <!--    角色模态框-->
-    <a-modal v-model:open="modalActive.open" :footer="null">
+    <a-modal v-model:open="modalActive.open" :footer="null" destroy-on-hidden>
       <template #title>
         <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>

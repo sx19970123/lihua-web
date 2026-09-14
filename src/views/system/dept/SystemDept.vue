@@ -163,7 +163,7 @@
      </a-card>
    </a-flex>
     <!--模态框-->
-   <a-modal v-model:open="modalActive.open" @ok="saveDept" :confirm-loading="modalActive.saveLoading">
+   <a-modal v-model:open="modalActive.open" @ok="saveDept" :confirm-loading="modalActive.saveLoading" destroy-on-hidden>
      <template #title>
        <div class="mb-ant-lg">
          <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>

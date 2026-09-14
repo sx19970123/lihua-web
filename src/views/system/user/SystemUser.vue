@@ -193,7 +193,7 @@
       </a-card>
     </a-flex>
 
-    <a-modal v-model:open="modalActive.open">
+    <a-modal v-model:open="modalActive.open" destroy-on-hidden>
       <template #title>
         <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
@@ -292,13 +292,21 @@
         </div>
       </a-form>
       <template #footer>
+<!--        前往上一选项卡（目标恒为 basic/dept 段，无需 post 段的岗位数据初始化）-->
+        <a-popover v-if="segmented !== 'basic'"
+                   :content="segmentedOption[segmentedOption.findIndex(item => item.value === segmented) - 1]?.label">
+          <a-button @click="toNextForm(segmentedOption[segmentedOption.findIndex(item => item.value === segmented) - 1]?.value)">
+            <template #icon>
+              <LeftOutlined />
+            </template>
+          </a-button>
+        </a-popover>
         <a-button @click="modalActive.open = false">关 闭</a-button>
         <a-button type="primary" @click="saveUser" :loading="modalActive.saveLoading">保 存</a-button>
 <!--        前往下一选项卡-->
         <a-popover v-if="segmented !== 'post'"
                    :content="segmentedOption[segmentedOption.findIndex(item => item.value === segmented) + 1]?.label">
-          <a-button type="primary"
-                    @click="toNextForm(segmentedOption[segmentedOption.findIndex(item => item.value === segmented) + 1]?.value)">
+          <a-button @click="toNextForm(segmentedOption[segmentedOption.findIndex(item => item.value === segmented) + 1]?.value)">
             <template #icon>
               <RightOutlined />
             </template>
