@@ -32,7 +32,7 @@ export interface UploadContext {
 // 分片链路对上传核心暴露的入口（beforeUpload/秒传判定依赖；晚绑定注入）
 export interface ChunkUploadApi {
   startChunkUpload: (file: VcFile) => Promise<void>
-  handleCalculateHash: (file: VcFile) => Promise<unknown>
+  handleCalculateHash: (file: VcFile) => Promise<string>
 }
 
 // 上传核心对分片链路暴露的回调（失败收尾/秒传/双向绑定回写）

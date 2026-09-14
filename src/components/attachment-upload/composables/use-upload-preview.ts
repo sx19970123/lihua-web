@@ -25,19 +25,15 @@ export const useUploadPreview = (ctx: {
       message.error("附件异常，无法预览或下载")
       return
     }
-    if (file.type || file.name) {
-      // 获取附件后缀名
-      const extension = file.name.split('.').pop()?.toLowerCase() || ""
-      // 获取组件返回的附件类型
-      const type = file.type?.split("/")[0] || ""
-      // 通过组件返回类型和附件后缀联合判断附件类型
-      if (type === "image" || imageExtensions.includes(extension)) {
-        previewType.value = "image"
-      } else if (type === "video" || videoExtensions.includes(extension)) {
-        previewType.value = "video"
-      } else {
-        previewType.value = 'other'
-      }
+    // 获取附件后缀名
+    const extension = file.name.split('.').pop()?.toLowerCase() || ""
+    // 获取组件返回的附件类型
+    const type = file.type?.split("/")[0] || ""
+    // 通过组件返回类型和附件后缀联合判断附件类型
+    if (type === "image" || imageExtensions.includes(extension)) {
+      previewType.value = "image"
+    } else if (type === "video" || videoExtensions.includes(extension)) {
+      previewType.value = "video"
     } else {
       previewType.value = 'other'
     }

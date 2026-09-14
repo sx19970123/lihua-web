@@ -8,7 +8,6 @@ import {
   chunksUploadStart,
   existsAttachmentByMd5
 } from "@/api/system/attachment/attachment-storage.ts"
-import {ResponseError} from "@/api/global/type.ts"
 import {currentRequests} from "@/utils/request.ts"
 import type {ChunkUploadApi, UploadContext, UploadCoreApi, UploadRecordType} from "./types.ts"
 import type {UploadState} from "./use-upload-state.ts"
@@ -32,26 +31,31 @@ export const useChunkUpload = (ctx: UploadContext & {
   const recordCleanups: Array<() => void> = []
   onUnmounted(() => recordCleanups.forEach(fn => fn()))
 
-  // 开始进行分片上传
+  // 开始进行分片上传（外层兜底：步骤 2/3 中的网络 reject 与本地记录 JSON.parse 损坏等逃逸异常
+  // 在此收口，否则 uploading 永久为 true 且异常成为 unhandled rejection）
   const startChunkUpload = async (file: VcFile) => {
     uploadState.uploading = true
-    // 1. 获取附件md5值（失败时终止本次上传，handleUploadError 内复位 loading）
-    let md5: string
     try {
-      md5 = await handleCalculateHash(file) as string
+      // 1. 获取附件md5值（失败时终止本次上传，handleUploadError 内复位 loading）
+      let md5: string
+      try {
+        md5 = await handleCalculateHash(file)
+      } catch {
+        handleUploadError(file, "附件哈希计算失败")
+        return
+      }
+      // 2. 判断是否进行附件上传
+      const allow = await allowUpload(file, md5)
+      if (allow) {
+        // 3. 处理分片上传逻辑
+        await handleChunkUpload(file, md5)
+      } else {
+        // 3 不允许分片上传 包含两种情况：1 同一附件有正在执行的上传任务；2 附件已上传完毕
+        handleSyncChunkUploadStatus(file, md5)
+      }
     } catch {
-      handleUploadError(file, "附件哈希计算失败")
-      return
-    }
-    // 2. 判断是否进行附件上传
-    let allow = await allowUpload(file, md5);
-    // 允许上传附件
-    if (allow) {
-      // 3. 处理分片上传逻辑
-      await handleChunkUpload(file, md5)
-    } else {
-      // 3 不允许分片上传 包含两种情况：1 同一附件有正在执行的上传任务；2 附件已上传完毕
-      handleSyncChunkUploadStatus(file, md5)
+      // 兜底收口（网络类异常拦截器已提示，本地记录损坏等走泛文案）
+      handleUploadError(file, "分片上传失败")
     }
   }
 
@@ -95,6 +99,7 @@ export const useChunkUpload = (ctx: UploadContext & {
     }
 
     // 5. 分片上传主体（单次调度：取片、上传、结算；调度由 worker 循环驱动）
+    let uploadAborted = false
     const uploadChunk = async (i: number) => {
       const {chunk, index} = needUploadChunks[i]
       try {
@@ -122,13 +127,12 @@ export const useChunkUpload = (ctx: UploadContext & {
             handleChunksMerge(file, recordObj, md5)
           }
         } else {
-          message.error(resp.msg)
+          // 业务失败统一走失败收口（handleUploadError 内弹提示并复位 loading）
+          handleUploadError(file, resp.msg)
           uploadAborted = true
         }
-      } catch (e) {
-        if (e instanceof ResponseError) {
-          message.error(e.msg)
-        }
+      } catch {
+        // 网络类异常（ResponseError）拦截器已统一提示，此处只收尾状态
         handleUploadError(file, "分片上传失败")
         uploadAborted = true
       }
@@ -136,7 +140,6 @@ export const useChunkUpload = (ctx: UploadContext & {
 
     // 6. 游标 worker-pool：固定数量 worker 从共享游标取片，任意分片失败即停止派片（在途分片自然收尾）
     let nextChunkCursor = 0
-    let uploadAborted = false
     const chunkWorker = async () => {
       while (!uploadAborted && nextChunkCursor < needUploadChunks.length) {
         await uploadChunk(nextChunkCursor++)
@@ -145,12 +148,9 @@ export const useChunkUpload = (ctx: UploadContext & {
     await Promise.all(
         Array.from({length: Math.min(chunkUploadCount, needUploadChunks.length)}, () => chunkWorker())
     ).catch((e) => {
-      if (e instanceof ResponseError) {
-        handleUploadError(file, e.msg)
-      } else {
-        handleUploadError(file, "分片上传失败")
-        console.error(e)
-      }
+      // 网络类异常（ResponseError）拦截器已提示，统一泛文案收口
+      console.error(e)
+      handleUploadError(file, "分片上传失败")
     })
   }
 
@@ -217,7 +217,7 @@ export const useChunkUpload = (ctx: UploadContext & {
     uploadState.progress = 0
 
     const chunks = handleChunk(file, HASH_CHUNK_SIZE_MB)
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       // 通过webWorker后台处理hash计算，防止ui阻塞
       const worker = new Worker(new URL("./hash-worker.ts", import.meta.url), {type: "module"})
       // worker 加载/运行异常兜底：不处理则 promise 永不落定、上传流程永久卡死
@@ -298,7 +298,6 @@ export const useChunkUpload = (ctx: UploadContext & {
             } as UploadRecordType))
             notifyChunkRecordChange(md5)
           } else {
-            message.error(resp.msg)
             handleUploadError(file, resp.msg)
           }
         }
@@ -333,12 +332,9 @@ export const useChunkUpload = (ctx: UploadContext & {
         handleUploadError(file, resp.msg)
       }
     }).catch((e) => {
-      if (e instanceof ResponseError) {
-        handleUploadError(file, e.msg)
-      } else {
-        handleUploadError(file, "附件合并失败")
-        console.error(e)
-      }
+      // 网络类异常（ResponseError）拦截器已提示，统一泛文案收口
+      console.error(e)
+      handleUploadError(file, "附件合并失败")
     }).finally(() => {
       resetUploadState()
     })

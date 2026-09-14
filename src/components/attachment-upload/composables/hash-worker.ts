@@ -7,16 +7,16 @@ import {createMD5} from 'hash-wasm';
 self.onmessage = async (event) => {
     const chunks = event.data
     // 初始化md5计算工具
-    const blake3 = await createMD5();
+    const md5 = await createMD5();
     // read读取函数
     const read = (i: number) => {
         // 读取完成后调用digest()返回哈希
         if (i >= chunks.length) {
-            self.postMessage(blake3.digest("hex"))
+            self.postMessage(md5.digest("hex"))
             return
         }
         chunks[i].arrayBuffer().then((data: ArrayBuffer) => {
-            blake3.update(new Uint8Array(data));
+            md5.update(new Uint8Array(data));
             self.postMessage(Math.trunc(i * 100 / chunks.length))
             read(i + 1)
         }).catch((e: unknown) => {

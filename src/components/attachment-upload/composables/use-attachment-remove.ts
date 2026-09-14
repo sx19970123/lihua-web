@@ -1,4 +1,4 @@
-import {message, Modal, type UploadFile} from "@/antd-adapter"
+import {Modal, type UploadFile} from "@/antd-adapter"
 import {h} from "vue"
 import {ExclamationCircleOutlined} from '@antdv-next/icons'
 import {deleteFromBusiness} from "@/api/system/attachment/attachment-storage.ts"
@@ -45,8 +45,9 @@ export const useAttachmentRemove = (ctx: {
           resolve({})
         }
       } else {
-        message.error("附件id不存在")
-        reject()
+        // 无 id 条目（上传中/失败残留/秒传在途）：无服务端可删，放行让 a-upload 直接移除本地条目
+        // （reject 会取消移除，令残留条目永久滞留列表）
+        resolve({})
       }
     })
   }

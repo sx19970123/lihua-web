@@ -34,8 +34,7 @@
     >
       <!--      picture 模式预览图标按文件类型切换；动作按钮外框（text 型小按钮 + item-action hover 样式）与预览点击由 UploadList 统一渲染，插槽只提供图标-->
       <template #previewIcon="data">
-        <CloudDownloadOutlined v-if="!imageExtensions.includes(data.file.name.toLowerCase().split('.').pop()) &&
-                                     !videoExtensions.includes(data.file.name.toLowerCase().split('.').pop())"/>
+        <CloudDownloadOutlined v-if="![imageExtensions, videoExtensions].some(list => list.includes(data.file.name.toLowerCase().split('.').pop() ?? ''))"/>
         <EyeOutlined v-else/>
       </template>
       <!--    按钮上传-->
