@@ -4,7 +4,7 @@
 @import "transition.css";
 /* 路由切换进度条 */
 @import "nprogress.css";
-/* 覆盖ant-design-vue 4 样式 */
+/* 覆盖组件库样式 */
 @import "overwrite-ant.css";
 /* 毛玻璃效果 */
 @import "ground-glass.css";
