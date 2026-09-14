@@ -7,7 +7,7 @@
         <theme-mode-segmented/>
       </a-form-item>
       <a-form-item label="主题颜色">
-        <color-select :dataSource="colorList" v-model:color="themeStore.colorPrimary" allow-custom @click="themeStore.changeColorPrimary()"/>
+        <color-select :dataSource="colorList" v-model:color="themeStore.colorPrimary" allow-custom custom-color-storage-key="colorSelectCustomColor" @click="themeStore.changeColorPrimary()"/>
       </a-form-item>
       <a-form-item label="导航颜色" v-if="!themeStore.isDarkTheme">
         <color-select :dataSource="navColors" v-model:value="themeStore.siderTheme"/>

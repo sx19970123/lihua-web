@@ -11,14 +11,14 @@
                   @click="openModal"
       />
     </a-row>
-    <a-modal v-model:open="open" width="1000px" @cancel="close">
+    <a-modal v-model:open="open" width="1000px" destroy-on-hidden @cancel="close">
       <template #title>
         <a-typography-title :level="4">头像编辑</a-typography-title>
       </template>
       <a-flex vertical align="center" :gap="24">
         <!--        avatarType 不是 image 时使用avatar预览-->
         <a-avatar :size="150"
-                  :style="{background: avatarColor === avatarBackgroundColor[0].color ? themeStore.getColorPrimary(): avatarColor}"
+                  :style="{background: resolveAvatarBackgroundColor(avatarColor, themeStore.getColorPrimary())}"
                   v-if="avatarType !== 'image'">
           <template v-if="avatarType === 'icon'" #icon>
             <component v-if="avatarIcon" :is="avatarIcon"/>
@@ -36,10 +36,12 @@
           <a-radio value="icon">图标</a-radio>
           <a-radio value="text">文本</a-radio>
         </a-radio-group>
-        <!--        颜色选取-->
+        <!--        颜色选取（allowCustom：尾部自定义取色器，hex 持久化落在背景色合法域内；记忆键与主题等场景隔离）-->
         <color-select v-model:color="avatarColor"
                       v-if="avatarType !== 'image'"
                       :dataSource="avatarBackgroundColor"
+                      allowCustom
+                      custom-color-storage-key="avatarBackgroundColor"
         />
         <!--        图标选取-->
         <icon-select v-if="avatarType === 'icon'" v-model="avatarIcon" :size="iconSize"/>
@@ -71,6 +73,7 @@ import ImageCropper from "@/components/image-cropper/index.vue"
 import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
 import SysAvatar from "@/components/user-avatar/index.vue"
 import {useUserStore} from "@/stores/user";
+import {AVATAR_AUTO_BACKGROUND, resolveAvatarBackgroundColor} from "@/helpers/avatar.ts";
 import {message} from "@/antd-adapter";
 import settings from "@/settings";
 import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
@@ -131,13 +134,14 @@ const avatarImg = ref<CropperDataType>({
   w: 0
 })
 
-// 头像背景颜色定义
-const avatarBackgroundColor = ref<Array<{name: string,color: string}>>(cloneDeep(settings.colorOptions))
+// 头像背景颜色定义（displayColor：跟随系统项的渐变展示值，见 color-select 契约）
+const avatarBackgroundColor = ref<Array<{name: string, color: string, displayColor?: string}>>(cloneDeep(settings.colorOptions))
 
-// 颜色集合第一个添加为跟随系统颜色
+// 颜色集合第一个添加为跟随系统颜色：持久化语义值 'auto'，渐变仅作色卡展示（displayColor）
 avatarBackgroundColor.value.unshift({
   name: '跟随系统',
-  color: 'conic-gradient(from 45deg, ' + settings.colorOptions.map(item => item.color).join(",") + ')'
+  color: AVATAR_AUTO_BACKGROUND,
+  displayColor: 'conic-gradient(from 45deg, ' + settings.colorOptions.map(item => item.color).join(",") + ')'
 })
 
 // 处理窗口宽度 1050 / 680 / 492 划分图标选择器尺寸
@@ -160,8 +164,21 @@ const handleWindowWith = () => {
   }
 }
 
-// 打开头像模态框
+// 打开头像模态框：从当前头像还原编辑草稿（未确认的更改不跨开关保留；modal 内容随 destroy-on-hidden 销毁，草稿 ref 在 setup 层须显式重置）
 const openModal = () => {
+  avatarType.value = props.modelValue.type
+  avatarColor.value = props.modelValue.backgroundColor
+  avatarUrl.value = props.modelValue.url
+  avatarIcon.value = props.modelValue.type === 'icon' ? props.modelValue.value : ''
+  avatarText.value = props.modelValue.type === 'text' ? props.modelValue.value : ''
+  avatarImg.value = {
+    div: { height: "", width: "" },
+    h: 0,
+    html: "",
+    img: { height: "", transform: "", width: "" },
+    url: "",
+    w: 0
+  }
   open.value = true
 }
 
