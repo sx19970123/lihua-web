@@ -246,7 +246,9 @@
       <a-form :colon="false">
         <a-form-item label="有效时间">
           <a-input-number placeholder="请输入链接有效时间"
-                          addon-after="分钟"
+                          change-on-wheel
+                          style="width: 50%;"
+                          suffix="分钟"
                           :min="1"
                           :precision="0"
                           v-model:value="shareValidTime"
@@ -254,7 +256,7 @@
           />
         </a-form-item>
         <a-form-item label="附件链接">
-          <a-textarea :auto-size="{ minRows: 8 }"
+          <a-textarea :auto-size="{ minRows: 10 }"
                       v-model:value="shareUrl"
                       placeholder="有效时间失去焦点以获取分享链接"
                       readonly/>
@@ -283,6 +285,7 @@ import dayjs from "dayjs";
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"
 import {download} from "@/utils/attachment-download.ts";
+import appInfo from "@/app-info.ts";
 import {useThemeStore} from "@/stores/theme.ts";
 import TableSetting from "@/components/table-setting/index.vue";
 
@@ -582,6 +585,9 @@ const initShare = () => {
   const shareName = ref<string>()
   const shareValidTime = ref<number>(15)
   const shareUrl = ref<string>()
+  // 上次生成链接的请求参数与时间：参数未变且生成不足 1 分钟时，失焦不重复请求
+  // （链接的有效期起点取生成时刻，超过 1 分钟后失焦会刷新起点）
+  let lastShareRequest: { id: string, validTime: number, generatedAt: number } | undefined
 
   // 处理打开分享model
   const handleShowShareModal = (event: MouseEvent, id: string, fileName: string, status: string) => {
@@ -601,16 +607,25 @@ const initShare = () => {
     showShareModal.value = false
     shareId.value = undefined
     shareUrl.value = undefined
+    lastShareRequest = undefined
   }
 
   // 处理获取分享链接
   const handleGetShareUrl = async () => {
     if (shareId.value) {
+      // 参数与上次一致且生成不足 1 分钟：沿用现有链接，跳过请求
+      if (shareUrl.value && lastShareRequest
+          && lastShareRequest.id === shareId.value
+          && lastShareRequest.validTime === shareValidTime.value
+          && Date.now() - lastShareRequest.generatedAt < 60 * 1000) {
+        return
+      }
       const resp = await getDownloadURL(shareId.value, shareValidTime.value.toString())
       if (resp.code === 200) {
+        lastShareRequest = {id: shareId.value, validTime: shareValidTime.value, generatedAt: Date.now()}
         const timeoutTime = dayjs(new Date()).add(shareValidTime.value, "minute").format('YYYY-MM-DD HH:mm:ss')
         const fullUrl = resp.data.startsWith("/") ? window.location.origin + baseAPI + resp.data : resp.data
-        shareUrl.value = `${fullUrl}### 附件名称 ${shareName.value} 有效期至 ${timeoutTime} --来自狸花猫后台管理系统`
+        shareUrl.value = `${fullUrl}### 附件名称 ${shareName.value} 有效期至 ${timeoutTime} --来自${appInfo.appName}`
       } else {
         message.error(resp.msg)
       }

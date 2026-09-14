@@ -11,8 +11,8 @@
       <div class="title">
         <transition name="fade" mode="out-in">
           <div v-show="showTitle">
-            <a-typography-title>狸花猫后台管理系统
-              <a-tag class="version-tag" variant="filled" color="blue">v{{ settings.version }}</a-tag>
+            <a-typography-title>{{ appInfo.appName }}
+              <a-tag class="version-tag" variant="filled" color="blue">v{{ appInfo.version }}</a-tag>
             </a-typography-title>
             <a-typography-title :level="2">
               基于SpringBoot 4.x 和 vue3.x
@@ -45,7 +45,7 @@ import LoginBackground from "@/views/login/components/LoginBackground.vue"
 import UserSetupIndex from "@/components/user-setup/index.vue"
 import UserRegister from "@/views/login/components/Register.vue"
 import UserLogin from "@/views/login/components/Login.vue"
-import settings from "@/settings.ts"
+import appInfo from "@/app-info.ts"
 import userSetup from "@/helpers/user-setup.ts"
 import {screenUnlock} from "@/helpers/lock-screen.ts"
 import {showOverflowY} from "@/utils/scrollbar.ts"

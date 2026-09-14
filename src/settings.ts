@@ -28,11 +28,6 @@ const themeMode: ThemeMode = localStorage.getItem("theme-mode") as ThemeMode ?? 
  */
 export default {
     /**
-     * 系统版本
-     */
-    version: "2.2.0",
-
-    /**
      * 外观模式（配置态：用户意图）
      */
     themeMode,

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mt-ant-lg mb-[56px] stagger-item" style="--si: 0">
-      <a-typography-title :level="2">欢迎注册狸花猫</a-typography-title>
+      <a-typography-title :level="2">欢迎注册{{ appInfo.appSubname }}</a-typography-title>
       <a-typography-text>已有账号？</a-typography-text>
       <a-typography-link @click="handleChangeComponent('login')">前往登录
         <RightOutlined/>
@@ -62,6 +62,7 @@ import PasswordInput from "@/components/password-input/index.vue"
 import {type Rule, message} from "@/antd-adapter";
 import {register} from "@/api/system/authentication/authentication.ts";
 import TianaiCaptcha from "@/components/tianai-captcha/index.vue";
+import appInfo from "@/app-info.ts";
 import {useSettingStore} from "@/stores/setting.ts";
 import {checkUserName} from "@/api/system/user/user.ts";
 // 系统设置

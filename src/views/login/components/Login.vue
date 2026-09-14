@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mt-ant-lg mb-[56px] stagger-item" style="--si: 0">
-      <a-typography-title :level="2">欢迎登录狸花猫</a-typography-title>
+      <a-typography-title :level="2">欢迎登录{{ appInfo.appSubname }}</a-typography-title>
       <a-typography-text v-if="!settingStore.isServerConnected" type="danger">无法连接服务器</a-typography-text>
       <!--                    根据配置显示注册-->
       <div v-if="settingStore.enableSignUp">
@@ -55,6 +55,7 @@
 
 <script setup lang="ts">
 import TianaiCaptcha from "@/components/tianai-captcha/index.vue"
+import appInfo from "@/app-info.ts"
 import {inject, onMounted, reactive, type Ref, ref, useTemplateRef} from "vue"
 import token from "@/helpers/token.ts"
 import remember from "@/helpers/remember.ts"
