@@ -2,7 +2,7 @@
   <HappyProvider :enabled="themeStore.clickEffect === 'happy'" v-slot="{ wave: happyWave }">
     <a-config-provider :theme="themeStore.themeConfig" :locale="local" :component-size="themeStore.componentSize"
                      :wave="happyWave ?? waveConfig"
-                     :modal="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
+                     :modal="{centered: true, mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
                      :drawer="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
                      :image="{preview: {mask: glassMaskConfig, styles: {popup: {mask: glassMaskStyle}}}}">
 <!--    浏览器兼容提示-->
