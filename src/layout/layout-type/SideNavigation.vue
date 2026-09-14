@@ -37,7 +37,8 @@
             <div id="lihua-layout-head"/>
           </a-flex>
         </transition>
-        <view-tabs v-if="themeStore.showViewTabs && !themeStore.isMiniWindow"/>
+        <!--多任务栏传送容器（ViewTabs 由 layout/index.vue 经 Teleport 挂载，布局切换不销毁）-->
+        <div id="lihua-layout-view-tabs"/>
       </a-layout-header>
       <a-layout-content>
         <!--内容-->
@@ -48,7 +49,6 @@
 </template>
 
 <script setup lang="ts">
-import ViewTabs from "@/layout/view-tabs/index.vue";
 import Side from "@/layout/sider/index.vue";
 import Logo from "@/layout/logo/index.vue";
 import {usePermissionStore} from "@/stores/permission";

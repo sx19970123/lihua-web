@@ -17,6 +17,11 @@
       <Head/>
     </Teleport>
 
+    <!--  使用传送组件加载多任务栏，避免布局切换销毁重建（重播开场动画、丢失页签栏内状态）  -->
+    <Teleport :to="viewTabsContainer" v-if="viewTabsContainer !== null">
+      <ViewTabs v-if="themeStore.showViewTabs && !themeStore.isMiniWindow"/>
+    </Teleport>
+
     <!--  使用传送组件重新加载内容，避免刷新组件造成的重复请求  -->
     <Teleport :to="contentContainer" v-if="headContainer !== null">
       <Content/>
@@ -31,6 +36,7 @@ import TopNavigation from "@/layout/layout-type/TopNavigation.vue"
 import DrawerNavigation from "@/layout/layout-type/DrawerNavigation.vue"
 import Content from "@/layout/content/index.vue"
 import Head from "@/layout/head/index.vue"
+import ViewTabs from "@/layout/view-tabs/index.vue"
 import {useThemeStore} from "@/stores/theme"
 import {useViewTabsStore} from "@/stores/view-tabs.ts"
 import {usePermissionStore} from "@/stores/permission.ts"
@@ -52,6 +58,7 @@ const effectiveLayoutType = computed(() => themeStore.isMiniWindow ? 'side-navig
 const initTeleport = () => {
   const headContainer = ref<HTMLElement | null>(null)
   const contentContainer = ref<HTMLElement | null>(null)
+  const viewTabsContainer = ref<HTMLElement | null>(null)
 
   // 加载传送组件容器
   const loadTeleportContainer = () => {
@@ -60,6 +67,8 @@ const initTeleport = () => {
       headContainer.value = document.getElementById('lihua-layout-head')
       // 内容组件容器
       contentContainer.value = document.getElementById('lihua-layout-content')
+      // 多任务栏容器
+      viewTabsContainer.value = document.getElementById('lihua-layout-view-tabs')
       // 头部块（head 行 + 多任务栏的包裹元素，四布局统一 id）高度实测随行
       observeHeaderHeight()
     })
@@ -68,11 +77,12 @@ const initTeleport = () => {
   return {
     headContainer,
     contentContainer,
+    viewTabsContainer,
     loadTeleportContainer
   }
 }
 
-const {headContainer, contentContainer, loadTeleportContainer} = initTeleport()
+const {headContainer, contentContainer, viewTabsContainer, loadTeleportContainer} = initTeleport()
 
 /**
  * 内容区可用高度供给：观察布局头部块（#lihua-layout-header，含 head 行与多任务栏）高度
