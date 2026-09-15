@@ -1,5 +1,5 @@
 <template>
-  <expandable-card :stretch="false" class="w-full"
+  <expandable-card class="w-full"
       :expanded-width="600"
       :expanded-height="610"
   >

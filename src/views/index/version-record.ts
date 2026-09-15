@@ -2,14 +2,25 @@
  * 首页展示版本日志
  * 项目开发可以将 views/index 中内容删除，在 router 中重新配置首页即可
  */
+
 export const versionInfo = {
-    springBootVersion: ' 4.1.1',
-    vueVersion: ' 3.5.38',
+    /** 单体后端仓库版本 */
+    lihuaVersion: '2.2.0',
+    /** 单体后端 Spring Boot 版本 */
+    springBootVersion: '4.1.1',
+    /** 微服务仓库版本 */
+    cloudVersion: '2.2.0',
+    /** 微服务版 lihua-cloud 的 Spring Cloud 框架版本 */
+    springCloudVersion: '2025.1.3',
+    /** 微服务版 lihua-cloud 的 Spring Boot 版本 */
+    springBootCloudVersion: '4.0.8',
+    vueVersion: '3.5.38',
     lihuaUpdateLog: [
         // 每次更新版本在集合头部新增一条
         {
             version: '3.0.0',
             updateDate: '2026-09-30',
+            platforms: ['boot', 'cloud', 'web', 'app'],
             title: "🎉🎉3.0.0 Web 端组件库整体迁移至 Antdv Next，对齐 Ant Design v6 设计体系",
             updateContent: [
                 '1. Web 端组件库由 ant-design-vue 4.2.6 迁移至 antdv-next，样式体系引入 UnoCSS 原子化工具类',
@@ -606,5 +617,44 @@ export const versionInfo = {
                 '发布后有bug又删了'
             ]
         }
-    ]
+    ] as VersionUpdateLog[]
 }
+
+/** 版本对应的平台（仓库）：boot=单体后端、cloud=微服务、web=管理端、app=移动端 */
+export type Platform = 'boot' | 'cloud' | 'web' | 'app';
+
+/** 单个仓库的版本更新记录 */
+export interface VersionUpdateLog {
+    /** 版本号 */
+    version: string;
+    /** 版本对应的平台/仓库；同一版本更新多个仓库时列出全部 */
+    platforms?: Platform[];
+    /** 版本亮点标题（可选） */
+    title?: string;
+    /** 更新日期 */
+    updateDate: string;
+    updateContent: string[];
+}
+
+/** 同一更新日期下的版本集合：时间轴节点 = 日期，节点内为该日期下各仓库的版本号 */
+export interface UpdateLogGroup {
+    updateDate: string;
+    versions: VersionUpdateLog[];
+}
+
+/**
+ * 按日期聚合的更新日志：日志集合按时间倒序维护，相邻的同日期条目自动归入同一节点，
+ * 形成「日期 → 版本号1 内容 / 版本号2 内容」的结构（兼容既有扁平数据，无需改写历史条目）
+ */
+export const updateLogGroups: UpdateLogGroup[] = (() => {
+    const groups: UpdateLogGroup[] = [];
+    for (const item of versionInfo.lihuaUpdateLog) {
+        const lastGroup = groups[groups.length - 1];
+        if (lastGroup && lastGroup.updateDate === item.updateDate) {
+            lastGroup.versions.push(item);
+        } else {
+            groups.push({updateDate: item.updateDate, versions: [item]});
+        }
+    }
+    return groups;
+})();

@@ -23,10 +23,10 @@
     </a-row>
     <a-row :gutter="16">
       <a-col :span="12">
-        <index_6></index_6>
+        <index_8></index_8>
       </a-col>
       <a-col :span="12">
-        <index_8></index_8>
+        <index_6></index_6>
       </a-col>
     </a-row>
     <a-row :gutter="16">

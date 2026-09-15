@@ -1,92 +1,63 @@
 <template>
-  <expandable-card :stretch="false" class="w-full h-full"
-             :expanded-width="600"
-             :expanded-height="610"
-             @beforeCardClose="resetContent"
-  >
-    <template #overview>
-      <div class="p-ant-lg">
-        <a-typography-title :level="4" ellipsis>更新日志</a-typography-title>
-        <a-flex vertical>
-          <a-typography-text ellipsis type="secondary">
-            <a-typography-text ellipsis type="secondary">最新版本为：</a-typography-text>
-            <a-typography-text ellipsis :styles="{root: {color: themeStore.getColorPrimary()}}">{{latestVersion.version}}</a-typography-text>
-          </a-typography-text>
-          <a-typography-title ellipsis :level="5" :styles="{root: {marginTop: 'var(--ant-margin-xs)'}}">
-            {{latestVersion.updateDate}}
-          </a-typography-title>
-          <!-- 预览行数与左侧「后端相关依赖文档」卡等高对齐（多一行会把整行卡片撑高） -->
-          <div v-for="(item,index) in latestVersion.updateContent" :key="index">
-            <a-typography-text ellipsis v-if="index < 4">
-              {{item}}
-            </a-typography-text>
-          </div>
-          <a-typography-text ellipsis v-if="latestVersion.updateContent.length > 4">
-            ...
-          </a-typography-text>
-        </a-flex>
-      </div>
-    </template>
-    <template #detail>
-      <div class="scrollbar p-ant-lg">
-        <a-typography-title :level="4" ellipsis>更新日志</a-typography-title>
-        <a-typography-text ellipsis type="secondary">
-          <a-typography-text type="secondary">最新版本为：</a-typography-text>
-          <a-typography-text :styles="{root: {color: themeStore.getColorPrimary()}}">{{latestVersion.version}}</a-typography-text>
-        </a-typography-text>
-        <div ref="contentRef" class="scrollbar h-[484px] mt-ant-xs">
-          <!-- antdv-next 的 Timeline 按内部标记只认 a-timeline-item 直接子节点，包装元素会被过滤为空；
-               条目过滤用 slice（v-if 优先级高于 v-for，不能同元素引用 v-for 变量），按钮移出时间轴 -->
-          <a-timeline style="margin-top: var(--ant-margin-xs)">
-            <a-timeline-item v-for="item in versionInfo.lihuaUpdateLog.slice(0, showIndex + 1)" :key="item.version">
-              <a-typography-title :level="5">
-                {{item.version}}
-                <a-typography-text type="secondary">{{item.updateDate}}</a-typography-text>
-              </a-typography-title>
-              <a-alert v-if="item.title" :title="item.title" style="margin-bottom: var(--ant-margin-xs);margin-right: var(--ant-margin-xs)"/>
-              <a-flex v-for="(content, contentIndex) in item.updateContent" :key="contentIndex" vertical>
-                <a-typography-text>{{content}}</a-typography-text>
-              </a-flex>
-            </a-timeline-item>
-          </a-timeline>
-          <a-flex>
-            <a-button type="link"
-                      style="margin: auto"
-                      :disabled="versionInfo.lihuaUpdateLog.length === showIndex" @click="handleShowMore">
-              <template #icon v-if="versionInfo.lihuaUpdateLog.length !== showIndex">
-                <DoubleRightOutlined class="rotate-90" />
-              </template>
-              {{versionInfo.lihuaUpdateLog.length === showIndex ? '已显示全部' : '显示更多' }}
-            </a-button>
-          </a-flex>
-        </div>
-      </div>
-    </template>
-  </expandable-card>
+  <div class="h-full">
+    <a-card title="后端相关依赖文档" style="height: 100%">
+      <a-card-grid>
+        <a-typography-link ellipsis href="https://spring.io/projects/spring-boot" target="_blank">
+          <img src="../static/spring-boot.png" class="size-4 mr-ant-xxs"/>
+          SpringBoot
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid>
+        <a-typography-link ellipsis href="https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html#:~:text=The%20Spring%20Framework%20provides%20support%20for%20the%20Java%20Bean" target="_blank">
+          <img src="../static/spring-boot.png" class="size-4 mr-ant-xxs"/>
+          Java Bean Validation
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid>
+        <a-typography-link ellipsis href="https://spring.io/projects/spring-security" target="_blank">
+          <img src="../static/spring-boot.png" class="size-4 mr-ant-xxs"/>
+          Spring Security
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid >
+        <a-typography-link ellipsis href="https://springdoc.org/" target="_blank">
+          <img src="../static/spring-boot.png" class="size-4 mr-ant-xxs"/>
+          Springdoc
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid>
+        <a-typography-link ellipsis href="https://baomidou.com/introduce/" target="_blank">
+          <img src="https://baomidou.com/assets/asset.cIbiVTt_.svg" class="size-4 mr-ant-xxs"/>
+          MyBatis-Plus
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid >
+        <a-typography-link ellipsis href="https://fesod.apache.org/zh-cn/docs/" target="_blank">
+          <img src="https://fesod.apache.org/zh-cn/img/logo/fesod-logo.svg" class="size-4 mr-ant-xxs"/>
+          fesod
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid>
+        <a-typography-link ellipsis href="https://snailjob.opensnail.com/docs/introduce/preface.html" target="_blank">
+          <img src="https://snailjob.opensnail.com/logo.svg"  class="size-4 mr-ant-xxs"/>
+          Snail Job
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid >
+        <a-typography-link ellipsis href="https://gitee.com/dromara/tianai-captcha" target="_blank">
+          <img src="../static/tianai.png" class="size-4 mr-ant-xxs"/>
+          tianaiCAPTCHA
+        </a-typography-link>
+      </a-card-grid>
+      <a-card-grid >
+        <a-typography-link ellipsis href="https://projectlombok.org/#:~:text=Project%20Lombok%20is%20a%20java%20library%20that%20automatically%20plugs" target="_blank">
+          <img src="https://th.bing.com/th?id=ODLS.673180fa-16fc-4868-8d90-fda8df611f7d&w=32&h=32&qlt=90&pcl=fffffa&o=6&cb=13&pid=1.2" class="size-4 mr-ant-xxs"/>
+          Lombok
+        </a-typography-link>
+      </a-card-grid>
+    </a-card>
+  </div>
 </template>
 <script setup lang="ts">
-import ExpandableCard from "@/components/expandable-card/index.vue";
-import {ref} from "vue";
-import {useThemeStore} from "@/stores/theme.ts";
-import {versionInfo} from "@/views/index/setting.ts";
 
-const latestVersion = versionInfo.lihuaUpdateLog[0]
-const themeStore = useThemeStore();
-const showIndex = ref<number>(4)
-const contentRef = ref<HTMLElement | null>(null)
-// 显示更多
-const handleShowMore = () => {
-  if (versionInfo.lihuaUpdateLog.length - showIndex.value >= 5) {
-    showIndex.value = showIndex.value + 5
-  } else {
-    showIndex.value = versionInfo.lihuaUpdateLog.length
-  }
-}
-// 重置内容
-const resetContent = () => {
-  if (contentRef.value) {
-    contentRef.value.scrollTop = 0
-    showIndex.value = 4
-  }
-}
 </script>

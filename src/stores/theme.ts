@@ -193,6 +193,15 @@ export const useThemeStore = defineStore('theme',{
                     })
                 }
             }
+            // 亮暗档位跨窗感知：档位不进广播载荷（serializeThemeState 剔除），事实源是 localStorage['theme-mode']；
+            // 手动切档时手动操作即第一事实——storage 事件仅在“其他同源窗口”修改该键时触发、自身写入不触发，
+            // 天然无回环，主窗/小窗任一侧切档另一侧即时跟随；刷新/首加载仍走 state 初始化的 localStorage 读值，行为不变
+            window.addEventListener('storage', (event: StorageEvent) => {
+                if (event.key !== 'theme-mode' || event.newValue === null) return
+                if (event.newValue !== 'light' && event.newValue !== 'dark' && event.newValue !== 'auto') return
+                if (event.newValue === this.$state.themeMode) return
+                this.changeThemeMode(event.newValue)
+            })
         },
         // 初始化样式
         init(themeJson?: string) {
