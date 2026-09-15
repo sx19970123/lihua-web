@@ -281,6 +281,7 @@ import {computed, nextTick, onUnmounted, ref} from "vue";
 import type {SysAttachment, SysAttachmentDTO, SysAttachmentVO} from "@/api/system/attachment/type/sys-attachment.ts";
 import {message, type TableColumnsType} from "@/antd-adapter";
 import {deleteData, forceDeleteData, getDownloadURL, queryById, queryPage} from "@/api/system/attachment/attachment.ts";
+import {resolveAttachmentAbsoluteUrl, resolveAttachmentEntryUrl} from "@/api/system/attachment/attachment-storage.ts";
 import dayjs from "dayjs";
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"
@@ -290,7 +291,6 @@ import {useThemeStore} from "@/stores/theme.ts";
 import TableSetting from "@/components/table-setting/index.vue";
 
 const {sys_attachment_status, sys_attachment_upload_mode, sys_client_type} = initDict("sys_attachment_status", "sys_attachment_upload_mode", "sys_client_type")
-const baseAPI = import.meta.env.VITE_APP_BASE_API
 const themeStore = useThemeStore()
 
 const initSearch = () => {
@@ -624,7 +624,7 @@ const initShare = () => {
       if (resp.code === 200) {
         lastShareRequest = {id: shareId.value, validTime: shareValidTime.value, generatedAt: Date.now()}
         const timeoutTime = dayjs(new Date()).add(shareValidTime.value, "minute").format('YYYY-MM-DD HH:mm:ss')
-        const fullUrl = resp.data.startsWith("/") ? window.location.origin + baseAPI + resp.data : resp.data
+        const fullUrl = resolveAttachmentAbsoluteUrl(resp.data)
         shareUrl.value = `${fullUrl}### 附件名称 ${shareName.value} 有效期至 ${timeoutTime} --来自${appInfo.appName}`
       } else {
         message.error(resp.msg)
@@ -696,7 +696,7 @@ const initInfo = () => {
     if (!url) {
       const resp = await getDownloadURL(id, PREVIEW_URL_EXPIRE_MINUTES.toString())
       if (resp.code === 200) {
-        previewUrlMap.value.set(id, resp.data.startsWith("/") ? baseAPI + resp.data : resp.data)
+        previewUrlMap.value.set(id, resolveAttachmentEntryUrl(resp.data))
       } else {
         message.error(resp.msg)
         return
@@ -726,7 +726,7 @@ const handleDownload = async (event: MouseEvent, id: string, status: string) => 
   }
   const resp = await getDownloadURL(id)
   if (resp.code === 200) {
-    download(resp.data.startsWith("/") ? baseAPI + resp.data : resp.data)
+    download(resolveAttachmentEntryUrl(resp.data))
   } else {
     message.error(resp.msg)
   }

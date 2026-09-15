@@ -1,6 +1,7 @@
 import {message, type UploadFile} from "@/antd-adapter"
 import {ref, type Ref} from "vue"
 import {getDownloadURL} from "@/api/system/attachment/attachment.ts"
+import {resolveAttachmentEntryUrl} from "@/api/system/attachment/attachment-storage.ts"
 import {download} from "@/utils/attachment-download.ts"
 import {baseAPI, imageExtensions, videoExtensions} from "./constants.ts"
 
@@ -76,17 +77,15 @@ export const useUploadPreview = (ctx: {
     return imageExtensions.includes(extension);
   }
 
-  // 处理预览URL
+  // 处理预览URL：http 外链或已加前缀的缓存值直用，其余为后端 entry 链接经统一出口拼前缀
   const handleThumbUrl = (thumbUrl?: string): string => {
     if (!thumbUrl) {
       return "";
     }
-    // 由http或baseAPI开头直接返回
-    if (thumbUrl.startsWith("http") || thumbUrl?.startsWith(baseAPI)) {
+    if (thumbUrl.startsWith("http") || thumbUrl.startsWith(baseAPI)) {
       return thumbUrl;
     }
-    // 最后拼接 baseAPI
-    return baseAPI + thumbUrl;
+    return resolveAttachmentEntryUrl(thumbUrl);
   }
 
   return {
