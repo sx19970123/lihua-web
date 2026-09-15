@@ -42,7 +42,7 @@ const {dictDataOption, dictDataValue, variant = 'outlined', styles = {root: {mar
   fullTreeNode = false, fullTreeSeparator = '/', rootTreeNodePrefix = ''} = defineProps<{
   // 字典data集合
   dictDataOption: Array<SysDictDataType>,
-  // 被翻译的字典值
+  // 被翻译的字典值（空值/未命中渲染为空，是列表数据的合法形态，不视为配置错误）
   dictDataValue: string,
   // 标签变体（透传 a-tag variant，默认 outlined 保持 2.x 有边框基线）
   variant?: 'outlined' | 'filled' | 'solid',
@@ -55,11 +55,4 @@ const {dictDataOption, dictDataValue, variant = 'outlined', styles = {root: {mar
   // 树型根节点前缀
   rootTreeNodePrefix?: string
 }>()
-
-if (!dictDataValue) {
-  console.error("dict-tag/DictTag 组件中 dictDataValue 值不存在")
-}
-if (!dictDataOption) {
-  console.error("dict-tag/DictTag 组件中 dictDataOption 值不存在")
-}
 </script>

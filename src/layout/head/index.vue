@@ -7,6 +7,8 @@
     <lock-screen/>
 <!--    通知公告-->
     <notification/>
+<!--    WebSocket 连接状态-->
+    <ws-status/>
 <!--    全屏-->
     <windows-change/>
 <!--    默认部门-->
@@ -19,6 +21,7 @@
 import User from "@/layout/head/components/user/index.vue"
 import WindowsChange from "@/layout/head/components/window-change/index.vue"
 import Notification from "@/layout/head/components/notice/index.vue"
+import WsStatus from "@/layout/head/components/ws-status/index.vue"
 import DefaultDept from "@/layout/head/components/dept/index.vue"
 import MenuSearch from "@/layout/head/components/menu-search/index.vue"
 import LockScreen from "@/layout/head/components/lock-screen/index.vue"

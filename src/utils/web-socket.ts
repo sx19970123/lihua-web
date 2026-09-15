@@ -1,9 +1,20 @@
 import {getOnceToken} from "@/api/system/authentication/authentication.ts";
 import {createBrowserId} from "@/utils/browser-id.ts";
+import {ref} from "vue";
+import {message} from "@/antd-adapter";
+
+// WebSocket 连接状态（头部状态图标的状态源；单色风格，形态区分状态）
+export type WsStatus = 'connected' | 'reconnecting' | 'disconnected'
+export const wsStatus = ref<WsStatus>('reconnecting')
 
 // 连接
 export const connect = async () => {
     await manager.connect()
+}
+
+// 手动重连（已断开时由状态图标触发：清零计数重启新一轮 3 次自动重试）
+export const manualReconnect = () => {
+    manager.manualReconnect()
 }
 
 // 关闭
@@ -37,12 +48,12 @@ class WebSocketManager {
     private listeners?: Map<string, (data: any) => void>
     // 心跳
     private heartbeat?: ReturnType<typeof setInterval>
-    // 重试次数
+    // 重试次数（连上即清零；累计达上限后停止自动重连，等待再次登录或手动重连触发）
     private retryNumber: number
-    // 重试间隔基数
-    private retryInterval: number = 2 * 1000
-    // 重试间隔上限
-    private maxRetryInterval: number = 60 * 1000
+    // 重试间隔（固定）
+    private readonly retryInterval: number = 2 * 1000
+    // 自动重连次数上限
+    private readonly maxRetryNumber: number = 3
     // 是否开启重连
     private enableRetry: boolean = true
 
@@ -56,12 +67,12 @@ class WebSocketManager {
      */
     public connect = async () => {
         if (!this.webSocket) {
+            wsStatus.value = 'reconnecting'
             try {
                 const { code, data } = await getOnceToken()
 
                 if (code !== 200 || !data) {
                     console.error("获取连接token失败")
-                    // token 获取失败纳入退避重试，由指数间隔节流
                     this.reconnect()
                     return;
                 }
@@ -71,8 +82,10 @@ class WebSocketManager {
                 // 连接已建立
                 this.webSocket.onopen = (event) => {
                     console.info('连接成功');
+                    // 连上即成功：重试计数清零
                     this.retryNumber = 0
                     this.enableRetry = true;
+                    wsStatus.value = 'connected'
                     this.startHeartbeat()
                 }
 
@@ -98,7 +111,6 @@ class WebSocketManager {
                 }
             } catch (e) {
                 console.error("websocket连接失败",e)
-                // 网络异常纳入退避重试，后端发布期间的短暂不可达恢复后自动重连
                 this.reconnect()
             }
         } else {
@@ -106,10 +118,14 @@ class WebSocketManager {
         }
     }
 
-    // 重试连接：指数退避（间隔随次数线性增长、封顶 maxRetryInterval），连接成功时 onopen 归零计数
+    // 重试连接：固定间隔；累计 maxRetryNumber 次仍未连上则彻底停止自动重连
     private reconnect = () => {
+        if (this.retryNumber >= this.maxRetryNumber) {
+            wsStatus.value = 'disconnected'
+            console.warn("WebSocket 重连失败已达上限，停止自动重连")
+            return
+        }
         this.retryNumber ++
-        const interval = Math.min(this.retryNumber * this.retryInterval, this.maxRetryInterval)
         setTimeout(() => {
             // 登出等主动关闭后不再重连
             if (!this.enableRetry) {
@@ -117,7 +133,7 @@ class WebSocketManager {
             }
             console.log("websocket 执行第" + this.retryNumber + "次重连")
             this.connect()
-        }, interval)
+        }, this.retryInterval)
     }
 
     // 接收数据
@@ -194,12 +210,24 @@ class WebSocketManager {
         return false
     }
 
+    // 手动重连：清零重试计数重启新一轮自动重连（连接在存时忽略）
+    public manualReconnect = () => {
+        if (this.webSocket) {
+            return
+        }
+        this.enableRetry = true
+        this.retryNumber = 0
+        this.connect()
+    }
+
     // 主动关闭连接
     public closeConnect = () => {
         this.enableRetry = false
         this.webSocket?.close(1000)
         this.webSocket = undefined
         this.listeners?.clear()
+        // 重置重试计数，下次登录的连接从满额度开始
+        this.retryNumber = 0
     }
 }
 

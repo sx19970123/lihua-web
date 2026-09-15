@@ -9,9 +9,8 @@
 import Mask from '@/components/mask/index.vue'
 import {useThemeStore} from '@/stores/theme';
 import {ref} from "vue";
+import {resolveAttachmentEntryUrl} from '@/api/system/attachment/attachment-storage.ts'
 
-// 请求url前缀
-const baseURL = import.meta.env.VITE_APP_BASE_API
 // 当前主题
 const themeStore = useThemeStore()
 // 是否打开遮罩
@@ -48,11 +47,12 @@ defineExpose({
 })
 
 // 验证码配置
+// 注：TAC 客户端库强制要求 URL 字符串并自带 XHR 传输，无法经 axios 管线；前缀经统一出口拼接
 const captchaConfig = {
   // 请求验证码接口
-  requestCaptchaDataUrl: baseURL + "/captcha/get",
+  requestCaptchaDataUrl: resolveAttachmentEntryUrl("/captcha/get"),
   // 验证验证码接口
-  validCaptchaUrl: baseURL + "/captcha/check",
+  validCaptchaUrl: resolveAttachmentEntryUrl("/captcha/check"),
   // 绑定div
   bindEl: "#lihua-tian-captcha",
   // 验证成功回调
