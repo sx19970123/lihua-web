@@ -25,7 +25,7 @@
                   <a-flex vertical :flex="1">
                     <a-flex justify="space-between" align="center">
                       <!--                      标题-->
-                      <a-tooltip :title="item.title" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
+                      <a-tooltip :title="item.title" placement="bottom">
                         <a-typography-text ellipsis :styles="{root: {width: '130px'}}">{{ item.title }}</a-typography-text>
                       </a-tooltip>
                       <!--                      标星 + 优先级-->
