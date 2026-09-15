@@ -1,4 +1,4 @@
-import axios, {AxiosError, type AxiosRequestConfig} from 'axios';
+import axios, {AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig} from 'axios';
 import token from "@/helpers/token.ts"
 import {ResponseError, type ResponseType} from "@/api/global/type.ts"
 import {useUserStore} from "@/stores/user";
@@ -17,6 +17,9 @@ const service = axios.create({
 });
 
 
+// 在途请求键：登记（请求拦截）与清理（响应成功/错误双出口）共用同一函数，保证键形态一致
+const requestKey = (config?: InternalAxiosRequestConfig) => `${config?.method}:${config?.url}`
+
 /**
  * 请求拦截器
  */
@@ -25,7 +28,7 @@ service.interceptors.request.use(config => {
     if (getToken()) {
         config.headers['Authorization'] = 'Bearer ' + getToken()
     }
-    currentRequests.add(config.method + ":" + config.url)
+    currentRequests.add(requestKey(config))
     return config;
 }, error => {
     Promise.reject(error).then(r => {})
@@ -48,7 +51,8 @@ const notifyRequestError = (msg: string) => {
 service.interceptors.response.use((resp) => {
     const data = resp.data
     const config = resp.config
-    currentRequests.delete(config.method + ":" + config.url)
+    // 在途清理（成功出口）：错误出口对侧清理，请求无论成败终态必移除，防分片在途误判
+    currentRequests.delete(requestKey(config))
     // token 失效或解析异常，清空用户信息返回登录
     if (data.code === 401) {
         const userStore = useUserStore()
@@ -62,6 +66,8 @@ service.interceptors.response.use((resp) => {
     }
     return resp;
 }, error => {
+    // 在途清理（错误出口）：与成功出口共同覆盖所有终态，失败请求不残留
+    currentRequests.delete(requestKey(error.config))
     if (error.response) {
         const {status, data} = error.response
         // 后端业务异常统一以 HTTP 200 + code 的 JSON 体返回，不走本分支；

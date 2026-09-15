@@ -107,7 +107,7 @@ const settingPage = () => {
 const logout = async () => {
   await userStore.handleLogout()
   message.success("退出成功")
-  await router.push('/authentication')
+  await router.push('/login')
 }
 </script>
 

@@ -146,7 +146,7 @@ export const useUserStore = defineStore('user', {
                 return
             }
             this.clearUserInfo()
-            router.push("/authentication")
+            router.push("/login")
             message.error(msg)
         },
         /**

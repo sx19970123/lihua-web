@@ -474,7 +474,7 @@ const initCheckPassword = () => {
     userStore.handleLogout().finally(() => {
       screenLogout()
       unlock()
-      router.push('/authentication')
+      router.push('/login')
     })
   }
 
@@ -594,6 +594,9 @@ const updateViewportHeight = () => {
   viewportHeight.value = window.innerHeight
 }
 
+// 时间与自动锁屏配置的轮询句柄（卸载时清理，防卸载后继续轮询）
+let lockScreenPollInterval: ReturnType<typeof setInterval> | undefined
+
 onMounted(() => {
   updateViewportHeight()
   window.addEventListener('resize', updateViewportHeight)
@@ -601,7 +604,7 @@ onMounted(() => {
   // 获取当前时间
   initTime()
   // 10秒刷新一次时间和自动锁屏配置
-  setInterval(() => {
+  lockScreenPollInterval = setInterval(() => {
     initTime()
     refreshAutoLockConfig()
   }, 10000)
@@ -617,6 +620,10 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', updateViewportHeight)
   clearAutoLock()
+  if (lockScreenPollInterval) {
+    clearInterval(lockScreenPollInterval)
+    lockScreenPollInterval = undefined
+  }
 })
 </script>
 

@@ -11,6 +11,8 @@ declare module '*.vue' {
 
 interface ImportMetaEnv {
     readonly VITE_APP_BASE_API: string;
+    readonly VITE_APP_WS_API: string;
+    readonly VITE_APP_DOC_API: string;
 }
 
 interface ImportMeta {
@@ -36,10 +38,6 @@ declare module 'crypto-js'
 
 declare module 'vue-cropper'
 
-declare module 'sortablejs'
-
 declare module 'lodash-es'
-
-declare module 'gsap'
 
 declare module 'uuid'
