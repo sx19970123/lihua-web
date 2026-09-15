@@ -269,8 +269,8 @@ const reset = () => {
   emitColumns(cloneDeep(defaultSettings.value))
   localStorage.removeItem(tableSettingKey)
   visiblePopover.value = false
-  enableWidthSetting.value = false
   message.success("重置完成")
+  setTimeout(() => enableWidthSetting.value = false, 200)
 }
 
 // 用户变更（勾选/宽度/固定/拖拽/位置约束修正）统一提交口：emit + 落盘
