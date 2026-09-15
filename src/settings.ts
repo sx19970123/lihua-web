@@ -133,7 +133,7 @@ export default {
     originSiderWith: 200,
 
     /**
-     * 切换路由时的过渡动画 zoom / fade / breathe / top / down / switch / trick
+     * 切换路由时的过渡动画 zoom / pop / fade / blur / slide-right / slide-left / slide-up / slide-down
      */
     routeTransition: 'zoom',
 

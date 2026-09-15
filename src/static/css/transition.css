@@ -1,28 +1,50 @@
 /**
-    zoom
+    路由切换过渡动画（mode="out-in"：离场完成后进场才开始，离场时长直接叠加切换总时延，
+    故统一离场 ≤0.1s 快退、进场 0.2~0.25s 慢进；transition 只声明实际动画的属性，不用 all）
+
+    分三类：变焦类（zoom/pop）、淡入淡出类（fade/blur）、方向滑动类（slide-*，X滑=整体向 X 方向流动）
+ */
+
+/**
+    zoom 变焦（双向缩放呼吸感；沿用 zoom 作为 value 兼容默认值与存量主题）
  */
 .zoom-enter-active {
-    transition: all 0.22s ease-in-out;
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 .zoom-leave-active {
-    transition: all 0.05s ease-out;
+    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
 }
+.zoom-leave-to,
 .zoom-enter-from {
     transform: scale(99%);
     opacity: 0;
 }
-.zoom-leave-to {
+
+/**
+    pop 弹入（回弹缓动缩放，快进利落）
+ */
+.pop-enter-active {
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.2s ease-out;
+}
+.pop-leave-active {
+    transition: opacity 0.08s ease-in;
+}
+.pop-enter-from {
+    transform: scale(97%);
+    opacity: 0;
+}
+.pop-leave-to {
     opacity: 0;
 }
 
 /**
-    淡入淡出
+    fade 淡入淡出
  */
 .fade-enter-active {
-    transition: all 0.2s ease-in;
+    transition: opacity 0.2s ease-in;
 }
 .fade-leave-active {
-    transition: all 0.2s ease-out;
+    transition: opacity 0.1s ease-out;
 }
 .fade-enter-from {
     opacity: 0;
@@ -32,86 +54,88 @@
 }
 
 /**
-    呼吸
+    blur 模糊（进离场双向虚化，干净的现代感；filter 直接作用于动画元素自身，无 backdrop-filter 的合成组隔离问题）
  */
-.breathe-enter-active {
-    transition: all 0.2s ease-in-out;
+.blur-enter-active {
+    transition: filter 0.22s ease-out, opacity 0.22s ease-out;
 }
-.breathe-leave-active {
-    transition: all 0.2s ease-out;
+.blur-leave-active {
+    transition: filter 0.08s ease-in, opacity 0.08s ease-in;
 }
-.breathe-leave-to,
-.breathe-enter-from {
-    transform: scale(99%);
+.blur-leave-to,
+.blur-enter-from {
+    filter: blur(6px);
     opacity: 0;
 }
 
 /**
-    上升
+    slide-right 右滑（整体向右流动：新页自左滑入，旧页向右让位，同移动端返回手势方向）
  */
-.top-enter-active {
-    transition: all 0.25s ease-in-out;
+.slide-right-enter-active {
+    transition: transform 0.22s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.22s ease-out;
 }
-.top-leave-active {
-    transition: all 0.05s ease-out;
+.slide-right-leave-active {
+    transition: transform 0.1s ease-in, opacity 0.1s ease-in;
 }
-.top-leave-to {
+.slide-right-leave-to {
+    transform: translateX(24px);
     opacity: 0;
 }
-.top-enter-from {
-    transform: translateY(10px);
-    opacity: 0;
-}
-
-
-/**
-    切换
- */
-.down-enter-active {
-    transition: all 0.25s ease-in-out;
-}
-.down-leave-active {
-    transition: all 0.25s ease-out;
-}
-.down-leave-to {
-    transform: translateY(10px);
-    opacity: 0;
-}
-.down-enter-from {
-    transform: translateX(10px);
+.slide-right-enter-from {
+    transform: translateX(-24px);
     opacity: 0;
 }
 
 /**
-    交换
+    slide-left 左滑（整体向左流动：新页自右滑入，旧页向左让位）
  */
-.switch-enter-active {
-    transition: all 0.25s ease-in-out;
+.slide-left-enter-active {
+    transition: transform 0.22s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.22s ease-out;
 }
-.switch-leave-active {
-    transition: all 0.25s ease-out;
+.slide-left-leave-active {
+    transition: transform 0.1s ease-in, opacity 0.1s ease-in;
 }
-.switch-leave-to,
-.switch-enter-from {
-    transform: translateX(10px);
+.slide-left-leave-to {
+    transform: translateX(-24px);
     opacity: 0;
 }
-
+.slide-left-enter-from {
+    transform: translateX(24px);
+    opacity: 0;
+}
 
 /**
-   整活
+    slide-up 上滑（新页自下滑入，旧页向上让位，整体向上流动）
  */
-.trick-enter-active {
-    transition: all 1.5s ease-in-out;
+.slide-up-enter-active {
+    transition: transform 0.22s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.22s ease-out;
 }
-.trick-leave-active {
-    transition: all 1s ease-in-out;
+.slide-up-leave-active {
+    transition: transform 0.1s ease-in, opacity 0.1s ease-in;
 }
-.trick-leave-to {
-    transform: translateX(500px) translateY(-1000px) translateZ(-1000px) scale(0.1) rotate(360deg);
+.slide-up-leave-to {
+    transform: translateY(-24px);
     opacity: 0;
 }
-.trick-enter-from {
-    transform: translateX(-500px) translateY(-1000px) translateZ(-1000px) scale(0.1) rotate(-360deg);
+.slide-up-enter-from {
+    transform: translateY(24px);
+    opacity: 0;
+}
+
+/**
+    slide-down 下滑（新页自上滑入，旧页向下让位，整体向下流动）
+ */
+.slide-down-enter-active {
+    transition: transform 0.22s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.22s ease-out;
+}
+.slide-down-leave-active {
+    transition: transform 0.1s ease-in, opacity 0.1s ease-in;
+}
+.slide-down-leave-to {
+    transform: translateY(24px);
+    opacity: 0;
+}
+.slide-down-enter-from {
+    transform: translateY(-24px);
     opacity: 0;
 }

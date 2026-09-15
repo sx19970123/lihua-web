@@ -111,7 +111,7 @@ export const useThemeStore = defineStore('theme',{
         const originSiderWith: number = settings.originSiderWith
 
         /**
-         * 切换路由时的过渡动画 zoom / fade / breathe / top / down / switch / trick
+         * 切换路由时的过渡动画 zoom / pop / fade / blur / slide-right / slide-left / slide-up / slide-down
          */
         const routeTransition: string = settings.routeTransition
 
