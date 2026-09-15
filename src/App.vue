@@ -3,8 +3,7 @@
     <a-config-provider :theme="themeStore.themeConfig" :locale="local" :component-size="themeStore.componentSize"
                      :wave="happyWave ?? waveConfig"
                      :modal="{centered: true, mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
-                     :drawer="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}"
-                     :image="{preview: {mask: glassMaskConfig, styles: {popup: {mask: glassMaskStyle}}}}">
+                     :drawer="{mask: glassMaskConfig, styles: {mask: glassMaskStyle}}">
 <!--    浏览器兼容提示-->
     <a-alert type="warning" closable banner v-if="showOldBrowserAlert()">
       <template #message>
@@ -54,7 +53,10 @@ const settingStore = useSettingStore()
 const local = ref(zhCN)
 dayjs.locale(zhCN.locale)
 
-// 弹层 mask 毛玻璃统一走组件库原生 mask.blur，跟随高级材质开关（仅影响其后新打开的弹层）
+// 弹层 mask 毛玻璃统一走组件库原生 mask.blur，跟随高级材质开关（仅影响其后新打开的弹层）。
+// 仅 Modal/Drawer：二者遮罩独立于内容动画，模糊自第一帧恒定生效。
+// Image 预览不参与：其为单根整体淡入结构（遮罩是 opacity 过渡根的子元素），过渡期间遮罩的
+// backdrop-filter 被祖先 opacity 合成组隔离无法取样页面，过渡结束瞬间虚化突跳——保持库默认纯暗底遮罩
 const glassMaskConfig = computed(() => ({blur: themeStore.groundGlass}))
 // mask 模糊强度统一取本体系 sm 档（组件库内置 blur(4px) 偏弱），以内联样式覆盖
 const glassMaskStyle = computed(() => themeStore.groundGlass

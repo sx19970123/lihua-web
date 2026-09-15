@@ -45,5 +45,30 @@ const displayJson = computed(() => avatarJson || JSON.stringify(userStore.getDef
 /* 昵称内边距：.ant-typography 根级 resetComponent 声明 padding，工具类同特异性会被 cssinjs 后注入反杀，维持 scoped */
 .nickname {
   padding-right: var(--ant-padding-xxs);
+  white-space: nowrap;
+}
+
+/* 整颗 chip 悬停浮层：毛玻璃为主 + 轻暗底（0.18），× 靠投影保证对比度；圆角贴合 chip 本体，仅当提供 hover 插槽时渲染 */
+.chip-hover-layer {
+  position: absolute;
+  inset: 0;
+  /* .ant-avatar 自带 position:relative，同为定位元素时按 DOM 序绘制会盖住浮层，显式提升层级 */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.18);
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  backdrop-filter: var(--lihua-backdrop-filter-lg);
+  opacity: 0;
+  transition: opacity 0.17s ease;
+  pointer-events: none;
+}
+
+.lihua-user-select:hover .chip-hover-layer {
+  opacity: 1;
 }
 </style>

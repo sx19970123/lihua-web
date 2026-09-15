@@ -183,19 +183,20 @@
         </a-form-item>
         <a-form-item label="指定用户" name="userIdList" :wrapper-col="{span: 8}" v-if="sysNoticeVO.userScope === '1'">
           <a-flex :gap="8">
-            <a-form-item-rest>
-              <a-tooltip>
-                <template #title v-if="sysNoticeVO.userIdList && sysNoticeVO.userIdList?.length > 0">
-                  {{selectUserInfo}}
-                </template>
+            <a-tooltip>
+              <template #title v-if="sysNoticeVO.userIdList && sysNoticeVO.userIdList?.length > 0">
+                {{selectUserInfo}}
+              </template>
+              <!-- addonAfter 已弃用：Space.Compact 组合，计数块复刻原 addon 形态 -->
+              <a-space-compact block>
                 <a-input placeholder="请选择用户"
                          readonly
                          v-model:value="selectUserInfo"
-                         :addon-after="sysNoticeVO.userIdList?.length + ' 人'" />
-              </a-tooltip>
-            </a-form-item-rest>
-            <a-form-item-rest>
-              <a-popover trigger="click"
+                         class="flex-1"/>
+                <span class="user-count-addon">{{ (sysNoticeVO.userIdList?.length ?? 0) + ' 人' }}</span>
+              </a-space-compact>
+            </a-tooltip>
+            <a-popover trigger="click"
                          destroy-on-hidden
                          :styles="{container: {maxWidth: 'calc(100vw - 48px)', marginLeft: 'var(--ant-margin-lg)', marginRight: 'var(--ant-margin-lg)'}}"
                          :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
@@ -213,7 +214,6 @@
                   </template>
                 </a-button>
               </a-popover>
-            </a-form-item-rest>
           </a-flex>
         </a-form-item>
         <a-form-item label="内容">
@@ -598,5 +598,15 @@ const handleRevoke = async (event:MouseEvent, id: string) => {
 
 </script>
 <style scoped>
-
+/* 已选人数外挂块（addonAfter 弃用替代）：复刻原 addon 形态——灰底、连边框、贴右圆角 */
+.user-count-addon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  white-space: nowrap;
+  border: 1px solid var(--ant-color-border);
+  border-left: none;
+  border-radius: 0 var(--ant-border-radius) var(--ant-border-radius) 0;
+  background: var(--ant-color-fill-tertiary);
+}
 </style>

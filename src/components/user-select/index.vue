@@ -136,7 +136,7 @@ const themeStore = useThemeStore();
 // value/nickname/username v-model:id/nickname/username 的回显入参
 // allDeptData 部门树是否取全量数据（false 时取当前用户可见部门）
 // emptyDescription 空数据描述
-const {height = 151, width = 750, bordered = true, bodyStyle = {padding: 0}, value, nickname, username, allDeptData = true, emptyDescription} = defineProps<{
+const {height = 151, width = 750, bordered = true, bodyStyle = {padding: 0}, id, nickname, username, allDeptData = true, emptyDescription} = defineProps<{
   // 三个分栏的滚动区高度
   height?: number,
   // 卡片宽度
@@ -146,7 +146,7 @@ const {height = 151, width = 750, bordered = true, bodyStyle = {padding: 0}, val
   // 卡片body样式
   bodyStyle?: CSSProperties,
   // v-model:id 回显的用户id集合
-  value?: string[],
+  id?: string[],
   // v-model:nickname 回显的用户昵称集合
   nickname?: string[],
   // v-model:username 回显的用户名集合
@@ -383,7 +383,7 @@ const { userColumn, userRowSelectionType, userList, selectedIds, selectUsers, lo
 
 // 用户id回显相关
 const initModelUserId = async () => {
-  const userIds = value
+  const userIds = id
   if (!userIds || userIds.length === 0) {
     return
   }

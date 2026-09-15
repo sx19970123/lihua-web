@@ -10,15 +10,15 @@
       <transition :name="themeStore.routeTransition" mode="out-in">
         <div v-if="settingForm.enable">
           <a-form-item label="周期" name="interval">
-            <a-input-number style="width: 150px"
-                            :precision="0"
-                            :min="1"
-                            placeholder="请输入"
-                            v-model:value="settingForm.interval">
-              <template #addonAfter>
-                <a-select style="width: 60px" v-model:value="settingForm.unit" :options="unitOptions"/>
-              </template>
-            </a-input-number>
+            <!-- addonAfter 已弃用：Space.Compact 组合数字输入与单位选择 -->
+            <a-space-compact>
+              <a-input-number style="width: 150px"
+                              :precision="0"
+                              :min="1"
+                              placeholder="请输入"
+                              v-model:value="settingForm.interval"/>
+              <a-select style="width: 60px" v-model:value="settingForm.unit" :options="unitOptions"/>
+            </a-space-compact>
           </a-form-item>
           <a-form-item>
             <a-button type="primary" html-type="submit" :loading="submitLoading">提 交</a-button>

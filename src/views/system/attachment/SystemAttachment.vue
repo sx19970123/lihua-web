@@ -193,7 +193,7 @@
     </a-flex>
 <!--    详情模态框-->
     <a-modal v-model:open="showInfoModal" @cancel="handleCloseInfoModal" width="1000px" :footer="null">
-      <a-descriptions title="附件详情" bordered :styles="{label: {width: '110px'}}">
+      <a-descriptions title="附件详情" bordered :column="3" :styles="{label: {width: '110px'}}">
         <!-- 文件信息 -->
         <a-descriptions-item label="附件名称" :span="1">
           <a-typography-link v-if="attachmentInfo.status === '0' && attachmentInfo.type?.startsWith('image')" @click="() => handlePreview(attachmentInfo.id, attachmentInfo.type)">{{attachmentInfo.originalName}}</a-typography-link>
@@ -234,7 +234,7 @@
         <a-descriptions-item label="MD5" :span="3" v-if="attachmentInfo.md5">{{attachmentInfo.md5}}</a-descriptions-item>
       </a-descriptions>
       <!--      图片预览-->
-      <a-image :src="attachmentInfo.id ? previewUrlMap.get(attachmentInfo.id) : ''" :style="{ display: 'none' }" :preview="{ visible, onVisibleChange: () => handlePreview(attachmentInfo.id, attachmentInfo.type)}"></a-image>
+      <a-image :src="attachmentInfo.id ? previewUrlMap.get(attachmentInfo.id) : ''" :style="{ display: 'none' }" :preview="{ open: previewOpen, onOpenChange: () => handlePreview(attachmentInfo.id, attachmentInfo.type)}"></a-image>
     </a-modal>
 <!--    分享模态框-->
     <a-modal v-model:open="showShareModal" @cancel="handleCloseShareModal">
@@ -664,7 +664,7 @@ const initInfo = () => {
   const showInfoModal = ref<boolean>(false)
   const attachmentInfo = ref<SysAttachmentVO>({})
   const previewUrlMap = ref<Map<string, string>>(new Map<string, string>())
-  const visible = ref<boolean>(false)
+  const previewOpen = ref<boolean>(false)
   // 详情图片预览链接的签发时效（分钟）：7 天，覆盖会话期；链接缓存在 previewUrlMap，仅卸载时清理
   const PREVIEW_URL_EXPIRE_MINUTES = 10080
 
@@ -702,20 +702,20 @@ const initInfo = () => {
         return
       }
     }
-    visible.value = !visible.value;
+    previewOpen.value = !previewOpen.value;
   }
   return {
     showInfoModal,
     attachmentInfo,
     previewUrlMap,
-    visible,
+    previewOpen,
     handleOpenInfoModal,
     handleCloseInfoModal,
     handlePreview
   }
 }
 
-const {showInfoModal, attachmentInfo, previewUrlMap, visible, handleOpenInfoModal, handleCloseInfoModal, handlePreview} = initInfo()
+const {showInfoModal, attachmentInfo, previewUrlMap, previewOpen, handleOpenInfoModal, handleCloseInfoModal, handlePreview} = initInfo()
 
 // 下载
 const handleDownload = async (event: MouseEvent, id: string, status: string) => {

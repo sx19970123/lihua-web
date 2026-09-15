@@ -195,7 +195,7 @@
     </a-modal>
     <!--    分配用户抽屉-->
     <a-drawer v-model:open="userDrawer.open"
-              :width="900"
+              :size="900"
               :destroyOnClose="true"
               :title="userDrawer.roleName"
               :styles="{body: {'padding-top': '0'}}">
