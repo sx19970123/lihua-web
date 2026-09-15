@@ -68,6 +68,8 @@ export const useSettingStore = defineStore('setting', {
                     this.fetchEnableSignUp(),
                     this.fetchEnableCaptcha()
                 ])
+                // 反映最近一次探测结果：失败置 false 后，经登录页「点击重试」成功即恢复
+                this.isServerConnected = true
             } catch (error) {
                 this.isServerConnected = false
             }

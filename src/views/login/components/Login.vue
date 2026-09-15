@@ -2,14 +2,17 @@
   <div>
     <div class="mt-ant-lg mb-[56px] stagger-item" style="--si: 0">
       <a-typography-title :level="2">欢迎登录{{ appInfo.appSubname }}</a-typography-title>
-      <a-typography-text v-if="!settingStore.isServerConnected" type="danger">无法连接服务器</a-typography-text>
+      <!--  断连提示与注册入口互斥单槽：任一显示时各占一行；两者皆隐藏时保留等高占位（isServerConnected/enableSignUp 均为加载后翻转的状态，防登录卡片高度跳动）-->
+      <a-typography-text v-if="!settingStore.isServerConnected" type="danger" class="cursor-pointer" @click="handleRetryConnect">无法连接服务器，点击重试</a-typography-text>
       <!--                    根据配置显示注册-->
-      <div v-if="settingStore.enableSignUp">
+      <div v-else-if="settingStore.enableSignUp">
         <a-typography-text>没有账号？</a-typography-text>
         <a-typography-link @click="handleChangeComponent('register')">快速注册
           <RightOutlined/>
         </a-typography-link>
       </div>
+      <!--                    皆不显示时的等高占位行-->
+      <a-typography-text v-else style="visibility: hidden">&nbsp;</a-typography-text>
     </div>
     <a-form :model="loginForm" @finish="handleFinish" :rules="loginRoles">
       <a-form-item name="username" hasFeedback>
@@ -191,6 +194,11 @@ const showVerify = () => {
 // 处理切换组件
 const handleChangeComponent = (name: string) => {
   emit('changeComponent', name)
+}
+
+// 重试连接服务器（重新探测基础配置，成功后 isServerConnected 恢复为 true）
+const handleRetryConnect = () => {
+  settingStore.initBaseSetting()
 }
 
 onMounted(() => {
