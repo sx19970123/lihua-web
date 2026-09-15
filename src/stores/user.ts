@@ -14,7 +14,7 @@ import {useDictStore} from "@/stores/dict.ts";
 import {serializeThemeState, useThemeStore} from "@/stores/theme.ts";
 import {debounce} from "lodash-es";
 import router from "@/router";
-import {resolveAttachmentEntryUrl} from "@/api/system/attachment/attachment-storage.ts";
+
 import {createWindowGuard} from "@/utils/window-guard.ts";
 
 // 认证失效联动（清用户态+跳转+提示）的单飞窗：token 过期时并发 401 只执行一次，窗口自动复位
@@ -64,6 +64,10 @@ export const useUserStore = defineStore('user', {
             posts,
             defaultDeptPosts
         }
+    },
+    getters: {
+        // 头像配置 JSON 串（user-avatar 单 json 参数消费；image 型 value 为后端下发相对链）
+        avatarJson: (state) => JSON.stringify(state.avatar)
     },
     actions: {
         // 初始化用户信息
@@ -213,22 +217,16 @@ export const useUserStore = defineStore('user', {
                 }
             })
         },
-        // 处理头像：图片头像直接消费后端随用户信息下发的 avatarUrl（entry 链 + 站点代理前缀）
+        // 处理头像：image 型缺失对象键时回退默认头像（访问链解析在 user-avatar 内部完成）
         handleAvatar() {
             const avatar = this.$state.avatar
-            if (avatar.type === 'image') {
-                // 当头像类型为 image 但 image不存在时，赋值默认头像
-                if (avatar.value) {
-                    const avatarUrl = this.$state.userInfo.avatarUrl
-                    avatar.url = avatarUrl ? resolveAttachmentEntryUrl(avatarUrl) : ''
-                } else {
-                    this.$state.avatar = this.getDefaultAvatar()
-                }
+            if (avatar.type === 'image' && !avatar.value) {
+                this.$state.avatar = this.getDefaultAvatar()
             }
         },
-        // 默认头像
-        getDefaultAvatar() {
-            return {type: 'text', backgroundColor: 'rgb(191, 191, 191)', value: this.$state.nickname, url: ''}
+        // 默认头像（未设置头像/配置缺失时的昵称文字头像）
+        getDefaultAvatar(nickname?: string): AvatarType {
+            return {type: 'text', backgroundColor: 'rgb(191, 191, 191)', value: nickname ?? this.$state.nickname, url: ''}
         }
     }
 })

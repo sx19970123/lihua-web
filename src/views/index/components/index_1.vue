@@ -10,10 +10,7 @@
         <a-flex justify="space-between">
           <a-flex :gap="16">
             <user-avatar
-                :value="userStore.avatar.value"
-                :type="userStore.avatar.type"
-                :url="userStore.avatar.url"
-                :background-color="userStore.avatar.backgroundColor"
+                :avatar-json="userStore.avatarJson"
                 :size="70"
             />
             <a-flex align="flex-start" vertical>

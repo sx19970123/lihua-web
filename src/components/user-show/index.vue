@@ -6,13 +6,8 @@
         <slot name="hover"/>
       </span>
       <a-flex align="center" :gap="4" wrap="nowrap">
-<!--        头像-->
-        <user-avatar
-            :value="avatar.value"
-            :type="avatar.type"
-            :url="avatar.url"
-            :background-color="avatar.backgroundColor"
-        />
+<!--        头像（json 解析在 user-avatar 内部完成）-->
+        <user-avatar :avatar-json="displayJson"/>
 <!--        昵称-->
         <a-typography class="nickname" ellipsis v-if="nickname">{{nickname}}</a-typography>
       </a-flex>
@@ -23,9 +18,7 @@
 <script setup lang="ts">
 import UserAvatar from '@/components/user-avatar/index.vue'
 import {useUserStore} from "@/stores/user.ts";
-import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
-import {computed, getCurrentInstance, ref, useSlots} from "vue";
-import {resolvePublicAttachmentUrl} from "@/api/system/attachment/attachment-storage.ts";
+import {computed, getCurrentInstance, useSlots} from "vue";
 
 const userStore = useUserStore();
 
@@ -43,24 +36,8 @@ const hasHoverSlot = computed(() => !!slots.hover)
 const instance = getCurrentInstance()
 const clickable = computed(() => !!instance?.vnode.props?.onClick)
 
-// 回显头像
-const avatar = ref<AvatarType>({})
-try {
-  if (avatarJson) {
-    avatar.value = JSON.parse(avatarJson)
-    // 处理图片类型头像：对象键按公开链直用（不 fetch 转 blob，缓存交由下载端 Cache-Control 接管）
-    if (avatar.value.value && avatar.value.type === 'image') {
-      avatar.value.url = resolvePublicAttachmentUrl(avatar.value.value)
-    }
-  } else {
-    avatar.value = userStore.getDefaultAvatar()
-    avatar.value.value = nickname
-  }
-} catch (e) {
-  console.error("头像获取异常，重置为默认头像")
-  avatar.value = userStore.getDefaultAvatar()
-  avatar.value.value = nickname
-}
+// 未传头像 json 时回退默认头像（昵称文字头像）
+const displayJson = computed(() => avatarJson || JSON.stringify(userStore.getDefaultAvatar(nickname)))
 
 </script>
 
@@ -68,30 +45,5 @@ try {
 /* 昵称内边距：.ant-typography 根级 resetComponent 声明 padding，工具类同特异性会被 cssinjs 后注入反杀，维持 scoped */
 .nickname {
   padding-right: var(--ant-padding-xxs);
-  white-space: nowrap;
-}
-
-/* 整颗 chip 悬停浮层：毛玻璃为主 + 轻暗底（0.18），× 靠投影保证对比度；圆角贴合 chip 本体，仅当提供 hover 插槽时渲染 */
-.chip-hover-layer {
-  position: absolute;
-  inset: 0;
-  /* .ant-avatar 自带 position:relative，同为定位元素时按 DOM 序绘制会盖住浮层，显式提升层级 */
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.18);
-  color: #fff;
-  font-size: 14px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  backdrop-filter: var(--lihua-backdrop-filter-lg);
-  opacity: 0;
-  transition: opacity 0.17s ease;
-  pointer-events: none;
-}
-
-.lihua-user-select:hover .chip-hover-layer {
-  opacity: 1;
 }
 </style>

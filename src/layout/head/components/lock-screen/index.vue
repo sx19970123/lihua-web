@@ -35,10 +35,7 @@
                   v-if="status === 'locked'"
               >
                 <user-avatar
-                    :value="userStore.avatar.value"
-                    :type="userStore.avatar.type"
-                    :url="userStore.avatar.url"
-                    :background-color="userStore.avatar.backgroundColor"
+                    :avatar-json="userStore.avatarJson"
                     :size="60"
                 />
 

@@ -29,9 +29,8 @@ export interface AuthInfoType {
  * store 用户信息
  */
 export interface UserInfoType {
+    // 头像配置 JSON（后端下发前 image 型 value 已转换为可直接访问的相对链）
     avatar?: string,
-    // 头像可直接访问的 URL（后端随用户信息解析下发；avatar 仍为头像配置 JSON）
-    avatarUrl?: string,
     gender?: string,
     id?: string,
     nickname?: string,

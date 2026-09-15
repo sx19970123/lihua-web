@@ -3,10 +3,7 @@
     <a-row align="center" class="h-16">
       <sys-avatar class="modify relative inline-block"
                   :size="64"
-                  :type="props.modelValue.type"
-                  :value="props.modelValue.value"
-                  :background-color="props.modelValue.backgroundColor"
-                  :url="props.modelValue.url"
+                  :avatar-json="modelValueJson"
                   v-if="!open"
                   @click="openModal"
       />
@@ -66,7 +63,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {onMounted, onUnmounted, ref, useTemplateRef} from "vue";
+import {computed, onMounted, onUnmounted, ref, useTemplateRef} from "vue";
 import ColorSelect from "@/components/color-select/index.vue"
 import IconSelect from "@/components/icon-select/index.vue"
 import ImageCropper from "@/components/image-cropper/index.vue"
@@ -77,6 +74,7 @@ import {AVATAR_AUTO_BACKGROUND, resolveAvatarBackgroundColor} from "@/helpers/av
 import {message} from "@/antd-adapter";
 import settings from "@/settings";
 import type {AvatarType} from "@/api/system/profile/type/sys-profile.ts";
+import {resolveAttachmentEntryUrl} from "@/api/system/attachment/attachment-storage.ts";
 import {cloneDeep, debounce} from 'lodash-es'
 import {useThemeStore} from "@/stores/theme.ts";
 import {ResponseError} from "@/api/global/type.ts";
@@ -89,6 +87,8 @@ const userStore = useUserStore()
 const props = defineProps(['modelValue'])
 // 双向绑定修改方法
 const emits = defineEmits(['update:modelValue','change'])
+// 当前头像 json 串（sys-avatar 单 json 参数消费）
+const modelValueJson = computed(() => JSON.stringify(props.modelValue ?? {}))
 
 let updatedData: AvatarType = {
   type :'',
@@ -117,8 +117,8 @@ const iconSize = ref<'small' | 'large' | 'default'>('large')
 // 图片裁剪宽度
 const imageCropperWight = ref<number>(0)
 
-// 图片地址
-const avatarUrl = ref<string>(props.modelValue.url)
+// 图片地址（image 型 modelValue.value 为后端下发相对链，拼部署前缀作裁剪器初始图）
+const avatarUrl = ref<string>(props.modelValue.type === 'image' && props.modelValue.value ? resolveAttachmentEntryUrl(props.modelValue.value) : props.modelValue.url)
 // 图标
 const avatarIcon = ref<string>(props.modelValue.type === 'icon' ? props.modelValue.value : '')
 // 文本
@@ -168,7 +168,7 @@ const handleWindowWith = () => {
 const openModal = () => {
   avatarType.value = props.modelValue.type
   avatarColor.value = props.modelValue.backgroundColor
-  avatarUrl.value = props.modelValue.url
+  avatarUrl.value = props.modelValue.type === 'image' && props.modelValue.value ? resolveAttachmentEntryUrl(props.modelValue.value) : props.modelValue.url
   avatarIcon.value = props.modelValue.type === 'icon' ? props.modelValue.value : ''
   avatarText.value = props.modelValue.type === 'text' ? props.modelValue.value : ''
   avatarImg.value = {

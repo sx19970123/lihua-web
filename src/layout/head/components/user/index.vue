@@ -2,14 +2,14 @@
   <a-dropdown :trigger="['contextmenu', 'click']" :classes="{root: 'enable-glass'}">
     <a-tooltip title="个人中心" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
       <a-button type="link" class="btn">
-        <user-avatar class="avatar" :value="userStore.avatar.value" :background-color="userStore.avatar.backgroundColor" :type="userStore.avatar.type" :url="userStore.avatar.url"/>
+        <user-avatar class="avatar" :avatar-json="userStore.avatarJson"/>
       </a-button>
     </a-tooltip>
     <template #popupRender>
       <a-menu class="user-card" :styles="{root: {width: '220px', boxShadow: 'var(--ant-box-shadow-tertiary)'}}" @click="handleClickMenu">
         <a-menu-item key="user-overview">
           <a-flex align="center" :gap="12">
-            <user-avatar :size="48" :value="userStore.avatar.value" :background-color="userStore.avatar.backgroundColor" :type="userStore.avatar.type" :url="userStore.avatar.url"/>
+            <user-avatar :size="48" :avatar-json="userStore.avatarJson"/>
             <a-flex vertical>
               <a-typography-text ellipsis :copyable="{ tooltip: false }" strong :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.nickname }}</a-typography-text>
               <a-tooltip :title="'UID：' + userStore.$state.userId" placement="bottom" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
