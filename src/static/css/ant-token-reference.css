@@ -1,0 +1,50 @@
+/**
+ * antd 主题 token IDE 解析参考文件（勿引入构建！）
+ *
+ * antdv-next 的 --ant-* CSS 变量由 cssinjs 在运行时按主题算法注入（挂在 ConfigProvider 子树），
+ * 静态源码中不存在声明，IDEA 的 CSS 检查会对 var(--ant-*) 报「无法解析自定义属性」。
+ * 本文件仅供 IDE 静态解析使用：不 import、不打包，值恒 initial（运行时真实值由主题算法注入）。
+ *
+ * 维护约定：新增消费了未登记的 --ant-* 变量时，同步在本文件补一行。
+ */
+:root {
+    --ant-border-radius: initial;
+    --ant-border-radius-lg: initial;
+    --ant-border-radius-sm: initial;
+    --ant-box-shadow-secondary: initial;
+    --ant-box-shadow-tertiary: initial;
+    --ant-color-bg-container: initial;
+    --ant-color-bg-elevated: initial;
+    --ant-color-border: initial;
+    --ant-color-border-secondary: initial;
+    --ant-color-error: initial;
+    --ant-color-fill-tertiary: initial;
+    --ant-color-icon: initial;
+    --ant-color-primary: initial;
+    --ant-color-split: initial;
+    --ant-color-success: initial;
+    --ant-color-text: initial;
+    --ant-color-text-tertiary: initial;
+    --ant-font-size: initial;
+    --ant-font-size-lg: initial;
+    --ant-font-size-sm: initial;
+    --ant-font-size-xl: initial;
+    --ant-line-type: initial;
+    --ant-line-width: initial;
+    --ant-margin: initial;
+    --ant-margin-lg: initial;
+    --ant-margin-sm: initial;
+    --ant-margin-xl: initial;
+    --ant-margin-xs: initial;
+    --ant-margin-xxs: initial;
+    --ant-padding: initial;
+    --ant-padding-lg: initial;
+    --ant-padding-md: initial;
+    --ant-padding-xs: initial;
+    --ant-padding-xxs: initial;
+    --ant-table-header-split-color: initial;
+    --ant-tabs-card-bg: initial;
+    --ant-tabs-item-active-color: initial;
+    --ant-tabs-item-color: initial;
+    --ant-tabs-item-selected-color: initial;
+}

@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 /// <reference types="@unocss/vite/client" />
+/// <reference types="antdv-next/global" />
 
 declare module '*.vue' {
     import type { DefineComponent } from 'vue'

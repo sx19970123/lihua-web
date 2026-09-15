@@ -27,9 +27,5 @@ coverage
 *.sln
 *.sw?
 
-*.tsbuildinfo
-
-package-lock.json
-
 # vue-tsc 增量构建产物（每次 type-check 变更，不入库）
 *.tsbuildinfo
