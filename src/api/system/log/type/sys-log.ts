@@ -85,6 +85,11 @@ export interface SysLog {
     url?: string;
 
     /**
+     * 链路追踪 id（入口生成，日志文件按此串联）
+     */
+    traceId?: string;
+
+    /**
      * 用户代理字符串
      */
     userAgent?: string;
@@ -141,6 +146,11 @@ export interface SysLogDTO {
      * 客户端类型
      */
     clientType?: string;
+
+    /**
+     * 链路追踪 id（精确匹配）
+     */
+    traceId?: string;
 
     /**
      * 创建时间集合

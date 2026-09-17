@@ -118,35 +118,29 @@
     <!--   日志详情模态框-->
     <a-modal cancelText="关 闭" v-model:open="openModal" width="1000px" :footer="null">
       <a-descriptions title="登录日志" bordered :column="3" :styles="{label: {width: '110px'}}">
-        <a-descriptions-item label="业务描述" :span="1">
-          <a-badge status="success" v-if="logInfo.executeStatus === '0'"/>
-          <a-badge status="error" v-else/>
-          {{logInfo.description}}
-        </a-descriptions-item>
-        <a-descriptions-item label="业务类型" :span="1">
-          <a-flex :gap="8">
-            {{logInfo.typeMsg}}
-            <dict-tag v-if="logInfo.clientType" :dict-data-option="sys_client_type" :dict-data-value="logInfo.clientType" />
-          </a-flex>
+        <a-descriptions-item label="业务类型" :span="1">{{logInfo.typeMsg}}</a-descriptions-item>
+        <a-descriptions-item label="业务描述" :span="1">{{logInfo.description}}</a-descriptions-item>
+        <a-descriptions-item label="执行结果" :span="1">
+          <dict-tag v-if="logInfo.executeStatus" :dict-data-option="sys_log_status" :dict-data-value="logInfo.executeStatus"/>
         </a-descriptions-item>
         <a-descriptions-item label="用户名" :span="1">{{logInfo.username}}</a-descriptions-item>
-        <a-descriptions-item label="类名" :span="2">{{logInfo.className}}</a-descriptions-item>
-        <a-descriptions-item label="方法名" :span="1">{{logInfo.methodName}}</a-descriptions-item>
-        <a-descriptions-item label="参数" :span="3">{{logInfo.params}}</a-descriptions-item>
+        <a-descriptions-item label="客户端" :span="1">
+          <dict-tag v-if="logInfo.clientType" :dict-data-option="sys_client_type" :dict-data-value="logInfo.clientType"/>
+        </a-descriptions-item>
         <a-descriptions-item label="操作人" :span="1">{{logInfo.createName}}</a-descriptions-item>
-        <a-descriptions-item label="操作时间" :span="1">{{dayjs(logInfo.createTime).format("YYYY-MM-DD HH:mm:ss")}}</a-descriptions-item>
-        <a-descriptions-item label="执行时长" :span="1">{{logInfo.executeTime ? logInfo.executeTime + ' 毫秒' : ''}}</a-descriptions-item>
-        <a-descriptions-item label="请求地址" :span="1">{{logInfo.url}}</a-descriptions-item>
+        <a-descriptions-item label="登录时间" :span="1">{{dayjs(logInfo.createTime).format("YYYY-MM-DD HH:mm:ss")}}</a-descriptions-item>
+        <a-descriptions-item label="执行耗时" :span="1">{{logInfo.executeTime ? logInfo.executeTime + ' 毫秒' : ''}}</a-descriptions-item>
         <a-descriptions-item label="用户ip" :span="1">{{logInfo.ipAddress}}</a-descriptions-item>
         <a-descriptions-item label="所属地区" :span="1">{{logInfo.region}}</a-descriptions-item>
-        <a-descriptions-item label="缓存key" :span="3">
-          {{logInfo.cacheKey}}
-        </a-descriptions-item>
-        <a-descriptions-item label="操作环境" :span="3">
-          {{logInfo.userAgent}}
-        </a-descriptions-item>
-        <a-descriptions-item label="异常信息" :span="3" v-if="logInfo.executeStatus === '1'">{{logInfo.errorMsg}}</a-descriptions-item>
-        <a-descriptions-item label="异常堆栈" :span="3" v-if="logInfo.executeStatus === '1'">{{logInfo.errorStack}}</a-descriptions-item>
+        <a-descriptions-item label="类名" :span="2" class="detail-long-text">{{logInfo.className}}</a-descriptions-item>
+        <a-descriptions-item label="方法名" :span="1">{{logInfo.methodName}}</a-descriptions-item>
+        <a-descriptions-item label="TraceId" :span="2">{{logInfo.traceId}}</a-descriptions-item>
+        <a-descriptions-item label="请求地址" :span="3" class="detail-long-text">{{logInfo.url}}</a-descriptions-item>
+        <a-descriptions-item label="参数" :span="3" v-if="logInfo.params" class="detail-long-text">{{logInfo.params}}</a-descriptions-item>
+        <a-descriptions-item label="缓存key" :span="3" class="detail-long-text">{{logInfo.cacheKey}}</a-descriptions-item>
+        <a-descriptions-item label="操作环境" :span="3" class="detail-long-text">{{logInfo.userAgent}}</a-descriptions-item>
+        <a-descriptions-item label="异常信息" :span="3" v-if="logInfo.executeStatus === '1'" class="detail-long-text">{{logInfo.errorMsg}}</a-descriptions-item>
+        <a-descriptions-item label="异常堆栈" :span="3" v-if="logInfo.executeStatus === '1'" class="detail-long-text">{{logInfo.errorStack}}</a-descriptions-item>
       </a-descriptions>
     </a-modal>
   </a-flex>
@@ -164,7 +158,7 @@ import TableSetting from "@/components/table-setting/index.vue";
 import DictTag from "@/components/dict-tag/index.vue";
 import {initDict} from "@/helpers/dict.ts";
 
-const {sys_client_type} = initDict( "sys_client_type")
+const {sys_client_type, sys_log_status} = initDict("sys_client_type", "sys_log_status")
 const initSearch = () => {
   // 选中的数据id集合
   const logoutCacheKeys = ref<Array<string>>([])
@@ -405,5 +399,8 @@ const {openModal, logInfo, selectByCacheKey} = initLogInfo()
 </script>
 
 <style scoped>
-
+/* 长文本字段（URL/JSON/UA/堆栈等）允许在单元格内断行，防止撑破布局 */
+:deep(.detail-long-text) {
+  word-break: break-all;
+}
 </style>
