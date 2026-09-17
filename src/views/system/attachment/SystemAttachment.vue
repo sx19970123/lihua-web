@@ -215,7 +215,7 @@
         </a-descriptions-item>
 
         <!-- 上传信息 -->
-        <a-descriptions-item label="上传用户" :span="1">{{attachmentInfo.uploadName}}</a-descriptions-item>
+        <a-descriptions-item label="上传用户" :span="1">{{uploadUserName}}</a-descriptions-item>
         <a-descriptions-item label="上传时间" :span="1">{{attachmentInfo.createTime ? dayjs(attachmentInfo.createTime).format("YYYY-MM-DD HH:mm:ss") : ''}}</a-descriptions-item>
         <a-descriptions-item label="上传方式" :span="1">
           <dict-tag :dict-data-value="attachmentInfo.uploadMode ? attachmentInfo.uploadMode : ''" :dict-data-option="sys_attachment_upload_mode"/>
@@ -281,6 +281,7 @@ import {computed, nextTick, onUnmounted, ref} from "vue";
 import type {SysAttachment, SysAttachmentDTO, SysAttachmentVO} from "@/api/system/attachment/type/sys-attachment.ts";
 import {message, type TableColumnsType} from "@/antd-adapter";
 import {deleteData, forceDeleteData, getDownloadURL, queryById, queryPage} from "@/api/system/attachment/attachment.ts";
+import {queryById as queryUserById} from "@/api/system/user/user.ts";
 import {resolveAttachmentAbsoluteUrl, resolveAttachmentEntryUrl} from "@/api/system/attachment/attachment-storage.ts";
 import dayjs from "dayjs";
 import {initDict} from "@/helpers/dict.ts";
@@ -663,6 +664,8 @@ const {showShareModal, shareName, shareUrl, shareValidTime, handleShowShareModal
 const initInfo = () => {
   const showInfoModal = ref<boolean>(false)
   const attachmentInfo = ref<SysAttachmentVO>({})
+  // 上传人昵称：详情打开时按 createId 单独查用户详情（附件接口不再联查 sys_user）
+  const uploadUserName = ref<string>("")
   const previewUrlMap = ref<Map<string, string>>(new Map<string, string>())
   const previewOpen = ref<boolean>(false)
   // 详情图片预览链接的签发时效（分钟）：7 天，覆盖会话期；链接缓存在 previewUrlMap，仅卸载时清理
@@ -675,6 +678,12 @@ const initInfo = () => {
     if (resp.code === 200) {
       showInfoModal.value = true
       attachmentInfo.value = resp.data
+      // 用户可能已被删除，查询失败或无昵称时显示空
+      uploadUserName.value = ""
+      if (resp.data.createId) {
+        const userResp = await queryUserById(resp.data.createId)
+        uploadUserName.value = userResp.code === 200 ? (userResp.data?.nickname ?? "") : ""
+      }
     } else {
       message.error(resp.msg)
     }
@@ -684,6 +693,7 @@ const initInfo = () => {
   const handleCloseInfoModal = () => {
     showInfoModal.value = false
     attachmentInfo.value = {}
+    uploadUserName.value = ""
   }
 
   // 处理详情中的图片预览
@@ -707,6 +717,7 @@ const initInfo = () => {
   return {
     showInfoModal,
     attachmentInfo,
+    uploadUserName,
     previewUrlMap,
     previewOpen,
     handleOpenInfoModal,
@@ -715,7 +726,7 @@ const initInfo = () => {
   }
 }
 
-const {showInfoModal, attachmentInfo, previewUrlMap, previewOpen, handleOpenInfoModal, handleCloseInfoModal, handlePreview} = initInfo()
+const {showInfoModal, attachmentInfo, uploadUserName, previewUrlMap, previewOpen, handleOpenInfoModal, handleCloseInfoModal, handlePreview} = initInfo()
 
 // 下载
 const handleDownload = async (event: MouseEvent, id: string, status: string) => {

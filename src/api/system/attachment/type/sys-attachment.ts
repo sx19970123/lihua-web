@@ -60,10 +60,6 @@ export interface SysAttachmentDTO extends SysAttachment {
 
 export interface SysAttachmentVO extends SysAttachment {
     /**
-     * 上传用户昵称
-     */
-    uploadName?: string;
-    /**
      * 行级公开标记
      */
     isPublic?: boolean;
