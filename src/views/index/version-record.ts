@@ -5,11 +5,11 @@
 
 export const versionInfo = {
     /** 单体后端仓库版本 */
-    lihuaVersion: '2.2.0',
+    lihuaVersion: '3.0.0',
     /** 单体后端 Spring Boot 版本 */
     springBootVersion: '4.1.1',
     /** 微服务仓库版本 */
-    cloudVersion: '2.2.0',
+    cloudVersion: '3.0.0',
     /** 微服务版 lihua-cloud 的 Spring Cloud 框架版本 */
     springCloudVersion: '2025.1.3',
     /** 微服务版 lihua-cloud 的 Spring Boot 版本 */
