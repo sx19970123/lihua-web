@@ -60,8 +60,8 @@ service.interceptors.response.use((resp) => {
         throw new ResponseError(data.code, data.msg)
     }
     // 配置的非法ip访问
-    if (data.code === 407) {
-        router.push("/407")
+    if (data.code === 451) {
+        router.push("/451")
         throw new ResponseError(data.code, data.msg)
     }
     return resp;

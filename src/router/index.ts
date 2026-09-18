@@ -97,10 +97,10 @@ const routers = [
     name: 'Login',
     component: () => import("@/views/login/index.vue")
   },
-  // 407
+  // 451
   {
-    path: "/407",
-    component: () => import("@/views/error/407/index.vue"),
+    path: "/451",
+    component: () => import("@/views/error/451/index.vue"),
     meta: {
       allowAnonymous: true
     }
