@@ -1,7 +1,9 @@
 <template>
-  <div class="password-input">
+  <div class="password-input" :style="{width: width}">
     <a-input-password v-model:value="password"
                       @change="handleChangePassword"
+                      @blur="e => emit('blur', e)"
+                      @focus="e => emit('focus', e)"
                       :placeholder="placeholder"
                       :maxlength="MAX_LENGTH"
                       :style="{height: height}"
@@ -50,16 +52,19 @@ const strongRegex = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d]).{10,}$/u;
 // modelValue v-model 双向绑定密码值
 // placeholder 输入框占位提示
 // progressWidth 强度条宽度（px）
+// width 组件整体宽度（css 值；默认 270px 对齐个人中心-安全设置表单，可传 '100%' 等随父容器）
 // height 输入框高度
 // prefixIcon 是否显示前缀锁图标
 // showProgress 是否显示强度条
-const {modelValue, placeholder, progressWidth = 88, height, prefixIcon = false, showProgress = true} = defineProps<{
+const {modelValue, placeholder, progressWidth = 88, width = '270px', height, prefixIcon = false, showProgress = true} = defineProps<{
   // v-model 双向绑定密码值
   modelValue?: string,
   // 输入框占位提示
   placeholder?: string,
   // 强度条宽度（px）
   progressWidth?: number,
+  // 组件整体宽度（css 值，默认 270px）
+  width?: string,
   // 输入框高度
   height?: string,
   // 是否显示前缀锁图标
@@ -70,7 +75,11 @@ const {modelValue, placeholder, progressWidth = 88, height, prefixIcon = false, 
 
 const emit = defineEmits<{
   // v-model 双向绑定
-  'update:modelValue': [value?: string]
+  'update:modelValue': [value?: string],
+  // 失焦/聚焦转发：a-form-item 会向唯一子节点注入 onBlur/onFocus 触发失焦校验等表单行为，
+  // 必须声明为组件事件显式转发，否则透传到根 div 上成为无效 DOM 监听（blur 不冒泡）
+  blur: [event: FocusEvent],
+  focus: [event: FocusEvent]
 }>()
 
 // 输入中的密码
@@ -108,11 +117,6 @@ watch(() => modelValue, () => {
 </script>
 
 <style scoped>
-/* 组件整体定宽（对齐个人中心-安全设置表单的密码框形态）：输入框 270，强度条默认 88 不拉满 */
-.password-input {
-  width: 270px;
-}
-
 /* 强度条淡入淡出（v-show 切换由 transition 接管出场的 display 时机） */
 .progress-fade-enter-active,
 .progress-fade-leave-active {

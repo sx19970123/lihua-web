@@ -182,8 +182,8 @@ const userLogin = async (captchaVerification: string) => {
 
 // 登录表单校验
 const loginRoles: Record<string, Rule[]> = {
-  username: [{required: true, message: '请输入账号', trigger: 'change'}],
-  password: [{required: true, message: '请输入密码', trigger: 'change'}]
+  username: [{required: true, message: '请输入账号', trigger: ['change', 'blur']}],
+  password: [{required: true, message: '请输入密码', trigger: ['change', 'blur']}]
 }
 
 // 显示验证码
