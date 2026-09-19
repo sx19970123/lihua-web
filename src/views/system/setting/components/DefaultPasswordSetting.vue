@@ -5,7 +5,7 @@
         <template #tooltip>
           用户管理模块新增用户时的默认密码
         </template>
-        <password-input class="w-[270px]" v-model="settingForm.defaultPassword" placeholder="请输入默认密码" :progress-width="88"/>
+        <password-input v-model="settingForm.defaultPassword" placeholder="请输入默认密码"/>
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit" :loading="submitLoading">提 交</a-button>

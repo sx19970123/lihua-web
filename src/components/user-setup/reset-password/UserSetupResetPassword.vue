@@ -17,9 +17,8 @@
           />
         </a-form-item>
         <a-form-item name="newPassword">
-          <password-input class="form-item-width"
-                          v-model="password.newPassword"
-                          placeholder="请输入新密码" :progress-width="88"
+          <password-input v-model="password.newPassword"
+                          placeholder="请输入新密码"
                           :show-progress="!!password.newPassword && password.newPassword.length >= 6 && password.newPassword.length <= 30"
           />
         </a-form-item>
@@ -40,6 +39,7 @@ import {reactive, type Ref, useTemplateRef} from "vue";
 import {type FormInstance, type Rule, message} from "@/antd-adapter";
 import PasswordInput from "@/components/password-input/index.vue";
 import {updatePassword} from "@/api/system/profile/profile.ts";
+import remember from "@/helpers/remember.ts";
 
 const resetPasswordRef = useTemplateRef<FormInstance>("resetPasswordRef")
 // 向外抛出函数
@@ -98,6 +98,7 @@ const handleNext = async (loading:Ref<boolean>) => {
     const resp = await updatePassword(password.oldPassword,password.newPassword,password.confirmPassword)
     loading.value = false
     if (resp.code === 200) {
+      remember.updateRememberedPassword(password.newPassword)
       emit('next', loading.value)
     } else {
       message.error(resp.msg)
@@ -112,9 +113,3 @@ const handleSkip = (loading:Ref<boolean>) => {
   emit('skip', loading.value)
 }
 </script>
-
-<style scoped>
-.form-item-width {
-  width: 270px;
-}
-</style>

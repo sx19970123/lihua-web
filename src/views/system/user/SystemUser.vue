@@ -326,8 +326,7 @@
          <a-form-item name="password" class="form-item-single-line">
            <password-input v-model="resetPasswordForm.password"
                            :show-progress="!!resetPasswordForm.password && resetPasswordForm.password.length >= 6"
-                           placeholder="请输入密码"
-                           :progress-width="116"/>
+                           placeholder="请输入密码"/>
          </a-form-item>
          <div class="mt-ant-xs">
            <a-checkbox v-model:checked="useDefaultPassword" @change="handleChangeUseDefaultPassword">使用默认密码</a-checkbox>
@@ -1073,7 +1072,8 @@ const initExcel = () => {
       const resp = await importExcel(uploadRequest.file)
       if (resp.code === 200) {
         await initPage()
-      } else if (resp.code === 510) {
+      } else if (resp.code === 509) {
+        // 后端 EXCEL_IMPORT_ERROR=509，data 为逐行错误明细 JSON 数组
         const errMsgList = JSON.parse(resp.data) as string[]
         Modal.confirm({
           title: '导入失败',

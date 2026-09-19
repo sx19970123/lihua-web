@@ -7,10 +7,8 @@
                           v-model:value="password.oldPassword"/>
       </a-form-item>
       <a-form-item label="新密码" name="newPassword">
-        <password-input class="w-[270px]"
-                        v-model="password.newPassword"
+        <password-input v-model="password.newPassword"
                         placeholder="请输入新密码"
-                        :progress-width="88"
                         :show-progress="!!password.newPassword && password.newPassword.length >= 6"
         />
       </a-form-item>
@@ -34,6 +32,7 @@ import {message, type Rule} from "@/antd-adapter";
 import PasswordInput from "@/components/password-input/index.vue";
 import {updatePassword} from "@/api/system/profile/profile.ts";
 import {ResponseError} from "@/api/global/type.ts";
+import remember from "@/helpers/remember.ts";
 
 const userStore = useUserStore()
 const submitLoading = ref<boolean>(false)
@@ -83,6 +82,7 @@ const handleFinish = async (data: passwordType) => {
   try {
     const resp = await updatePassword(data.oldPassword, data.newPassword, data.confirmPassword)
     if (resp.code === 200) {
+      remember.updateRememberedPassword(data.newPassword)
       message.success("修改成功")
     } else {
       message.error(resp.msg)

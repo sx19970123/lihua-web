@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="password-input">
     <a-input-password v-model:value="password"
                       @change="handleChangePassword"
                       :placeholder="placeholder"
@@ -53,7 +53,7 @@ const strongRegex = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d]).{10,}$/u;
 // height 输入框高度
 // prefixIcon 是否显示前缀锁图标
 // showProgress 是否显示强度条
-const {modelValue, placeholder, progressWidth = 90, height, prefixIcon = false, showProgress = true} = defineProps<{
+const {modelValue, placeholder, progressWidth = 88, height, prefixIcon = false, showProgress = true} = defineProps<{
   // v-model 双向绑定密码值
   modelValue?: string,
   // 输入框占位提示
@@ -108,6 +108,11 @@ watch(() => modelValue, () => {
 </script>
 
 <style scoped>
+/* 组件整体定宽（对齐个人中心-安全设置表单的密码框形态）：输入框 270，强度条默认 88 不拉满 */
+.password-input {
+  width: 270px;
+}
+
 /* 强度条淡入淡出（v-show 切换由 transition 接管出场的 display 时机） */
 .progress-fade-enter-active,
 .progress-fade-leave-active {

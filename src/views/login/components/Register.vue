@@ -25,7 +25,6 @@
       <a-form-item name="password" hasFeedback>
         <password-input class="register-form-item stagger-item" style="--si: 2"
                         v-model="userRegister.password"
-                        :progress-width="98"
                         placeholder="密码"
                         height="48px"
                         prefix-icon

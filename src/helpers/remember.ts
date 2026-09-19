@@ -62,6 +62,13 @@ const forgetMe = () => {
     removePassword()
 }
 
+// 记住我开启时同步新密码（改密成功后调用，防旧密码残留致下次自动填充登录失败）
+const updateRememberedPassword = (password: string): void => {
+    if (enableRememberMe()) {
+        setPassword(password)
+    }
+}
+
 // 获取账号密码
 const getUsernamePassword = () => {
     return {
@@ -75,4 +82,5 @@ export default {
     forgetMe,
     getUsernamePassword,
     enableRememberMe,
+    updateRememberedPassword,
 }
