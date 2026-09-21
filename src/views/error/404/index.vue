@@ -4,16 +4,24 @@
       <img class="error-image" :src="themeStore.isDarkTheme ? errHei : errMiao" alt="404">
       <a-typography-title style="margin: 0">404 Not Found</a-typography-title>
       <a-typography-text type="secondary">页面不见了</a-typography-text>
+      <a-button type="primary" @click="toIndex">回到首页</a-button>
     </div>
   </a-card>
 </template>
 <script setup lang="ts">
+import {useRouter} from "vue-router";
 import {useThemeStore} from "@/stores/theme";
 import errMiao from '@/assets/error/404-miao.png'
 import errHei from '@/assets/error/404-hei.png'
 
 // 错误插画：亮色模式 miao / 暗色模式 hei
 const themeStore = useThemeStore()
+
+// 经路由守卫回首页（未登录会被引导至登录页）
+const router = useRouter()
+const toIndex = () => {
+  router.push("/index")
+}
 </script>
 <style scoped>
 .error-container {
