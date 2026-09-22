@@ -66,14 +66,16 @@
         </a-flex>
         <!--    文章内容-->
         <!--  notice-content：富文本宽度约束（见 style 块注释） -->
-        <div class="notice-content" v-html="notice.content"/>
+        <!--  v-html 前经 DOMPurify 白名单消毒（WR-6）：内容来源含外部粘贴，阻断存储型 XSS（token 在 localStorage 可被脚本窃取） -->
+        <div class="notice-content" v-html="safeContent"/>
       </a-flex>
     </div>
   </a-spin>
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
+import DOMPurify from "dompurify";
 import {preview, queryReadInfo} from "@/api/system/notice/notice.ts";
 import UserShow from "@/components/user-show/index.vue"
 import type {SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
@@ -90,6 +92,9 @@ const {noticeId, showReadUser} = defineProps<{
 const spinning = ref<boolean>(false)
 // notice 对象
 const notice = ref<SysNoticeVO>({})
+
+// 富文本消毒：默认白名单覆盖编辑器常规产出（p/标题/列表/img/table/a/内联 style），剥 script/事件属性/javascript: 链接
+const safeContent = computed(() => DOMPurify.sanitize(notice.value.content ?? ''))
 
 // 已读未读用户分页大小
 const READ_INFO_PAGE_SIZE = 20
