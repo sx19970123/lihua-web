@@ -1,4 +1,4 @@
-import {message, type UploadFile, type VcFile} from "@/antd-adapter"
+import {type UploadFile, type VcFile} from "@/antd-adapter"
 import {onUnmounted} from "vue"
 import {
   CHUNK_MD5_QUERY,
@@ -12,10 +12,12 @@ import {currentRequests} from "@/utils/request.ts"
 import type {ChunkUploadApi, UploadContext, UploadCoreApi, UploadRecordType} from "./types.ts"
 import type {UploadState} from "./use-upload-state.ts"
 import {CHUNK_UPLOAD_RECORD_PREFIX, HASH_CHUNK_SIZE_MB, UPLOAD_MODE} from "./constants.ts"
-import {CHUNK_RECORD_EVENT, notifyChunkRecordChange} from "./chunk-record-event.ts"
 
 /**
- * 分片上传链路：哈希计算、断点续传判存、分片上传（游标 worker-pool）与合并
+ * 分片上传链路：哈希计算、断点续传判存、分片上传（游标 worker-pool）与合并。
+ * 同附件并发语义（2026-09-22 拍板）：接受双份结果——发现他方在传时不等待、不共写同一任务，
+ * 各自开独立 uploadId 传完；后端按 md5 多行容错设计（findUploadableByMd5 遍历取首个物理存在行），
+ * 秒传天然兼容，无需为重复结果做任何处理。
  */
 export const useChunkUpload = (ctx: UploadContext & {
   uploadState: UploadState
@@ -27,9 +29,39 @@ export const useChunkUpload = (ctx: UploadContext & {
   const {emits, fileList, sysAttachment, buildSysAttachment, uploadState, resetUploadState, core, chunkSize, chunkUploadCount} = ctx
   const {handleUploadError, handleFastUpload, handleModelValue} = core
 
-  // 运行期注册的记录同步监听，组件卸载时统一移除
-  const recordCleanups: Array<() => void> = []
-  onUnmounted(() => recordCleanups.forEach(fn => fn()))
+  // per-文件上传活动登记（取消通道）：取消标志 + 在途 hash worker 引用。
+  // 删行（cancelUpload）或组件卸载时置位——终止 worker、停止派片与合并；本地记录保留供断点续传。
+  // 条目在合并终态/链路失败处删除，个别中间失败路径可能残留至组件卸载，无害（仅占位小对象）
+  const activeUploads = new Map<string, {aborted: boolean, worker?: Worker}>()
+  onUnmounted(() => {
+    activeUploads.forEach(entry => {
+      entry.aborted = true
+      entry.worker?.terminate()
+    })
+  })
+
+  const ensureActive = (uid: string) => {
+    let entry = activeUploads.get(uid)
+    if (!entry) {
+      entry = {aborted: false}
+      activeUploads.set(uid, entry)
+    }
+    return entry
+  }
+  const isAborted = (uid: string) => activeUploads.get(uid)?.aborted ?? false
+
+  // 取消指定文件的上传链路（删行时调用）：静默收场不报错——停止分片/合并后不再回写列表与发事件，
+  // uploading 状态就地复位（分片模式单文件串行，不存在会被波及的并发上传）
+  const cancelUpload = (file: UploadFile) => {
+    const entry = activeUploads.get(file.uid)
+    if (!entry) {
+      return
+    }
+    entry.aborted = true
+    entry.worker?.terminate()
+    entry.worker = undefined
+    resetUploadState()
+  }
 
   // 开始进行分片上传（外层兜底：步骤 2/3 中的网络 reject 与本地记录 JSON.parse 损坏等逃逸异常
   // 在此收口，否则 uploading 永久为 true 且异常成为 unhandled rejection）
@@ -41,7 +73,13 @@ export const useChunkUpload = (ctx: UploadContext & {
       try {
         md5 = await handleCalculateHash(file)
       } catch {
+        activeUploads.delete(file.uid)
         handleUploadError(file, "附件哈希计算失败")
+        return
+      }
+      // 哈希期间该行已被删除（cancelUpload 已复位状态），静默结束
+      if (isAborted(file.uid)) {
+        activeUploads.delete(file.uid)
         return
       }
       // 2. 判断是否进行附件上传
@@ -50,11 +88,12 @@ export const useChunkUpload = (ctx: UploadContext & {
         // 3. 处理分片上传逻辑
         await handleChunkUpload(file, md5)
       } else {
-        // 3 不允许分片上传 包含两种情况：1 同一附件有正在执行的上传任务；2 附件已上传完毕
-        handleSyncChunkUploadStatus(file, md5)
+        // 不允许 = 附件已传完（记录 completed 或库中命中），秒传直接拿现成附件
+        handleFastUpload(file, md5)
       }
     } catch {
       // 兜底收口（网络类异常拦截器已提示，本地记录损坏等走泛文案）
+      activeUploads.delete(file.uid)
       handleUploadError(file, "分片上传失败")
     }
   }
@@ -99,7 +138,6 @@ export const useChunkUpload = (ctx: UploadContext & {
     }
 
     // 5. 分片上传主体（单次调度：取片、上传、结算；调度由 worker 循环驱动）
-    let uploadAborted = false
     const uploadChunk = async (i: number) => {
       const {chunk, index} = needUploadChunks[i]
       try {
@@ -112,7 +150,6 @@ export const useChunkUpload = (ctx: UploadContext & {
           recordObj.uploadedChunkSize = Math.trunc(uploadedChunkSize / 1024 / 1024)
           recordObj.totalSize = Math.trunc(file.size ? file.size / 1024 / 1024 : 0 )
           localStorage.setItem(CHUNK_UPLOAD_RECORD_PREFIX + md5, JSON.stringify(recordObj))
-          notifyChunkRecordChange(md5)
           uploadState.progress = recordObj.totalSize ? Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100) : 0
         })
         if (resp.code === 200) {
@@ -127,21 +164,22 @@ export const useChunkUpload = (ctx: UploadContext & {
             handleChunksMerge(file, recordObj, md5)
           }
         } else {
-          // 业务失败统一走失败收口（handleUploadError 内弹提示并复位 loading）
+          // 业务失败统一走失败收口（handleUploadError 内弹提示并复位 loading），停止后续派片
           handleUploadError(file, resp.msg)
-          uploadAborted = true
+          ensureActive(file.uid).aborted = true
         }
       } catch {
         // 网络类异常（ResponseError）拦截器已统一提示，此处只收尾状态
         handleUploadError(file, "分片上传失败")
-        uploadAborted = true
+        ensureActive(file.uid).aborted = true
       }
     }
 
-    // 6. 游标 worker-pool：固定数量 worker 从共享游标取片，任意分片失败即停止派片（在途分片自然收尾）
+    // 6. 游标 worker-pool：固定数量 worker 从共享游标取片；停派标志统一为登记表的取消位
+    //（删行取消与业务失败共用），在途分片自然收尾
     let nextChunkCursor = 0
     const chunkWorker = async () => {
-      while (!uploadAborted && nextChunkCursor < needUploadChunks.length) {
+      while (!isAborted(file.uid) && nextChunkCursor < needUploadChunks.length) {
         await uploadChunk(nextChunkCursor++)
       }
     }
@@ -152,51 +190,6 @@ export const useChunkUpload = (ctx: UploadContext & {
       console.error(e)
       handleUploadError(file, "分片上传失败")
     })
-  }
-
-  // 同步分片上传状态：其他上传方（本页其他实例或跨页签）推进 localStorage 记录，事件驱动同步进度直至完成
-  const handleSyncChunkUploadStatus = (file: UploadFile, md5: string) => {
-    const recordKey = CHUNK_UPLOAD_RECORD_PREFIX + md5
-    if (!localStorage.getItem(recordKey)) {
-      // 没有本地记录直接调用附件秒传
-      handleFastUpload(file, md5)
-      return
-    }
-    const syncRecord = () => {
-      // 每次重读记录：进度由并发上传方推进，闭包快照会恒为旧值
-      const record = localStorage.getItem(recordKey)
-      if (!record) {
-        cleanup()
-        return
-      }
-      const recordObj: UploadRecordType = JSON.parse(record)
-      uploadState.progress = recordObj.totalSize ? Math.trunc(recordObj.uploadedChunkSize / recordObj.totalSize * 100) : 0
-      // 检测到上传状态为completed时，执行附件秒传获取数据
-      if (recordObj.status === "completed") {
-        cleanup()
-        handleFastUpload(file, md5)
-      }
-    }
-    // 同页实例推进走 CustomEvent；跨页签写入走 storage 事件（storage 不在写入页自身触发）
-    const onCustomEvent = (event: Event) => {
-      if ((event as CustomEvent<string>).detail === md5) {
-        syncRecord()
-      }
-    }
-    const onStorageEvent = (event: StorageEvent) => {
-      if (event.key === recordKey) {
-        syncRecord()
-      }
-    }
-    const cleanup = () => {
-      window.removeEventListener(CHUNK_RECORD_EVENT, onCustomEvent)
-      window.removeEventListener("storage", onStorageEvent)
-    }
-    recordCleanups.push(cleanup)
-    window.addEventListener(CHUNK_RECORD_EVENT, onCustomEvent)
-    window.addEventListener("storage", onStorageEvent)
-    // 立即同步一次：记录可能已处于 completed
-    syncRecord()
   }
 
   // 处理分片
@@ -220,10 +213,18 @@ export const useChunkUpload = (ctx: UploadContext & {
     return new Promise<string>((resolve, reject) => {
       // 通过webWorker后台处理hash计算，防止ui阻塞
       const worker = new Worker(new URL("./hash-worker.ts", import.meta.url), {type: "module"})
+      // 登记 worker 供取消通道终止；被取消时 terminate 后本 promise 保持挂起——取消是用户主动行为，
+      // 不应走 reject 弹错误提示（挂起的 await 无后续副作用，组件卸载后随实例回收）
+      const entry = ensureActive(file.uid)
+      entry.worker = worker
+      const detachWorker = () => {
+        entry.worker = undefined
+      }
       // worker 加载/运行异常兜底：不处理则 promise 永不落定、上传流程永久卡死
       worker.onerror = () => {
         reject(new Error("附件哈希计算失败"))
         worker.terminate()
+        detachWorker()
       }
       // 接收hash计算完成后的结果
       worker.onmessage = (event) => {
@@ -231,12 +232,14 @@ export const useChunkUpload = (ctx: UploadContext & {
         if (typeof resp === "string") {
           resolve(resp)
           worker.terminate()
+          detachWorker()
         } else if (typeof resp === "number") {
           uploadState.progress = resp
         } else if (resp && typeof resp === "object" && resp.type === "error") {
           // worker 内分片读取失败的主动上报（协议：{type: 'error', message}）
           reject(new Error(resp.message ?? "附件哈希计算失败"))
           worker.terminate()
+          detachWorker()
         }
       }
       worker.postMessage(chunks)
@@ -250,9 +253,16 @@ export const useChunkUpload = (ctx: UploadContext & {
       let needFetch = false
       if (record) {
         const uploadRecord: UploadRecordType = JSON.parse(record)
-        // 缓存对象为上传中状态，检查当前正在进行的请求，post:开头，包含md5是否存在，存在即处于正在上传状态，不存在即为中途断开状态
         if (uploadRecord.status === "in_progress") {
-          resolve(![... currentRequests].some(url => url.startsWith("post:") && url.includes("?" + CHUNK_MD5_QUERY + md5)))
+          // 记录在途且仍有对应请求 = 他方正在上传同附件：按拍板接受双份结果，走查库→未命中则
+          // 新建自己的任务（各持独立 uploadId，不共写互踩）；查库命中则自然落秒传
+          // 记录在途但无对应请求 = 上次中断，续传旧任务（断点续传）
+          const inFlight = [...currentRequests].some(url => url.startsWith("post:") && url.includes("?" + CHUNK_MD5_QUERY + md5))
+          if (!inFlight) {
+            resolve(true)
+            return
+          }
+          needFetch = true
         } else {
           // 已完成上传，从数据库查询对应信息
           needFetch = true
@@ -296,7 +306,6 @@ export const useChunkUpload = (ctx: UploadContext & {
               totalSize: 0,
               chunkSize: 0
             } as UploadRecordType))
-            notifyChunkRecordChange(md5)
           } else {
             handleUploadError(file, resp.msg)
           }
@@ -307,17 +316,20 @@ export const useChunkUpload = (ctx: UploadContext & {
 
   // 处理附件合并
   const handleChunksMerge = (file: UploadFile, recordObj: UploadRecordType, md5: string) => {
+    // 删行取消：静默收场，不再合并/回写列表/发事件（本地记录保留供断点续传）
+    if (isAborted(file.uid)) {
+      resetUploadState()
+      return
+    }
     uploadState.status = "MERGE"
     // 进入合并前把本地记录置为 completed（分片已全部就绪）：合并期间会话中断（刷新/关闭）后，
     // 重传会经 existsAttachmentByMd5 命中秒传闭环，而非把已消费的 uploadId 当全新任务全量重传
     recordObj.status = "completed"
     localStorage.setItem(CHUNK_UPLOAD_RECORD_PREFIX + md5, JSON.stringify(recordObj))
-    notifyChunkRecordChange(md5)
     chunksMerge({originalName: file.name, md5: md5, uploadId:  recordObj.uploadId}, recordObj.chunkSize).then((resp) => {
       if (resp.code === 200) {
         // 上传成功后删除浏览器缓存记录
         localStorage.removeItem(CHUNK_UPLOAD_RECORD_PREFIX + md5)
-        notifyChunkRecordChange(md5)
         // fileList重新赋值
         fileList.value.forEach(item => {
           if (item.uid === file.uid) {
@@ -337,11 +349,13 @@ export const useChunkUpload = (ctx: UploadContext & {
       handleUploadError(file, "附件合并失败")
     }).finally(() => {
       resetUploadState()
+      activeUploads.delete(file.uid)
     })
   }
 
   return {
     startChunkUpload,
-    handleCalculateHash
+    handleCalculateHash,
+    cancelUpload
   } satisfies ChunkUploadApi
 }

@@ -33,6 +33,8 @@ export interface UploadContext {
 export interface ChunkUploadApi {
   startChunkUpload: (file: VcFile) => Promise<void>
   handleCalculateHash: (file: VcFile) => Promise<string>
+  // 取消指定文件的上传链路（删行时调用）：终止 hash worker、停止派片与合并；无在途活动时为 no-op
+  cancelUpload: (file: UploadFile) => void
 }
 
 // 上传核心对分片链路暴露的回调（失败收尾/秒传/双向绑定回写）

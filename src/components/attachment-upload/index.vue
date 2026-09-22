@@ -243,7 +243,7 @@ core.bindChunkApi(chunkApi)
 const {beforeUpload, handleChange, handleCustomRequest} = core
 
 const {previewVisible, previewTitle, previewURL, previewType, handlePreview, handleCancel, handleShowThumbImage, handleThumbUrl} = useUploadPreview({fileList})
-const {handleRemove, businessRemove} = useAttachmentRemove({emits: emits as AttachmentEmitFn, autoRemove})
+const {handleRemove, businessRemove} = useAttachmentRemove({emits: emits as AttachmentEmitFn, autoRemove, cancelUpload: chunkApi.cancelUpload})
 
 // 监听双向绑定
 watch(() => modelValue, (value) => {

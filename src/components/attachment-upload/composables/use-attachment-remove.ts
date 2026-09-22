@@ -10,8 +10,9 @@ import type {AttachmentEmitFn} from "./types.ts"
 export const useAttachmentRemove = (ctx: {
   emits: AttachmentEmitFn
   autoRemove: boolean
+  cancelUpload?: (file: UploadFile) => void
 }) => {
-  const {emits, autoRemove} = ctx
+  const {emits, autoRemove, cancelUpload} = ctx
   const removeIds: string[] = []
 
   // 处理附件删除
@@ -54,8 +55,10 @@ export const useAttachmentRemove = (ctx: {
           resolve({})
         }
       } else {
-        // 无 id 条目（上传中/失败残留/秒传在途）：无服务端可删，放行让 a-upload 直接移除本地条目
+        // 无 id 条目（上传中/失败残留/秒传在途）：先取消后台上传链路（终止 hash worker、停止派片与合并，
+        // 防已删文件传完后回写复活/发出成功事件）再放行，让 a-upload 直接移除本地条目
         // （reject 会取消移除，令残留条目永久滞留列表）
+        cancelUpload?.(file)
         resolve({})
       }
     })
