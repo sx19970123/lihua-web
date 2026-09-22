@@ -88,7 +88,7 @@ const handleClickMenuTab = ({ key }: { key :string }) => {
       emits('closeTabs', closeKeys)
       break
     }
-    // 清空最近使用的入口收敛至个人中心「常用页面」历史记录卡（2026-09-09 去重）
+    // 清空最近使用的入口收敛至个人中心「常用页面」历史记录卡
     default: {
       emits('routeSkip', key)
     }

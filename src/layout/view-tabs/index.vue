@@ -482,7 +482,7 @@ html:not([ground-glass='enable']) .ant-tabs-tab[data-dnd-dragging]:not(.ant-tabs
   color: var(--ant-tabs-item-selected-color);
 }
 
-/* 页签间距用 flex gap（2px = cardGutter）替代相邻 margin：与 DOM 相邻关系解耦，拖拽换位时间距恒定 */
+/* 页签间距用 flex gap（2px = cardGutter）：与 DOM 相邻关系解耦，拖拽换位时间距恒定 */
 .tab-none-padding .ant-tabs-nav-list {
   gap: 0 2px;
 }

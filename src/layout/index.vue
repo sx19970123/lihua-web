@@ -23,7 +23,7 @@
     </Teleport>
 
     <!--  使用传送组件重新加载内容，避免刷新组件造成的重复请求  -->
-    <Teleport :to="contentContainer" v-if="headContainer !== null">
+    <Teleport :to="contentContainer" v-if="contentContainer !== null">
       <Content/>
     </Teleport>
   </div>

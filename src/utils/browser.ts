@@ -3,11 +3,6 @@ export const getBrowserType = () => {
     const { browserName} = getBrowserInfo()
     return browserName
 }
-// 获取浏览器完整版本号
-export const getBrowserVersion = () => {
-    const { fullVersion} = getBrowserInfo()
-    return fullVersion
-}
 // 获取浏览器大版本号
 export const getBrowserMajorVersion = () => {
     const { majorVersion} = getBrowserInfo()

@@ -92,7 +92,7 @@ const emit = defineEmits<{
 const componentName = router.currentRoute.value.name as string
 // 表格设置key
 const tableSettingKey = `table-setting-${componentName}-${settingKey}`
-// localStorage 存储结构版本（结构演进时递增，旧记录整体丢弃）
+// localStorage 存储结构版本（结构演进时递增，低版本记录整体丢弃）
 const STORAGE_VERSION = 1
 // 开启宽度控制
 const enableWidthSetting = ref<boolean>(false)

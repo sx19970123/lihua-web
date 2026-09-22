@@ -239,6 +239,7 @@ import {initDict} from "@/helpers/dict.ts";
 import {cloneDeep} from "lodash-es";
 import {useRouter} from "vue-router";
 import {flattenTree} from "@/utils/tree.ts";
+import {ROOT_PARENT_ID} from "@/stores/permission";
 import type {SysDept, SysDeptVO} from "@/api/system/dept/type/sys-dept.ts";
 import type {SysPost} from "@/api/system/post/type/sys-post.ts";
 import Spin from "@/components/spin";
@@ -490,7 +491,7 @@ const initSave = () => {
   const resetForm = () => {
     sysDept.value = {
       status: '0',
-      parentId: '0'
+      parentId: ROOT_PARENT_ID
     }
   }
 
@@ -500,7 +501,7 @@ const initSave = () => {
     if (resp.code === 200) {
       const deepDeptList = cloneDeep(resp.data)
       parentDeptList.value = [{
-        id: '0',
+        id: ROOT_PARENT_ID,
         name: '根节点',
         children: deepDeptList
       }]

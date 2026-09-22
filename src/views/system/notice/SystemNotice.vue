@@ -613,7 +613,7 @@ const handleRevoke = async (event:MouseEvent, id: string) => {
 
 </script>
 <style scoped>
-/* 已选人数外挂块（addonAfter 弃用替代）：复刻原 addon 形态——灰底、连边框、贴右圆角 */
+/* 已选人数外挂块（addonAfter 不可用）：复刻 addon 形态——灰底、连边框、贴右圆角 */
 .user-count-addon {
   display: inline-flex;
   align-items: center;

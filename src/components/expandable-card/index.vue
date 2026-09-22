@@ -101,7 +101,7 @@ const {
   // 当 autoComplete 为 false 时，isComplete 置 true 触发 spin 渐隐、detail 渐显（即关闭 loading）；
   // 关闭后应由外部在 afterCardClose 中复位为 false，供下一轮展开复用
   isComplete?: boolean,
-  // 是否可展开（拥有点击展开详情的能力；历史名 isDetailVisible，语义即"可展开"）：
+  // 是否可展开（拥有点击展开详情的能力，语义即"可展开"）：
   // false = 静态卡——点击仅抛 cardClick 事件、无键盘语义、不进 tab 序，
   // elevated 缺省时跟随此值联动去浮起
   isDetailVisible?: boolean,
@@ -165,7 +165,7 @@ const TRANSITION = {
     damping: 57,
     mass: 1,
     // 初速度注入（行程/秒）：起步速度 v₀，0 = 静止起步纯物理。
-    // 5 ≈ 复刻数值积分时代的起飞加成（与旧欧拉曲线全程偏差 <1.7%，首帧即 ~5.8% 行程），
+    // 5 为起飞加成经验值（与纯物理曲线全程偏差 <1.7%，首帧即 ~5.8% 行程），
     // 语义同 Apple UISpringTimingParameters 的 initialVelocity（手势动量传入弹簧）——
     // 零酝酿的即时响应感来源；v₀ 需 ~25 量级才会推过终点，5 无回弹
     initialVelocity: 5,
@@ -343,8 +343,8 @@ const animateTo = (el: HTMLElement | null,
 
 // 内容层非等比缩放飞行：transform scale(sx, sy) 关键帧，与容器主动画共用弹簧进度序列
 // sx/sy 各自沿进度仿射插值——与容器宽/高的仿射插值逐帧等价（层排版尺寸 × scale ≡ 容器尺寸），
-// 内容横纵独立拉伸填满容器（旧版拉伸感来源）；transform-origin: 0 0
-// 已知代价（用户知情选择）：transform 走合成器栅格缓存，大倍率纵向缩放存在中段重采样闪烁风险（旧会话 index_8 雷区）
+// 内容横纵独立拉伸填满容器；transform-origin: 0 0
+// 已知代价（用户知情选择）：transform 走合成器栅格缓存，大倍率纵向缩放存在中段重采样闪烁风险
 // radius 为反补偿圆角：transform 会连带缩放 border-radius，每帧本地弧度取 R/sx、R/sy（x/y 分轴），
 // 被该帧缩放一乘后视觉弧度恒等于容器圆角——插槽内容按契约为方角满铺背景，
 // 圆角完全由本层裁切承担，内容圆角的缩放漂移不再露底
@@ -613,7 +613,7 @@ const init = () => {
 
   // 悬停上浮：位移 + 阴影升档，配 readyStyle 的 box-shadow/transform 过渡形成连续浮起感；
   // 仅浮起卡（elevated 判定）的 ready 态生效——静态卡无"点我"暗示（无指针手势/无位移/无阴影），
-  // 展开后容器是覆盖层同样不动，门控顺带修复展开态移出鼠标会把悬浮卡阴影降到 tertiary 的旧问题
+  // 展开后容器是覆盖层同样不动，门控兼覆盖展开态移出鼠标的阴影回落场景
   // （mouseenter 不冒泡，进出各触发一次）；进快出慢（过渡取目标态时长）
   const handleMouseEnterCard = () => {
     if (showStatus.value !== 'ready' || !isElevated.value) {
@@ -723,7 +723,7 @@ const init = () => {
           transformFlight(detailRef.value, detailScaleNow.sx, (bounding?.width ?? flightFinalW) / flightFinalW,
               detailScaleNow.sy, (bounding?.height ?? flightFinalH) / flightFinalH, closeRadius)
         }
-        // 打断展开：清除尚未触发的展开交接，改为关闭方向交接——handoverClose 独立配置，
+        // 打断展开：清除尚未触发的展开交接、切换为关闭方向交接——handoverClose 独立配置，
         // 并钳制不晚于「动画结束前能完成渐变」的最晚位置：动画结束时 detail 恰好淡尽，
         // v-if 卸载发生在全透明态（无亮度跳变、无驻留窗口、复位零延迟）
         clearHandoverTimer()

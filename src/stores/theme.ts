@@ -209,7 +209,7 @@ export const useThemeStore = defineStore('theme',{
             // 亮暗档位只认 localStorage（跨端解耦）：initState 可能已被 JSON 中的同名键污染
             // （存量服务端主题仍含 themeMode），此处以 localStorage 现值覆盖回来——档位不随远端数据走
             this.$state.themeMode = localStorage.getItem('theme-mode') as ThemeMode ?? settings.themeMode
-            // 旧版主题 JSON 的圆角只存于 token 内，回读后同步到顶层字段，保持字段与 token 一致
+            // 兼容只存 token 圆角的存量主题 JSON：回读后同步到顶层字段，保持字段与 token 一致
             this.$state.borderRadius = this.$state.themeConfig.token.borderRadius ?? settings.themeConfig.token.borderRadius
             this.applyThemeMode()
             this.changeGroundGlass()

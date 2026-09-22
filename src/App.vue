@@ -143,7 +143,7 @@ onMounted(() => {
   settingStore.initBaseSetting()
   // 主题跟随系统
   handleFollowSystemTheme()
-  // 挂接跨窗主题同步（主窗与小窗画中画 iframe 间全量广播，替代原 storage 事件方案）
+  // 挂接跨窗主题同步（主窗与小窗画中画 iframe 间全量广播）
   themeStore.subscribeThemeBroadcast()
 })
 

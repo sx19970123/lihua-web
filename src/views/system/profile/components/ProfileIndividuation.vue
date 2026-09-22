@@ -100,7 +100,7 @@ const transitionOptions = [
 // 主题到服务端的同步由 user store 的防抖订阅统一负责（变更即写，页面卸载无即时同步——
 // 登出流程中的卸载同步会在清 token 后发出必 401 的请求）
 
-// Switch 的 change 事件先于 v-model 写回触发，回调内读状态是旧值，统一改为 watch 驱动
+// Switch 的 change 先于 v-model 写回触发（回调内读到旧值），故用 watch 驱动
 watch(() => themeStore.borderRadius, () => themeStore.changeBorderRadius())
 watch(() => themeStore.showViewTabs, () => themeStore.changeShowViewTabs())
 watch(() => themeStore.showFooter, () => themeStore.changeFooter())
