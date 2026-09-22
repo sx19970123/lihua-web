@@ -65,7 +65,8 @@
           </a-space>
         </a-flex>
         <!--    文章内容-->
-        <div v-html="notice.content"/>
+        <!--  notice-content：富文本宽度约束（见 style 块注释） -->
+        <div class="notice-content" v-html="notice.content"/>
       </a-flex>
     </div>
   </a-spin>
@@ -175,3 +176,24 @@ watch(() => noticeId, () => {
   handlePreview()
 })
 </script>
+
+<style scoped>
+/* 富文本内容宽度约束：从新闻站等外部源直接粘贴的内容常带固定宽 img/table 或内联 width，
+   直出会撑破 960px modal 内容区（外层 a-flex 居中使子项宽度收缩，须 width:100% 撑满才能约束）；
+   超宽表格保留横向滚动而非截断。本组件是公告预览两个 modal 入口的唯一渲染出口 */
+.notice-content {
+  width: 100%;
+  overflow-x: auto;
+  word-break: break-word;
+}
+
+.notice-content :deep(img),
+.notice-content :deep(video) {
+  max-width: 100%;
+  height: auto;
+}
+
+.notice-content :deep(table) {
+  max-width: 100%;
+}
+</style>
