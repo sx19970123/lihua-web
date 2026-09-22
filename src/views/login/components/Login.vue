@@ -103,7 +103,14 @@ const initRememberMe = () => {
 }
 
 // 触发登录
-const handleFinish = () => {
+const handleFinish = async () => {
+  // 提交前重探测服务可达性并刷新开关：停服/断连时 enableCaptcha 停留在默认 true，
+  // 直接弹验证码会因 TAC 库内部请求失败被静默吞掉而永远转加载（WEB-006）；
+  // 探测失败由 axios 拦截器 toast 与登录页红字断连提示接管，恢复连接后重试即走原流程
+  await settingStore.initBaseSetting()
+  if (!settingStore.isServerConnected) {
+    return
+  }
   if (settingStore.enableCaptcha) {
     showVerify()
   } else {

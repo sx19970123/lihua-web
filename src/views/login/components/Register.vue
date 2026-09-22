@@ -138,7 +138,12 @@ const rules: Record<string, Rule[]> = {
 }
 
 // 触发注册
-const handleFinish = () => {
+const handleFinish = async () => {
+  // 提交前重探测服务可达性并刷新开关（同 Login：防停服时弹出永远加载中的验证码）
+  await settingStore.initBaseSetting()
+  if (!settingStore.isServerConnected) {
+    return
+  }
   if (settingStore.enableCaptcha) {
     showVerify()
   } else {
