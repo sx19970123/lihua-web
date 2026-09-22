@@ -49,6 +49,7 @@ import appInfo from "@/app-info.ts"
 import userSetup from "@/helpers/user-setup.ts"
 import {screenUnlock} from "@/helpers/lock-screen.ts"
 import {showOverflowY} from "@/utils/scrollbar.ts"
+import {useSettingStore} from "@/stores/setting.ts"
 // 显示登录卡片
 const showCard = ref<boolean>(false)
 // 显示左侧title
@@ -142,6 +143,9 @@ const handleShowCard = () => {
   setTimeout(() => showCard.value = true, 100)
 }
 
+// 系统设置（验证码/自助注册开关等）
+const settingStore = useSettingStore()
+
 onMounted(() => {
   // 默认显示login
   handleChangeComponent("login")
@@ -151,6 +155,9 @@ onMounted(() => {
   showOverflowY()
   // 检查是否存在登录必要配置的项
   checkUserSetup()
+  // 重拉登录相关基础设置：登出/锁屏返回登录是 SPA 内跳转，App 不会重挂载（initBaseSetting 的另一触发点），
+  // 防止登录会话中管理员切换验证码/自助注册开关后，登录页沿用旧快照导致 507 验证码错误
+  settingStore.initBaseSetting()
 })
 </script>
 
