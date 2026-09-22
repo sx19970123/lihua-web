@@ -661,8 +661,6 @@ const initSave = () => {
 
   // 保存用户信息
   const saveUser = async () => {
-    modalActive.saveLoading = true
-
     // 表单验证
     try {
       await formRef.value?.validate()
@@ -670,8 +668,6 @@ const initSave = () => {
       // 出现表单验证信息后跳转到表单首页
       toNextForm('basic')
       return
-    } finally {
-      modalActive.saveLoading = false
     }
 
     const userDTO = cloneDeep(sysUserDTO.value)
@@ -684,6 +680,8 @@ const initSave = () => {
     }
 
     const userId = sysUserDTO.value.id
+    // loading 只覆盖网络请求期：原先校验段 finally 无条件复位，save() 在途反而无保护可连点重复提交
+    modalActive.saveLoading = true
     try {
       // 调用保存接口
       const resp = await save(userDTO)

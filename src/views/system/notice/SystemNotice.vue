@@ -158,7 +158,7 @@
       </a-card>
     </a-flex>
 <!--    保存修改模态框-->
-    <a-modal v-model:open="modalActive.open" :width="960" @ok="saveNotice" destroy-on-hidden>
+    <a-modal v-model:open="modalActive.open" :width="960" :confirm-loading="modalActive.saveLoading" @ok="saveNotice" destroy-on-hidden>
       <template #title>
         <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
@@ -443,7 +443,11 @@ const initSave = () => {
 
   // 保存消息通知
   const saveNotice = async () => {
-    await formRef.value?.validate()
+    // 静默守卫：校验失败仅停留弹窗，不产生未处理 rejection
+    const ok = await formRef.value?.validate().then(() => true).catch(() => false)
+    if (!ok) {
+      return
+    }
 
     // 通知公告类型不同，显示不同的图标
     if (sysNoticeVO.value.type === '0') {
@@ -452,13 +456,19 @@ const initSave = () => {
       sysNoticeVO.value.icon = 'NotificationOutlined'
     }
 
-    const resp = await save(sysNoticeVO.value);
-    if (resp.code === 200) {
-      message.success(resp.msg)
-      modalActive.open = false
-      await initPage()
-    } else {
-      message.error(resp.msg)
+    // 请求期锁 OK 按钮（confirm-loading），防连点重复公告
+    modalActive.saveLoading = true
+    try {
+      const resp = await save(sysNoticeVO.value);
+      if (resp.code === 200) {
+        message.success(resp.msg)
+        modalActive.open = false
+        await initPage()
+      } else {
+        message.error(resp.msg)
+      }
+    } finally {
+      modalActive.saveLoading = false
     }
   }
 

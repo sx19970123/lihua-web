@@ -67,6 +67,9 @@ class WebSocketManager {
      */
     public connect = async () => {
         if (!this.webSocket) {
+            // 每次显式连接重置重连开关：登出 closeConnect 会置 false，若不复位，
+            // 会话内再登录（首连失败走 onclose 非 1000 分支）时自动重连被残留的 false 永久禁用
+            this.enableRetry = true
             wsStatus.value = 'reconnecting'
             try {
                 const { code, data } = await getOnceToken()

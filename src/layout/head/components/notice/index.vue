@@ -54,7 +54,7 @@
         </a-flex>
         <!--                      加载更多-->
         <a-flex v-if="userNoticeList.length > 0" align="center" justify="center" style="margin-top: var(--ant-margin-sm)">
-          <a-button type="link" class="w-full" @click="queryMore" :disabled="total === userNoticeList.length">
+          <a-button type="link" class="w-full" @click="queryMore" :loading="loading" :disabled="total === userNoticeList.length">
             {{total === userNoticeList.length ? '没有更多' : '加载更多'}}
           </a-button>
         </a-flex>
@@ -192,6 +192,10 @@ const handleChangeNoticeList = (isOpen: boolean) => {
 }
 
 const queryMore = () => {
+  // 在途防连点：请求中再点会 pageNum 连加两次，两请求并发响应乱序 append
+  if (loading.value) {
+    return
+  }
   query.value.pageNum++
   initNoticeList()
 }
