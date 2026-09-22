@@ -18,12 +18,15 @@ import UserShow from "@/components/user-show/index.vue"
 import {queryPage} from "@/api/system/user/user.ts";
 import {onMounted, ref} from "vue";
 import type {SysUserVO} from "@/api/system/user/type/sys-user.ts";
+import {message} from "@/antd-adapter";
 
 const userList = ref<SysUserVO[]>([])
 onMounted(async () => {
   const resp = await queryPage({pageNum: 1, pageSize: 20})
   if (resp.code === 200) {
     userList.value = resp.data.records
+  } else {
+    message.error(resp.msg)
   }
 })
 

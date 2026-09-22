@@ -31,7 +31,7 @@ service.interceptors.request.use(config => {
     currentRequests.add(requestKey(config))
     return config;
 }, error => {
-    Promise.reject(error).then(r => {})
+    return Promise.reject(error)
 })
 
 /**

@@ -1,4 +1,4 @@
-import {Modal, type UploadFile} from "@/antd-adapter"
+import {Modal, message, type UploadFile} from "@/antd-adapter"
 import {h} from "vue"
 import {ExclamationCircleOutlined} from '@antdv-next/icons'
 import {deleteFromBusiness} from "@/api/system/attachment/attachment-storage.ts"
@@ -26,13 +26,22 @@ export const useAttachmentRemove = (ctx: {
             content: '删除后无法恢复，是否删除？',
             // 确认删除
             onOk: async () => {
-              const resp = await deleteFromBusiness([id])
-              if (resp.code === 200) {
-                emits("remove", {id: id, status: "success"})
-                resolve({})
-              } else {
-                reject()
+              // onOk 内异常会被 Modal 自行兜住，须显式 reject 让外层 promise 落定（否则 a-upload 行删除悬挂）
+              try {
+                const resp = await deleteFromBusiness([id])
+                if (resp.code === 200) {
+                  emits("remove", {id: id, status: "success"})
+                  resolve({})
+                } else {
+                  reject()
+                  emits("remove", {id: id, status: "error"})
+                  message.error(resp.msg)
+                }
+              } catch (err) {
+                console.error("附件删除失败", err)
                 emits("remove", {id: id, status: "error"})
+                message.error("删除失败")
+                reject()
               }
             },
             // 取消删除
