@@ -17,6 +17,10 @@ import {useThemeStore} from "@/stores/theme";
 import linkopenMiao from '@/assets/error/linkopen-miao.png'
 import linkopenHei from '@/assets/error/linkopen-hei.png'
 
+// 显式组件名与首页（两者按文件名推断均为 'index'）解耦：keep-alive include 按组件名匹配，
+// 外链实例不再命中首页常驻的 'index' 缓存名额（link 路由本无 meta.cache，此前入缓存属失控而非设计）
+defineOptions({ name: 'LinkIFrame' })
+
 // prop 名与本地 src/isInner ref 同名，解构重命名避免冲突（image-cropper 先例）
 const {src: srcProp, isInner: isInnerProp} = defineProps<{
   src?: string,
