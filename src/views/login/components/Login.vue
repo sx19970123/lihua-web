@@ -178,6 +178,10 @@ const userLogin = async (captchaVerification: string) => {
         userSetup.setData(checkItem)
         emit("startUserSetup", checkItem)
       }
+    } else {
+      // 业务码失败与 catch 分支同语义：回滚 token 停留登录页，避免半登录态刷新后被守卫放行
+      message.error(loginCheckResp.msg)
+      token.removeToken()
     }
   } catch (e) {
     token.removeToken()

@@ -157,13 +157,16 @@ const handlePopoverOpen = (open: boolean) => {
 // 预览
 const handlePreview = async () => {
   spinning.value = true
-  // 后端查询预览
-  const resp = await preview(noticeId)
-  if (resp.code === 200) {
-    notice.value = resp.data
+  try {
+    // 后端查询预览
+    const resp = await preview(noticeId)
+    if (resp.code === 200) {
+      notice.value = resp.data
+    } else {
+      message.error(resp.msg)
+    }
+  } finally {
     spinning.value = false
-  } else {
-    message.error(resp.msg)
   }
 }
 

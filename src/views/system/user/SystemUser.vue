@@ -1029,9 +1029,14 @@ const initExcel = () => {
     const spinInstance = Spin.service({
       description: '努力加载中...'
     });
-    const blob = await excelTemplate()
-    download(blob, "用户导入模板")
-    spinInstance.close()
+    try {
+      const blob = await excelTemplate()
+      download(blob, "用户导入模板")
+    } catch (err) {
+      message.error("模板下载失败")
+    } finally {
+      spinInstance.close()
+    }
   }
 
   // 导出excel
