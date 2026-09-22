@@ -23,6 +23,8 @@ export interface AuthInfoType {
     defaultDept: SysDept,
     // 岗位信息
     posts: SysPost[],
+    // 权限数据是否已变更（会话权限版本快照落后于当前版本）：头像/「数据更新」红点数据源
+    permissionUpdate?: boolean,
 }
 
 /**

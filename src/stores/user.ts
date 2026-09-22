@@ -48,6 +48,8 @@ export const useUserStore = defineStore('user', {
         // 岗位相关数据
         const posts: SysPost[] = []
         const defaultDeptPosts: SysPost[] = []
+        // 权限数据已变更标志（「数据更新」红点）：登录/数据更新重载后由 getInfo 重算，WS 推送在线即时置位
+        const permissionUpdate: boolean = false
         return {
             userInfo,
             userId,
@@ -62,7 +64,9 @@ export const useUserStore = defineStore('user', {
             defaultDeptName,
             defaultDeptCode,
             posts,
-            defaultDeptPosts
+            defaultDeptPosts,
+            // 权限数据已变更标志（「数据更新」红点）：登录/数据更新重载后由 getInfo 重算，WS 推送在线即时置位
+            permissionUpdate
         }
     },
     getters: {
@@ -99,6 +103,9 @@ export const useUserStore = defineStore('user', {
                         // 岗位相关赋值
                         state.posts = data.posts
                         state.defaultDeptPosts = data.posts.filter(post => post.deptCode === state.defaultDeptCode)
+
+                        // 权限数据已变更标志（「数据更新」红点）：服务端会话版本比对结果
+                        state.permissionUpdate = data.permissionUpdate ?? false
 
                         // 处理头像
                         this.handleAvatar()

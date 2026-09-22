@@ -93,9 +93,7 @@ import type {SysNotice, SysNoticeDTO} from "@/api/system/notice/type/sys-notice.
 import {Button} from "antdv-next";
 import {message, notification} from "@/antd-adapter";
 import {h, onMounted, onUnmounted, ref} from "vue";
-import {CloudSyncOutlined, MessageOutlined, NotificationOutlined, StarOutlined} from "@antdv-next/icons";
-import {useRoute} from "vue-router";
-import {refreshApp} from "@/app-init.ts";
+import {MessageOutlined, NotificationOutlined, StarOutlined} from "@antdv-next/icons";
 import {useThemeStore} from "@/stores/theme.ts";
 import {getDictLabel, initDict} from "@/helpers/dict.ts";
 import {queryUnReadCount, read, star, userMessageList} from "@/api/system/notice/notice.ts";
@@ -104,7 +102,6 @@ import {handleTime} from "@/utils/handle-date.ts";
 import dayjs from "dayjs";
 
 const themeStore = useThemeStore();
-const route = useRoute();
 
 // 通知类型 tab：label 用渲染函数保持「图标 + 文案」结构
 const noticeTabs = [
@@ -159,28 +156,6 @@ const handleWebsocketMessage = (data: SysNotice) => {
     }),
     icon: h("0" === type ? MessageOutlined : NotificationOutlined, { style: 'color: ' + themeStore.getColorPrimary()}),
     key: id
-  })
-}
-
-// 权限数据更新提示：角色/菜单变更后服务端定向推送（WS_REFRESH_PERMISSION），
-// 引导一键执行「数据更新」——与头像下拉菜单的数据更新同款 refreshApp 链路
-const handleRefreshPermissionMessage = () => {
-  notification.open({
-    title: '权限数据更新',
-    description: '您的角色或菜单权限已变更，更新数据后生效。',
-    actions: h(Button, {
-      type: "primary",
-      size: "small",
-      onClick: async () => {
-        notification.destroy('ws-refresh-permission')
-        await refreshApp(route)
-        message.success("更新完成")
-      },
-    }, {
-      default: () => '立即更新'
-    }),
-    icon: h(CloudSyncOutlined, { style: 'color: ' + themeStore.getColorPrimary()}),
-    key: 'ws-refresh-permission'
   })
 }
 
@@ -339,11 +314,9 @@ const handleRead = (id: string) => {
 onMounted(() => {
   handleUnReadCount()
   addEventListener("WS_NOTICE", handleWebsocketMessage)
-  addEventListener("WS_REFRESH_PERMISSION", handleRefreshPermissionMessage)
 })
 
 onUnmounted(() => {
   removeEventListener("WS_NOTICE")
-  removeEventListener("WS_REFRESH_PERMISSION")
 })
 </script>
