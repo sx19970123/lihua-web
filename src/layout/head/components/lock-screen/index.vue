@@ -317,26 +317,29 @@ const autoLock = () => {
   nextTick(() => lock())
 }
 
+// storage 事件处理（具名：卸载时移除，匿名监听会在登出→登录反复挂载时累积）
+const handleStorageEvent = (e: StorageEvent) => {
+  if (e.key !== getLockKey()) return
+
+  // 锁定
+  if (e.newValue === 'locked') {
+    autoLock()
+  }
+
+  // 解锁
+  if (e.newValue === 'unlocked') {
+    unlock()
+  }
+
+  // 登出
+  if (e.newValue === 'logout') {
+    handleLogout()
+  }
+}
+
 // 同步上锁解锁
 const syncLock = () => {
-  window.addEventListener('storage', (e) => {
-    if (e.key !== getLockKey()) return
-
-    // 锁定
-    if (e.newValue === 'locked') {
-      autoLock()
-    }
-
-    // 解锁
-    if (e.newValue === 'unlocked') {
-      unlock()
-    }
-
-    // 登出
-    if (e.newValue === 'logout') {
-      handleLogout()
-    }
-  })
+  window.addEventListener('storage', handleStorageEvent)
 }
 
 // 清理数据
@@ -513,6 +516,14 @@ const initAutoLock = () => {
   // 扫描超时计时器
   let scanActiveTimeInterval: ReturnType<typeof setInterval> | undefined
 
+  // 页面重新可见时刷新活动时间（防后台挂起导致误判超时锁屏）；具名以便 clearAutoLock 移除——
+  // 匿名函数在自动锁定关→开的 refresh 循环里每次新增一个闭包且永不移除
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      lastActiveTime = Date.now()
+    }
+  }
+
   // 监听鼠标、键盘事件
   const handleAutoLock = () => {
     const lockScreenInfo = getLockScreenInfo()
@@ -523,11 +534,7 @@ const initAutoLock = () => {
       window.addEventListener('keydown', updateActiveTime)
       window.addEventListener('mousemove', updateActiveTime)
       window.addEventListener('mousedown', updateActiveTime)
-      window.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-          lastActiveTime = Date.now()
-        }
-      })
+      window.addEventListener('visibilitychange', handleVisibilityChange)
       scanActiveTime()
     }
   }
@@ -575,6 +582,7 @@ const initAutoLock = () => {
     window.removeEventListener('keydown', updateActiveTime)
     window.removeEventListener('mousemove', updateActiveTime)
     window.removeEventListener('mousedown', updateActiveTime)
+    window.removeEventListener('visibilitychange', handleVisibilityChange)
     if (scanActiveTimeInterval) {
       clearInterval(scanActiveTimeInterval)
       scanActiveTimeInterval = undefined
@@ -619,6 +627,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateViewportHeight)
+  window.removeEventListener('storage', handleStorageEvent)
   clearAutoLock()
   if (lockScreenPollInterval) {
     clearInterval(lockScreenPollInterval)

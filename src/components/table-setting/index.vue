@@ -54,7 +54,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {nextTick, onMounted, reactive, ref, watch} from "vue";
+import {nextTick, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import type {DragEndEvent} from '@dnd-kit/vue'
 import {DragDropProvider, DragOverlay, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {PointerActivationConstraints} from '@dnd-kit/dom'
@@ -576,6 +576,9 @@ const changePopover = (visible: boolean) => {
     window.removeEventListener("resize", debounceWidth)
   }
 }
+
+// 卸载兜底：浮层开着时切走路由（keep-alive 离开）不会触发 changePopover(false)，resize 监听残留累积
+onUnmounted(() => window.removeEventListener("resize", debounceWidth))
 
 // 拖动宽度条
 const changeSlide = (index: number) => {

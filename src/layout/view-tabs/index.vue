@@ -36,7 +36,7 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onMounted, onUnmounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
 import type {DragEndEvent, DragMoveEvent, DragOverEvent, DragStartEvent} from '@dnd-kit/vue'
@@ -188,6 +188,9 @@ const routeSkip = (path: string, query?: string) => {
  */
 const dndManager = new DragDropManager()
 dndManager.registry.plugins.get(Scroller)?.disable()
+// 卸载销毁：自建 manager 不随 Provider 卸载回收（Provider 只销毁自己创建的实例），
+// 页签栏随小窗/显隐开关反复挂卸会累积含活动 monitor/effects 的未销毁 manager
+onUnmounted(() => dndManager.destroy())
 
 /**
  * 初始化拖拽排序（@dnd-kit/vue）：集中定义拖拽相关的状态与方法，统一导出

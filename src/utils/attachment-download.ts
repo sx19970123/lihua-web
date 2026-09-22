@@ -14,9 +14,12 @@ export const download = (data: string | Blob, fileName?: string) => {
     }
 }
 
-// 下载blob附件
+// 下载blob附件（objectURL 延迟释放：a[download] 点击即取流，60s 足够；
+// 不 revoke 则每次下载泄漏一个 blob 引用直至文档卸载）
 export const downloadBlob = (blob: Blob, filename?: string) => {
-    downloadFromUrl(URL.createObjectURL(blob), filename)
+    const url = URL.createObjectURL(blob)
+    downloadFromUrl(url, filename)
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
 // 通过url下载
