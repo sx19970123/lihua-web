@@ -126,6 +126,8 @@ const handleFinish = async () => {
       await init()
     } else {
       message.error(resp.msg)
+      // 保存失败回滚开关：重拉服务端值复位（成功分支同法，兼恢复被合并去重的 ip 列表）
+      await init()
     }
   } finally {
     submitLoading.value = false

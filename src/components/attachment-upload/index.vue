@@ -209,6 +209,9 @@ const initVModel = async () => {
     } else {
       message.error(resp.msg)
     }
+  } else {
+    // 外部清空 v-model：显式清空列表——残留 done 行会被后续 handleModelValue 按 fileList 全量重算，把旧 id 写回 v-model（旧值复活）
+    fileList.value = []
   }
 }
 

@@ -62,6 +62,8 @@ const handleChangeSwitch = async (checked: boolean | string | number) => {
     message.success(resp.msg)
   } else {
     message.error(resp.msg)
+    // 保存失败回滚开关：重拉服务端值复位（v-model 已翻转，与非 admin 分支同法）
+    await init()
   }
 }
 

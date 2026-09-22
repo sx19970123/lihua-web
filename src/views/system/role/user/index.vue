@@ -43,7 +43,7 @@
           <a-col>
             <a-form-item>
               <a-space size="small">
-                <a-button type="primary" :loading="tableLoad" @click="initPage">
+                <a-button type="primary" :loading="tableLoad" @click="handleQueryPage">
                   <template #icon>
                     <SearchOutlined />
                   </template>
@@ -334,6 +334,11 @@ const initSearch = () => {
   }
 }
 const {authorizedOptions,selectedIds,userRowSelectionType,handleRowClick,userColumn,userQuery,userList,userTotal,tableLoad,initPage,resetPage} = initSearch()
+// 查询按钮先回第一页：停留后页再输入筛选条件按旧页码查询会命中空页（对齐 user/post 页 handleQueryPage 范式）
+const handleQueryPage = () => {
+  userQuery.value.pageNum = 1
+  initPage()
+}
 
 // 授权操作相关
 const initAuthorize = () => {

@@ -23,7 +23,7 @@
             <a-col>
               <a-form-item>
                 <a-space size="small">
-                  <a-button type="primary" :loading="tableLoad" @click="initPage">
+                  <a-button type="primary" :loading="tableLoad" @click="handleQueryPage">
                     <template #icon>
                       <SearchOutlined />
                     </template>
@@ -365,6 +365,11 @@ const initSearch = () => {
   }
 }
 const {roleQuery,roleTotal,roleColumn,roleList,tableLoad,selectedIds,roleRowSelectionType,initPage,resetPage,handleRowClick} = initSearch()
+// 查询按钮先回第一页：停留后页再输入筛选条件按旧页码查询会命中空页（对齐 user/post 页 handleQueryPage 范式）
+const handleQueryPage = () => {
+  roleQuery.value.pageNum = 1
+  initPage()
+}
 
 
 // 数据保存相关

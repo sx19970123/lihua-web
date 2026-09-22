@@ -492,6 +492,11 @@ const initDelete = () => {
             selectedIds.value = selectedIds.value.filter(item => item !== id)
           }
           await initPage()
+          // 删空当前页时回退一页重查：停留原页码会是空页，回退而非回第一页（连续删除不用翻回来）
+          if (attachmentQuery.value.pageNum > 1 && attachmentList.value.length === 0) {
+            attachmentQuery.value.pageNum--
+            await initPage()
+          }
         } else {
           message.error(resp.msg)
         }

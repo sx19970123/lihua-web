@@ -272,6 +272,11 @@ const initSearch = () => {
         pagination.value.total = resp.data.length
         // 重新渲染当前页数据（查询/重置入口已先行重置页码，强退后刷新停留在当前页）
         changePage(pagination.value.pageNum, pagination.value.pageSize)
+        // 数据量缩小后当前页码可能越界（强退/筛选后）：渲染为空页则回退一页重渲染（客户端分页，无额外请求）
+        if (pagination.value.pageNum > 1 && currentPage.value.length === 0) {
+          pagination.value.pageNum--
+          changePage(pagination.value.pageNum, pagination.value.pageSize)
+        }
       } else {
         message.error(resp.msg)
       }

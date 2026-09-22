@@ -284,6 +284,13 @@ const showNoticeDetail = (id: string) => {
 
 // 处理标星
 const handleStar = async (noticeId: string, value: number) => {
+  // 失败回滚：a-rate 的 v-model 已先把 starFlagNumber 翻转，请求失败需还原 UI 与服务端一致
+  const rollbackStar = () => {
+    const item = userNoticeList.value.find(item => item.noticeId === noticeId)
+    if (item) {
+      item.starFlagNumber = value === 1 ? 0 : 1
+    }
+  }
   try {
     const resp = await star(noticeId, value.toString())
     if (resp.code === 200) {
@@ -295,9 +302,11 @@ const handleStar = async (noticeId: string, value: number) => {
       }
     } else {
       message.error(resp.msg)
+      rollbackStar()
     }
   } catch (e) {
     message.error("标星操作失败")
+    rollbackStar()
     console.error('处理标星出错:', e)
   }
 }

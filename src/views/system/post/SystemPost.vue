@@ -242,7 +242,8 @@ const route = useRoute();
 // 监听传入deptId变化进行部门赋值
 watch(() => route.query.deptId, (value) => {
   postQuery.value.deptId = value as string | undefined;
-  initPage()
+  // 部门筛选变化回第一页（handleQueryPage），停留后页时按旧页码查询会命中空页
+  handleQueryPage()
 })
 
 
