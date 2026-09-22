@@ -190,7 +190,11 @@ const imageCropperRef = useTemplateRef<InstanceType<typeof ImageCropper>>("image
 /**
  * 处理确认数据
  */
+// 图片型入库值（对象键）：与预览值分离——update:modelValue 携带可渲染链（上传响应 url）供父组件即时回显，
+// change 事件仍以对象键入库（入库值恒对象键契约），运行时由后端下发时解析为可访问链
+let savedImagePath: string | undefined = undefined
 const handleOk = async () => {
+  savedImagePath = undefined
   try {
     switch (avatarType.value) {
       case "image": {
@@ -219,12 +223,14 @@ const handleOk = async () => {
         // 释放上一次确认生成的预览 URL（父组件的持有值随本次 emits 同步替换）
         releaseOwnPreviewUrl()
         ownPreviewUrl = URL.createObjectURL(blob)
+        // 预览值取上传响应的可访问链：user-avatar 只渲染 value 字段，若填对象键会拼出无效地址导致确认后坏图
         updatedData = {
           url: ownPreviewUrl,
-          value: resp.data.path,
+          value: resp.data.url,
           type: avatarType.value,
           backgroundColor: avatarColor.value
         };
+        savedImagePath = resp.data.path
         break;
       }
       case "icon":
@@ -243,8 +249,11 @@ const handleOk = async () => {
     if (updatedData.value) {
       // 双向绑定
       emits('update:modelValue', updatedData);
-      // 删除临时url
+      // 入库克隆：图片型恢复对象键（预览链仅本地回显用）
       const cloneData = cloneDeep(updatedData);
+      if (savedImagePath !== undefined) {
+        cloneData.value = savedImagePath;
+      }
       delete cloneData.url;
       // 触发change事件
       emits('change', JSON.stringify(cloneData));
