@@ -13,9 +13,12 @@
 import {onBeforeUnmount, watch} from "vue";
 import {hiddenOverflowY, showOverflowY} from "@/utils/scrollbar.ts";
 // 控制遮罩开关
-const {showMask, zIndex = 1000} = defineProps<{
+const {showMask, zIndex = 1000, lockScroll = true} = defineProps<{
   showMask: boolean,
-  zIndex?: number
+  zIndex?: number,
+  // 遮罩打开期间是否锁定页面滚动（默认锁定）：滚动锁需与遮罩显影解耦的使用方
+  // （如 expandable-card 关闭后遮罩即刻消失、滚动锁须持有至折叠动画完成）传 false 自管锁时机
+  lockScroll?: boolean
 }>()
 const emit = defineEmits<{
   click: [event: KeyboardEvent | MouseEvent, source: string]
@@ -27,11 +30,14 @@ const handleClickMask = (event: KeyboardEvent | MouseEvent) => {
 
 // 组件卸载时处理显示滚动条
 onBeforeUnmount(() => {
-  showOverflowY()
+  if (lockScroll) {
+    showOverflowY()
+  }
 })
 
 // 判断遮罩是否打开，打开时调用隐藏Y轴滚动条，关闭时显示滚动条
 watch(() => showMask, (value) => {
+  if (!lockScroll) return
   if (value) {
     hiddenOverflowY()
   } else {

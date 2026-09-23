@@ -41,8 +41,9 @@
       <slot name="overview"></slot>
     </div>
 
-    <!-- mask 打开时背景蒙版 -->
-    <Mask :show-mask="showMask" @click="handleClose($event, 'mask')"/>
+    <!-- mask 打开时背景蒙版；lock-scroll=false：滚动锁由本组件自管——遮罩随关闭即刻消失，
+         但锁须持有至折叠动画完成（fixed 容器飞行期间页面可滚会让落点随滚动漂移，落定恢复 static 时闪跳） -->
+    <Mask :show-mask="showMask" :lock-scroll="false" @click="handleClose($event, 'mask')"/>
   </div>
 </template>
 
@@ -50,7 +51,7 @@
 import Mask from "@/components/mask/index.vue"
 import type {CSSProperties} from 'vue';
 import {computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch} from "vue";
-import {hiddenOverflowY} from "@/utils/scrollbar.ts";
+import {hiddenOverflowY, showOverflowY} from "@/utils/scrollbar.ts";
 
 /**
  * 可展开卡片：小卡（overview 封面）⇄ 大卡（detail 详情）的弹簧飞行组件。
@@ -560,8 +561,10 @@ const init = () => {
     }, {
       spring: true,
       onStart: () => {
-        // 打开遮罩
+        // 打开遮罩（Mask 已传 lock-scroll=false，滚动锁在此自管）
         showMask.value = true
+        // 锁定页面滚动（原由 Mask 代劳）：加锁在展开起飞、解锁在折叠完成，全程覆盖飞行期
+        hiddenOverflowY()
         // 状态修改为进行时
         showStatus.value = 'activity'
         // detail 层由 v-if 在本次状态变更后的微任务中挂载，nextTick 后才可操作其元素
@@ -748,6 +751,10 @@ const init = () => {
         // 各层复位：overview 回流内接管（落定帧像素与回流一致，零跳变），detail/spin 层随 v-if 卸载（交接点已钳制，此刻 detail 已淡尽）
         resetLayers()
         clearHandoverTimer()
+        // 解锁页面滚动：推迟到折叠完成而非关闭开始——fixed 容器飞行期间若页面可滚，
+        // 落点（关闭起步时采样的视口坐标）会随滚动漂移错位，落定恢复 static 时闪跳；
+        // 解锁本身零布局位移（悬浮滚动条不占位），晚解锁不引入新跳变
+        showOverflowY()
         // 动画执行完成后，状态修改为就绪
         showStatus.value = 'ready'
         // 卡片关闭动画完成后抛出
@@ -893,6 +900,9 @@ const initListener = () => {
     if (resizeRafId !== null) {
       cancelAnimationFrame(resizeRafId)
     }
+    // 释放自管的滚动锁（lock-scroll=false 后 Mask 不再代劳）：展开态卸载直接放锁；
+    // 折叠中卸载因动画被 cancel 不会走到关闭 onComplete 的解锁——幂等，ready 态卸载为 no-op
+    showOverflowY()
   })
 
   // v-model:expanded 受控口：外部驱动的展开/关闭，与内部触发（点击/Esc/蒙版）共用同一执行体，
