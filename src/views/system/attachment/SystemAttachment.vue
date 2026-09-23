@@ -131,7 +131,7 @@
               </a>
               <template #popupRender>
                 <a-menu>
-                  <a-menu-item>
+                  <a-menu-item key="delete">
                     <a-popconfirm title="删除后不可恢复，是否删除？"
                                   placement="topRight"
                                   ok-text="确 定"
@@ -147,7 +147,7 @@
                       </a-button>
                     </a-popconfirm>
                   </a-menu-item>
-                  <a-menu-item>
+                  <a-menu-item key="forceDelete">
                     <a-popconfirm placement="bottomRight"
                                   :ok-text="countdown ? '确 认 ' + countdown : '确 认'"
                                   :okButtonProps="{disabled: countdown !== 0}"

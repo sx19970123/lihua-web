@@ -116,7 +116,7 @@
                       批量导入
                     </a-upload>
                   </a-menu-item>
-                  <a-menu-item @click="handleDownloadExcelTemplate">模板下载</a-menu-item>
+                  <a-menu-item key="template" @click="handleDownloadExcelTemplate">模板下载</a-menu-item>
                 </a-menu>
               </template>
             </a-dropdown>
