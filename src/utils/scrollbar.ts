@@ -7,8 +7,22 @@ import {OverlayScrollbars} from 'overlayscrollbars';
  */
 let pageScrollbar: OverlayScrollbars | undefined;
 
+// 移动端浏览器（安卓/iOS；iPadOS 13+ UA 伪装 Mac，须以触屏点数补判；iOS 第三方浏览器同为
+// WebKit，UA 均带设备名）跳过页面滚动条接管：OS 接管须在根元素 html 上显式设 height+overflow
+// （html 成为独立滚动盒），移动端浏览器藏不住根元素滚动条（原生条与悬浮条双层并存），
+// 且对「根元素自滚」的触屏手势处理与真视口滚动不同——跳过后恢复原生视口滚动；
+// 移动端原生滚动条本为 overlay 自动隐藏，接管零收益
+const isMobileBrowser = () =>
+    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 export const initPageScrollbar = () => {
-    if (pageScrollbar) return pageScrollbar;
+    // 视口 overscroll-behavior:none 全平台挂载（原为 index.html 静态规则）：
+    // 桌面防视口边界回弹/下拉刷新把悬浮滚动条状态带乱；移动端（Safari 16.4+）禁掉下拉
+    // 橡皮筋——橡皮筋的弹性平移会让 sticky 吸顶头部（affixHead）与文档分离错位：
+    // 头部钉在视口顶不动、文档整体被拽下滑，内容视觉上"消失"（安卓本无弹性平移，无感）
+    document.documentElement.style.overscrollBehavior = 'none';
+    if (pageScrollbar || isMobileBrowser()) return pageScrollbar;
     pageScrollbar = OverlayScrollbars(document.body, {
         overflow: {x: 'hidden', y: 'scroll'},
         // macOS 式显隐：滚动时出现、静止 autoHideDelay（默认 1300ms）后淡出；
@@ -43,6 +57,11 @@ const applyViewportLock = () => {
     if (pageScrollbar) {
         // 悬浮滚动条零占位，overflow 切换无布局位移
         pageScrollbar.options({overflow: {y: locked ? 'hidden' : 'scroll'}});
+    } else {
+        // 无 OS 实例（移动端浏览器跳过接管）时经 html 内联 overflow 兜底：同为 html 级
+        // hidden，不塌缩滚动高度、位置天然保留（触屏拖动会有边界回弹但滚不动，锁定仍成立）；
+        // custom.css 对 body 的 overflow 反杀写在 body 盒上，与本通道不冲突
+        document.documentElement.style.overflowY = locked ? 'hidden' : '';
     }
 };
 
