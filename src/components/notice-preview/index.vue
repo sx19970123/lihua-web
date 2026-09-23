@@ -1,7 +1,8 @@
 <template>
   <a-spin :spinning="spinning">
     <div class="m-ant-xl">
-      <a-flex vertical :gap="32" align="center">
+      <a-empty v-if="notFound" description="公告不存在或不可见"/>
+      <a-flex v-else vertical :gap="32" align="center">
         <a-flex vertical align="center">
           <!--    标题-->
           <a-typography-title>{{notice.title}}</a-typography-title>
@@ -58,7 +59,7 @@
                     </div>
                   </a-spin>
               </template>
-              <a-typography-text type="secondary" class="cursor-pointer" v-if="showReadUser && notice.status === '1'">
+              <a-typography-text type="secondary" class="cursor-pointer" v-if="manage && notice.status === '1'">
                 <EyeOutlined />
               </a-typography-text>
             </a-popover>
@@ -76,22 +77,25 @@
 <script setup lang="ts">
 import {computed, onMounted, ref, watch} from "vue";
 import DOMPurify from "dompurify";
-import {preview, queryReadInfo} from "@/api/system/notice/notice.ts";
+import {preview, managePreview, queryReadInfo} from "@/api/system/notice/notice.ts";
 import UserShow from "@/components/user-show/index.vue"
 import type {SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
 import dayjs from "dayjs";
 import {message} from "@/antd-adapter";
 import type {SysUser} from "@/api/system/user/type/sys-user.ts";
 
-const {noticeId, showReadUser} = defineProps<{
+const {noticeId, manage} = defineProps<{
   noticeId: string,
-  showReadUser?: boolean
+  // 管理端预览：走 managePreview 接口（不限制公告状态）并显示已读/未读入口；默认走用户侧 preview 接口（仅已发布）
+  manage?: boolean
 }>()
 
 // 加载中
 const spinning = ref<boolean>(false)
 // notice 对象
 const notice = ref<SysNoticeVO>({})
+// 查询空集（未发布/已撤销/已删除公告对当前查询不可见），展示空态而非空标题
+const notFound = ref<boolean>(false)
 
 // 富文本消毒：默认白名单覆盖编辑器常规产出（p/标题/列表/img/table/a/内联 style），剥 script/事件属性/javascript: 链接
 const safeContent = computed(() => DOMPurify.sanitize(notice.value.content ?? ''))
@@ -162,11 +166,16 @@ const handlePopoverOpen = (open: boolean) => {
 // 预览
 const handlePreview = async () => {
   spinning.value = true
+  notFound.value = false
   try {
-    // 后端查询预览
-    const resp = await preview(noticeId)
+    // 后端查询预览（管理端不限公告状态，用户侧仅已发布）
+    const resp = await (manage ? managePreview(noticeId) : preview(noticeId))
     if (resp.code === 200) {
-      notice.value = resp.data
+      if (resp.data) {
+        notice.value = resp.data
+      } else {
+        notFound.value = true
+      }
     } else {
       message.error(resp.msg)
     }

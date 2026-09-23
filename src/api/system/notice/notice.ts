@@ -38,6 +38,17 @@ export const preview = (id: string) => {
 }
 
 /**
+ * 管理端查询预览（不限制公告状态，未发布/已发布/已撤销均可见）
+ * @param id
+ */
+export const managePreview = (id: string) => {
+    return request<SysNoticeVO>({
+        url: "/system/notice/managePreview/" + id,
+        method: "get"
+    })
+}
+
+/**
  * 保存数据
  * @param data
  */

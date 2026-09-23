@@ -34,7 +34,7 @@
                                 v-model:value="item.starFlagNumber"
                                 @click="(event:MouseEvent) => event.stopPropagation()"
                                 @change="(value: number) => handleStar(item.noticeId, value)" />
-                        <dict-tag :dict-data-option="sys_notice_priority" :dict-data-value="item.priority" variant="solid"/>
+                        <dict-tag :dict-data-option="sys_notice_priority" :dict-data-value="item.priority" variant="outlined"/>
                       </a-flex>
                     </a-flex>
                     <!--                      发布人/发布时间：两端对齐-->
@@ -62,7 +62,8 @@
       </template>
 <!--                      通知公告主体-->
       <div @click="() => open = true">
-        <a-badge :count="unReadCount" :offset="[-5,5]" style="color: #FFFFFF">
+        <!-- 角标大小随主题组件大小联动（Badge 无 large 档，middle/large 均落 medium） -->
+        <a-badge :count="unReadCount" :offset="[-5,8]" :size="themeStore.componentSize === 'small' ? 'small' : 'medium'" style="color: #FFFFFF">
           <a-tooltip title="通知公告" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
             <a-button type="text">
               <template #icon>

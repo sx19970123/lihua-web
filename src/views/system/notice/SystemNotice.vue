@@ -109,7 +109,7 @@
             {{dayjs(text).format('YYYY-MM-DD HH:mm')}}
           </template>
           <template v-if="column.key === 'action'">
-            <a-button type="link" size="small" @click="(event:MouseEvent) => selectById(event, record.id, record.status)">
+            <a-button type="link" size="small" :disabled="record.status === '1'" @click="(event:MouseEvent) => selectById(event, record.id, record.status)">
               <template #icon>
                 <EditOutlined />
               </template>
@@ -223,7 +223,7 @@
     </a-modal>
 <!--    公告预览-->
     <a-modal v-model:open="previewModelOpen" :footer="false" :width="960" destroy-on-hidden>
-      <notice-preview :notice-id="previewNoticeId" :show-read-user="true"/>
+      <notice-preview :notice-id="previewNoticeId" :manage="true"/>
     </a-modal>
   </div>
 </template>
@@ -412,7 +412,9 @@ const initSave = () => {
 
   const noticeRoles: Record<string, Rule[]> = {
     title: [
-      {required: true, message: "请填写标题", trigger: "change"}
+      {required: true, message: "请填写标题", trigger: "change"},
+      // IME 组合输入可绕过 input 的 maxlength，长度限制以 rules 层为准
+      {max: 80, message: "标题长度不能超过80个字符", trigger: "change"}
     ],
     userIdList: [
       {required: true, message: "请选择用户", trigger: "change"}

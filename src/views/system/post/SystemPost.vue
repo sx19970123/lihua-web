@@ -430,7 +430,7 @@ const initSave = () => {
       {pattern: /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/, message: "请输入正确的邮箱", trigger: "change"}
     ],
     fax: [
-      {pattern: /^\d{3,20}$/, message: "请输入正确的传真", trigger: "change"}
+      {pattern: /^(\d{3,4}-)?\d{3,20}$/, message: "请输入正确的传真", trigger: "change"}
     ]
   }
 
