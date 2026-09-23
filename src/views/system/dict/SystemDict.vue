@@ -211,7 +211,7 @@
     <!--    字典配置抽屉-->
     <a-drawer v-model:open="drawerAction.openDrawer"
               :size="drawerAction.width"
-              :destroyOnClose="true"
+              destroy-on-hidden
               :title="drawerAction.title"
               :styles="{body: {'padding-top': '0'}}">
       <dict-data :type-code="drawerAction.typeCode" :type="drawerAction.type"/>

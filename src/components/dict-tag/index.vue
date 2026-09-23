@@ -22,7 +22,6 @@
     </a-tag>
 <!--    递归调用组件-->
     <dict-tag v-else-if="item.children"
-              class="w-fit"
               :dict-data-value="dictDataValue"
               :dict-data-option="item.children"
               :variant="variant"

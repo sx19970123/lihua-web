@@ -196,7 +196,7 @@
     <!--    分配用户抽屉-->
     <a-drawer v-model:open="userDrawer.open"
               :size="900"
-              :destroyOnClose="true"
+              destroy-on-hidden
               :title="userDrawer.roleName"
               :styles="{body: {'padding-top': '0'}}">
       <role-user :role-id="userDrawer.roleId"/>

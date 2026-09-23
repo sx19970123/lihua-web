@@ -66,7 +66,7 @@
       <p class="ant-upload-hint">{{description}}</p>
     </a-upload-dragger>
     <!--    图片/视频预览-->
-    <a-modal :open="previewVisible" :title="previewTitle" :footer="null" @cancel="handleCancel" destroyOnClose>
+    <a-modal :open="previewVisible" :title="previewTitle" :footer="null" @cancel="handleCancel" destroy-on-hidden>
       <a-image style="border-radius: var(--ant-border-radius-lg)" :preview="{maskClassName: 'attachment-upload-preview-mask'}" :src="previewURL" v-if="previewType === 'image'"/>
       <video style="width: 100%;border-radius: var(--ant-border-radius-lg)" controls preload="auto" :src="previewURL" v-if="previewType === 'video'"/>
     </a-modal>
