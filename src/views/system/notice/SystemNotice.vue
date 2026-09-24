@@ -158,7 +158,8 @@
       </a-card>
     </a-flex>
 <!--    保存修改模态框-->
-    <a-modal v-model:open="modalActive.open" :width="960" :confirm-loading="modalActive.saveLoading" @ok="saveNotice" destroy-on-hidden>
+    <!-- TinyMCE 弹层挂 body 下在 modal 焦点陷阱之外，点击即被弹回，须关闭 trap 才能正常输入 -->
+    <a-modal v-model:open="modalActive.open" :width="960" :confirm-loading="modalActive.saveLoading" @ok="saveNotice" destroy-on-hidden :focusable="{trap: false}">
       <template #title>
         <div class="mb-ant-lg">
           <a-typography-title :level="4">{{modalActive.title}}</a-typography-title>
