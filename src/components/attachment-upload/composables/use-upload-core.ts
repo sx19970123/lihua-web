@@ -18,6 +18,8 @@ export const useUploadCore = (ctx: UploadContext & {
   chunk: boolean
 }) => {
   const {emits, fileList, sysAttachment, buildSysAttachment, uploadState, lastModelValue, maxCount, maxSize, uploadType, chunk} = ctx
+  // 公开附件模式：上传公开附件，双向绑定回写附件 path（对象键）而非附件 id
+  const isPublicMode = ctx.public
 
   // 分片链路后于本 composable 创建（其回调依赖此处产物），入口经晚绑定注入
   let chunkApi: ChunkUploadApi | undefined
@@ -105,21 +107,21 @@ export const useUploadCore = (ctx: UploadContext & {
   const handleModelValue = (file: UploadFile, fileList: Array<UploadFile>) => {
     // 通过fileList获取双向绑定值
     const modelValueList = fileList.filter(item => item.status === "done").map(item => {
-      // 有url的直接返回（url内容为附件表id）
+      // 有url的直接返回（url内容为附件表id；公开附件模式下为附件 path）
       if (item.url) {
         return item.url
       }
-      // 有response数据获取统一 VO 的 id（onSuccess 仅在业务码 200 时调用，此处 resp 必为成功）
+      // 有response数据获取统一 VO 的回写值（公开附件模式取 path，其余取 id；onSuccess 仅在业务码 200 时调用，此处 resp 必为成功）
       if (item.response) {
         const resp = item.response as {code: number, msg: string, data?: AttachmentUploadVO}
-        const id = resp.data?.id
+        const value = isPublicMode ? resp.data?.path : resp.data?.id
         // 向fileList赋值URL
         fileList.forEach(item => {
           if (item.uid === file.uid) {
-            item.url = id
+            item.url = value
           }
         })
-        return id
+        return value
       }
     })
 
@@ -181,10 +183,12 @@ export const useUploadCore = (ctx: UploadContext & {
   const handleCustomRequest = async (options: UploadRequestOption) => {
     const file = options.file as VcFile
     try {
-      // 业务附件恒私密：public 不传（服务端默认 false）；业务标签取 startUpload 阶段构建的附件对象。
+      // 业务附件恒私密（public 不传，服务端默认 false），公开附件模式显式传 true；
+      // 业务标签取 startUpload 阶段构建的附件对象。
       // 业务码非 200 走 onError：文件直接落 error 态（onSuccess 会让 antd 置 done → 先发 uploadSuccess
       // 再由回写改判 error 的事件矛盾），业务失败提示由全局拦截器/上传失败事件承担
       const resp = await uploadAttachment(file as unknown as File, {
+        public: isPublicMode,
         businessCode: sysAttachment.value.businessCode,
         businessName: sysAttachment.value.businessName
       })
@@ -244,10 +248,11 @@ export const useUploadCore = (ctx: UploadContext & {
       // 等待该文件「进入列表」的 change 事件处理完成（秒传响应先到时保证回写顺序）
       await waitFileListChanged(file.uid)
       if (resp.code === 200 && resp.data?.uploaded) {
-        const id = resp.data.id
+        // 公开附件模式回写 path，其余回写附件表 id
+        const value = isPublicMode ? resp.data.path : resp.data.id
         fileList.value.forEach(item => {
           if (item.uid === file.uid) {
-            item.url = id
+            item.url = value
             item.status = "done"
           }
         })

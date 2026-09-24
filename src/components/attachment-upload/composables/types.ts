@@ -27,6 +27,8 @@ export interface UploadContext {
   fileList: Ref<UploadFile[]>
   sysAttachment: Ref<SysAttachment>
   buildSysAttachment: (file: UploadFile, md5: string, uploadMode?: string) => void
+  // 公开附件模式（上传 isPublic=true，v-model 收发附件 path 而非附件 id）
+  public: boolean
 }
 
 // 分片链路对上传核心暴露的入口（beforeUpload/秒传判定依赖；晚绑定注入）

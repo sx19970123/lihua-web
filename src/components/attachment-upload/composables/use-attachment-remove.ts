@@ -11,6 +11,8 @@ export const useAttachmentRemove = (ctx: {
   emits: AttachmentEmitFn
   autoRemove: boolean
   cancelUpload?: (file: UploadFile) => void
+  // 公开附件模式：列表删除仅解除引用（url 为附件 path 非附件 id），不做业务删除
+  public?: boolean
 }) => {
   const {emits, autoRemove, cancelUpload} = ctx
   const removeIds: string[] = []
@@ -18,6 +20,11 @@ export const useAttachmentRemove = (ctx: {
   // 处理附件删除
   const handleRemove = async (file: UploadFile) => {
     return new Promise( (resolve, reject) => {
+      if (ctx.public) {
+        cancelUpload?.(file)
+        resolve({})
+        return
+      }
       if (file && file.url) {
         const id = file.url
         if (autoRemove) {

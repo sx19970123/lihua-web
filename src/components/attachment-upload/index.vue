@@ -94,7 +94,7 @@ const themeStore = useThemeStore()
 const lastModelValue = ref<string>()
 
 // 参数
-const {mode = 'button', icon, text, uploadType = [], description, maxCount = 10, maxSize = 10, multiple = true, directory = false, modelValue = "", businessCode, businessName, chunk = false, chunkSize = 20, chunkUploadCount = 3, fileName, autoRemove = false} = defineProps<{
+const {mode = 'button', icon, text, uploadType = [], description, maxCount = 10, maxSize = 10, multiple = true, directory = false, modelValue = "", businessCode, businessName, chunk = false, chunkSize = 20, chunkUploadCount = 3, fileName, autoRemove = false, public: isPublic = false} = defineProps<{
   // 模式：按钮/图片/拖拽
   mode?: 'button' | 'picture' | 'dragger',
   // 图标
@@ -129,6 +129,9 @@ const {mode = 'button', icon, text, uploadType = [], description, maxCount = 10,
   fileName?: string,
   // 自动删除（点击删除按钮是否自动进行业务删除）
   autoRemove?: boolean,
+  // 公开附件模式：上传 isPublic=true 的公开附件，双向绑定收发附件 path（对象键）而非附件 id；
+  // 免登录可下载（App 安装包等公开内容），列表删除仅解除引用不做业务删除
+  public?: boolean,
 }>()
 
 // 双向绑定空值容错：null/undefined 按空串处理，调用方初始化缺陷以 console 暴露（throw 会击穿整页渲染）
@@ -163,7 +166,9 @@ const handleSysAttachment = (file: UploadFile, md5: string, uploadMode?: string)
     originalName: fileName ? fileName + getAttachmentExpandedName(file) : file.name,
     size: file.size? file.size.toString() : "",
     type: file.type,
-    md5: md5
+    md5: md5,
+    // 公开附件模式：行级公开标记随上传即物化（秒传/分片 start 均经本对象透传；键名对齐后端 JSON 契约 public）
+    public: isPublic
   }
 }
 
@@ -186,6 +191,19 @@ const initVModel = async () => {
   const version = ++initVModelVersion
   const ids = splitAttachmentIds(modelValue)
   if (ids && ids.length > 0) {
+    // 公开附件模式的绑定值为附件 path（不查库），path 末段即文件名直接回显
+    if (isPublic) {
+      fileList.value = ids.map(path => {
+        const uploadFile: UploadFile = {
+          uid: path,
+          name: path.split("/").pop() ?? path,
+          status: 'done',
+          url: path
+        }
+        return uploadFile;
+      })
+      return
+    }
     // 初次加载数据时根据双向绑定内容请求附件信息
     const resp = await queryAttachmentInfoByIds(ids)
     if (version !== initVModelVersion) {
@@ -223,7 +241,8 @@ const uploadContext = {
   emits: emits as AttachmentEmitFn,
   fileList,
   sysAttachment,
-  buildSysAttachment: handleSysAttachment
+  buildSysAttachment: handleSysAttachment,
+  public: isPublic
 }
 const core = useUploadCore({
   ...uploadContext,
@@ -246,7 +265,7 @@ core.bindChunkApi(chunkApi)
 const {beforeUpload, handleChange, handleCustomRequest} = core
 
 const {previewVisible, previewTitle, previewURL, previewType, handlePreview, handleCancel, handleShowThumbImage, handleThumbUrl} = useUploadPreview({fileList})
-const {handleRemove, businessRemove} = useAttachmentRemove({emits: emits as AttachmentEmitFn, autoRemove, cancelUpload: chunkApi.cancelUpload})
+const {handleRemove, businessRemove} = useAttachmentRemove({emits: emits as AttachmentEmitFn, autoRemove: autoRemove && !isPublic, cancelUpload: chunkApi.cancelUpload, public: isPublic})
 
 // 监听双向绑定
 watch(() => modelValue, (value) => {

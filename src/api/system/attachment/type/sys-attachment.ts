@@ -37,6 +37,9 @@ export interface SysAttachment {
     errorMsg?: string;
     /** 客户端类型 */
     clientType?: string;
+    /** 行级公开标记（秒传/分片 start 请求体透传；键名对齐后端 DTO 的 JSON 契约 public——
+     *  isPublic 是 Java 关键字变体，后端以手写 getPublic/setPublic 绑定，发 isPublic 会被静默丢弃） */
+    public?: boolean;
 }
 
 export interface SysAttachmentDTO extends SysAttachment {
@@ -59,10 +62,6 @@ export interface SysAttachmentDTO extends SysAttachment {
 }
 
 export interface SysAttachmentVO extends SysAttachment {
-    /**
-     * 行级公开标记
-     */
-    isPublic?: boolean;
     /**
      * 附件访问链接（按行选链：公开=永久链，私密=时效签名链；path 以同值链接形态下发）
      */

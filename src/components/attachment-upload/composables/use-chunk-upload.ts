@@ -330,10 +330,10 @@ export const useChunkUpload = (ctx: UploadContext & {
       if (resp.code === 200) {
         // 上传成功后删除浏览器缓存记录
         localStorage.removeItem(CHUNK_UPLOAD_RECORD_PREFIX + md5)
-        // fileList重新赋值
+        // fileList重新赋值（公开附件模式回写 path，其余回写附件表 id）
         fileList.value.forEach(item => {
           if (item.uid === file.uid) {
-            item.url = resp.data?.id
+            item.url = ctx.public ? resp.data?.path : resp.data?.id
             item.status = "done"
           }
         })

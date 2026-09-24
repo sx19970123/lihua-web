@@ -8,6 +8,12 @@ export const resolveAttachmentEntryUrl = (entryUrl: string) => `${import.meta.en
 // 分享外发等脱离页面上下文场景的绝对 URL：站点 origin + 代理前缀 + 后端 entry 链接
 export const resolveAttachmentAbsoluteUrl = (entryUrl: string) => `${window.location.origin}${resolveAttachmentEntryUrl(entryUrl)}`
 
+// 附件对象键（path，如 AppVersionPackage/xxx.apk）→ 绝对可访问下载 URL（公开附件）。
+// entry 链构造与后端 AttachmentUrlUtils.DOWNLOAD_URL_PREFIX 对齐（前端无该纯函数下沉，改后端前缀须同步此处）
+export const resolvePathDownloadUrl = (path: string) => {
+    return resolveAttachmentAbsoluteUrl(`/system/attachment/storage/download?fullPath=` + encodeURIComponent(path))
+}
+
 // 根据md5查询附件是否存在
 export const existsAttachmentByMd5 = (md5: string) => {
     return request<boolean>({
