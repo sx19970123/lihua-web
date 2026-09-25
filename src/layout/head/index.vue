@@ -11,8 +11,8 @@
     <ws-status/>
 <!--    全屏-->
     <windows-change/>
-<!--    默认部门-->
-    <default-dept :key="viewTabsStore.$state.contentComponentKey"/>
+<!--    默认部门（用户无部门时隐藏）-->
+    <default-dept v-if="userStore.deptTrees.length > 0" :key="viewTabsStore.$state.contentComponentKey"/>
 <!--    用户-->
     <user/>
   </a-flex>
@@ -26,5 +26,7 @@ import DefaultDept from "@/layout/head/components/dept/index.vue"
 import MenuSearch from "@/layout/head/components/menu-search/index.vue"
 import LockScreen from "@/layout/head/components/lock-screen/index.vue"
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
+import {useUserStore} from "@/stores/user.ts";
 const viewTabsStore = useViewTabsStore()
+const userStore = useUserStore()
 </script>
