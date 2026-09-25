@@ -1,6 +1,6 @@
 ---
 name: lihua-init-pattern
-description: 狸花猫项目 lihua-web 的 Vue 3 组件代码组织约定：init* 工厂函数（闭包组合式函数）与导包顺序。当在 lihua-web 中新建或重构 script setup 组件、为组件添加一组相关功能（状态+方法+watch+生命周期）、整理散落在 setup 顶层的逻辑、整理/编写 import 导入语句、或需要遵循/扩展已有 initXxx() 写法时使用。核心：按关注点把相关逻辑收进 initXxx 工厂函数，闭包持有私有状态，统一 return 导出并在 setup 顶层解构使用；导入按依赖类型分组排序。
+description: lihua-web 的 Vue 3 组件代码组织约定：init* 工厂函数（闭包组合式函数）与导包顺序。当在 lihua-web 中新建或重构 script setup 组件、为组件添加一组相关功能（状态+方法+watch+生命周期）、整理散落在 setup 顶层的逻辑、整理/编写 import 导入语句、或需要遵循/扩展已有 initXxx() 写法时使用。
 ---
 
 # lihua init 模式
@@ -31,7 +31,7 @@ const {a, b} = initXxx()   // 解构紧随定义
 4. **命名**：`init` + 领域名（camelCase）；解构语句紧跟函数定义。
 5. **模板 ref 同名导出**：`return {anchorRef}` 后模板 `ref="anchorRef"` 照常绑定。
 6. **跨实例共享状态放模块级**：SFC 用独立 `<script lang="ts">` 块；跨组件共享用独立 `.ts` 模块（如 `useTrackModifiers.ts`——它有两个消费方，不并入任何组件）。
-7. **注释一句话**：写明函数/块的作用即可，不写调查叙事（详细根因分析放迁移文档的问题记录）。
+7. **注释一句话**：写明函数/块的作用即可，不写调查叙事（详细根因分析放问题记录文档）。
 8. 依赖外部上下文（store、其他 ref）通过闭包引用，定义在 init 之前即可。
 
 ## 导包顺序
