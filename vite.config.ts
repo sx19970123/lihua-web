@@ -30,12 +30,12 @@ export default defineConfig(({ mode }): UserConfig => {
       open: true,
       proxy: {
         [baseApi]: {
-          target: 'http://localhost:8081',
+          target: 'http://localhost:8085',
           changeOrigin: true,
           rewrite: (p:string) => p.replace(baseApi, '')
         },
         [wsBaseApi]: {
-          target: 'ws://localhost:8081',
+          target: 'ws://localhost:8085',
           changeOrigin: true,
           ws: true
         }
