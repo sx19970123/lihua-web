@@ -86,4 +86,4 @@ npm run build
 
 默认代理 `/dev-api` → `http://localhost:8081`（单体版），微服务版改为网关地址即可，详见 `vite.config.ts`。
 
-默认账号密码：`admin` / `admin123`
+默认账号密码：`admin` / `123456`
