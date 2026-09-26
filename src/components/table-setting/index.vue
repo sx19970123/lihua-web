@@ -416,7 +416,9 @@ const initDrag = () => {
       if (findIndexBy(settings, ts => ts.leftFixed === 1, true) > movedIndex) {
         return "无法移动至固定元素左边"
       }
-      if (movedIndex > findIndexBy(settings, ts => ts.rightFixed === 1, false)) {
+      // findIndexBy 无右固定列时返回 -1，须先排除，否则任意落点都恒大于 -1 误报
+      const rightFixedIndex = findIndexBy(settings, ts => ts.rightFixed === 1, false)
+      if (rightFixedIndex !== -1 && movedIndex > rightFixedIndex) {
         return "无法移动至固定元素右边"
       }
       return null
