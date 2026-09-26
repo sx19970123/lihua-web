@@ -1,6 +1,6 @@
 # 狸花猫后台管理系统 Web 端（lihua-web）
 
-> 基于 **Vue3 + TypeScript + Ant Design Vue Next** 的现代化中后台管理端
+> 基于 **Vue3 + TypeScript + Antdv Next** 的现代化中后台管理端
 
 [![Gitee Stars](https://gitee.com/yukino_git/lihua-web/badge/star.svg?theme=dark)](https://gitee.com/yukino_git/lihua-web/stargazers)
 
@@ -20,7 +20,6 @@
 ## 📚 文档
 
 - 📖 开发文档：https://doc.lihua.xyz（含 1.0 / 2.0 / 3.0 全版本）
-- 🖖 前端文档入口：https://doc.lihua.xyz/3.0/doc-web/basic/overview.html
 
 ## 🚀 在线体验
 
@@ -35,7 +34,7 @@
 
 - Vue 3.5（Composition API）
 - TypeScript
-- Ant Design Vue Next（antdv-next）
+- Antdv Next（antdv-next）
 - Vite 8 / Pinia 3 / Vue Router 5
 - UnoCSS（原子化样式，跟随 antdv-next design token）
 - TinyMCE 富文本 / vue-cropper 图片裁剪 / DOMPurify XSS 消毒
