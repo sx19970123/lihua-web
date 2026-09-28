@@ -19,7 +19,7 @@ export const versionInfo = {
         // 每次更新版本在集合头部新增一条
         {
             version: '3.0.0',
-            updateDate: '2026-09-30',
+            updateDate: '2026-09-28',
             platforms: ['boot', 'cloud', 'web', 'app'],
             title: "🎉🎉3.0.0 Web 端组件库整体迁移至 Antdv Next；前后端全面重构与优化——附件域统一上传管线与签名下载、WebSocket 推送架构升级（微服务版连接服务可多实例）、全模块接口体检规范化、安全与部署运维全面加固",
             updateContent: [
