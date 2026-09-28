@@ -1,18 +1,32 @@
 /* layout：对滚动条的干预最小化——不做恒宽 hack（100vw 含滚动条槽会向外溢出一个条宽，
    还得配套裁剪），宽度完全随浏览器默认，滚动条出现/消失时内容自然横移（已接受） */
-.layout {
-    min-height: 100vh;
+/* min-height 是页脚钉底链（content 组件 section min-height:100%）的视口下限，须压过
+   antdv-next cssinjs 后注入的 .ant-layout{min-height:0}（同特异性层叠顺序必败，惯例见
+   overwrite-ant.css）——被覆盖后顶部导航/混合无侧栏布局（无 h-screen sider 撑高）整条
+   百分比高度链退化为 auto，页脚 margin-top:auto 无自由空间、紧贴内容不贴底 */
+.ant-layout.layout {
+    min-height: 100vh !important;
 }
 
 /* content */
+/* 内容区高度传播走 flex 而非 height:100% 百分比：顶部导航/混合无侧栏布局中 main.ant-layout-content
+   的高度来自 min-height:100vh 容器的 main 轴 flex-grow，Chromium 不将其视为 definite，
+   height:100% 解析失败退化 auto、页脚钉底链断裂（侧边布局靠 row flex cross 轴 stretch 的
+   definite 高度侥幸可用）；flex 传播不依赖 definiteness，四种布局统一 */
+.ant-layout > .ant-layout-content {
+    display: flex;
+    flex-direction: column;
+}
 .layout-content {
     padding: var(--ant-padding);
     /* 页脚行兼任底部留白：显示页脚时（--footer-display-height 24px > padding 16px）钳到 0，
        隐藏页脚时（0px）恢复默认 padding，页脚开关经变量联动、无 JS */
     padding-bottom: max(0px, calc(var(--ant-padding) - var(--footer-display-height)));
-    /* 撑满被 flex 拉伸的内容区，为 content 组件内页脚钉底（section min-height:100%）提供高度上下文 */
-    height: 100%;
-    /* 横向裁切必须用 clip：hidden 会让另一轴按规范降级 auto——height:100% 拉伸链的解与内容
+    /* flex item 身份撑满 main（替代原 height:100%，见上）；shrink 0 + basis auto 保长页面自然撑高 */
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    /* 横向裁切必须用 clip：hidden 会让另一轴按规范降级 auto——拉伸链的解与内容
        实际高度存在几像素差，内容区因此成为仅可滚数像素的伪滚动容器，触屏滑动被 latching
        到内层（首扫滚几像素即到底、手势被边界吃掉，需二次滑动才真正滚页面），且与视口
        滚动条形成安卓上的双层滚动条；clip 同样裁横向溢出但不建立滚动容器（y 轴保持 visible，

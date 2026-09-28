@@ -25,11 +25,12 @@ const viewTabsStore = useViewTabsStore()
 </script>
 
 <style scoped>
-/* 撑满内容区（高度上下文由 layout.css 的 .layout-content height:100% 提供），页脚才钉得住底 */
+/* 以 flex item 身份撑满 .layout-content（flex:1 传播不依赖高度 definiteness，父级已改 flex column，
+   见 layout.css），页脚 margin-top:auto 才有自由空间钉底 */
 section {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  flex: 1;
 }
 
 /* 原生 footer 元素无组件库默认样式，无需压制；显示时内容区底 padding 已被融合公式清零，本行兼任底部留白 */

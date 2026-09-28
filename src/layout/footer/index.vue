@@ -1,5 +1,7 @@
 <template>
-  <a-typography-text type="secondary" class="unselectable">{{ copyrightText }}</a-typography-text>
+  <!--  ellipsis 单行省略：小屏收缩后版权文案自动截尾不折行（footer 定高 32px，折行会溢出），
+        宽屏文案放得下时完整显示；省略类走 cssinjs 全局注入，无 a-typography-text 不传父 scopeId 的问题  -->
+  <a-typography-text type="secondary" class="unselectable" ellipsis>{{ copyrightText }}</a-typography-text>
 </template>
 <script setup lang="ts">
 import dayjs from "dayjs"
