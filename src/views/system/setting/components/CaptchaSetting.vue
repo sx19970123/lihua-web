@@ -12,17 +12,33 @@
 </template>
 
 <script setup lang="ts">
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, nextTick, onMounted, ref} from "vue";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import type {Captcha} from "@/api/system/setting/type/captcha.ts";
 import {message} from "@/antd-adapter";
 import {isAdmin} from "@/helpers/auth.ts";
+import {cloneDeep} from "lodash-es";
 import {save} from "@/api/system/setting/setting.ts";
 import {useSettingStore} from "@/stores/setting.ts";
 
 const settingStore = useSettingStore();
 
 const componentName = getCurrentInstance()?.type.__name
+
+// 验证码配置表单对象
+const settingForm = ref<Captcha>({
+  enable: true
+})
+
+// 加载完成后的配置快照（深拷贝），无权限操作时本地复位用，免二次请求
+let initialSetting: Captcha | undefined
+
+// 保存到数据库中的对象
+const setting = ref<SysSetting>({
+  settingKey: componentName,
+  json: JSON.stringify(settingForm.value)
+})
+
 // 加载配置，已保存的系统配置中没有当前配置的话会进行创建
 const init = async () => {
   if (!componentName) {
@@ -33,24 +49,17 @@ const init = async () => {
   if (settingData) {
     settingForm.value = settingData
   }
+  initialSetting = cloneDeep(settingForm.value)
 }
-
-// 验证码配置表单对象
-const settingForm = ref<Captcha>({
-  enable: true
-})
-
-// 保存到数据库中的对象
-const setting = ref<SysSetting>({
-  settingKey: componentName,
-  json: JSON.stringify(settingForm.value)
-})
 
 // 处理保存设置
 // antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
 const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
-    await init()
+    // 无权限不发请求：以加载时快照本地复位（等价 init 的重置效果，不依赖服务端可达）
+    if (initialSetting) {
+      nextTick(() => settingForm.value = cloneDeep(initialSetting))
+    }
     message.error("用户权限不足")
     return
   }

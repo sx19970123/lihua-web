@@ -32,18 +32,45 @@
 <script setup lang="ts">
 import {useSettingStore} from "@/stores/setting.ts";
 import {useThemeStore} from "@/stores/theme.ts";
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, nextTick, onMounted, ref} from "vue";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import type {GrayModel} from "@/api/system/setting/type/gray-model.ts";
 import {message} from "@/antd-adapter";
 import dayjs, {type Dayjs} from "dayjs";
 import {isAdmin} from "@/helpers/auth.ts";
+import {cloneDeep} from "lodash-es";
 import {save} from "@/api/system/setting/setting.ts";
 
 const themeStore = useThemeStore();
 const settingStore = useSettingStore();
 const componentName = getCurrentInstance()?.type.__name
 const submitLoading = ref<boolean>(false)
+
+// 日期选项快捷预设
+const presets = ref([
+  { label: '三天后', value: dayjs().add(+3, 'd') },
+  { label: '下周', value: dayjs().add(+7, 'd') },
+  { label: '下个月', value: dayjs().add(+1, 'month') },
+]);
+
+// 灰色模式配置表单对象
+const settingForm = ref<GrayModel>({
+  enable: false,
+  closeTime: undefined
+})
+
+// 加载完成后的配置快照（深拷贝），无权限操作时本地复位用，免二次请求
+let initialSetting: GrayModel | undefined
+
+// 双向绑定关闭时间
+const closeTime = ref<Dayjs>()
+
+// 保存到数据库中的对象
+const setting = ref<SysSetting>({
+  settingKey: componentName,
+  json: JSON.stringify(settingForm.value)
+})
+
 const init = async () => {
   const settingData = await settingStore.getSettingInfo<GrayModel>(componentName);
   if (settingData) {
@@ -71,35 +98,20 @@ const init = async () => {
       settingForm.value = data
     }
   }
+  initialSetting = cloneDeep(settingForm.value)
 }
-
-// 日期选项快捷预设
-const presets = ref([
-  { label: '三天后', value: dayjs().add(+3, 'd') },
-  { label: '下周', value: dayjs().add(+7, 'd') },
-  { label: '下个月', value: dayjs().add(+1, 'month') },
-]);
-
-// 灰色模式配置表单对象
-const settingForm = ref<GrayModel>({
-  enable: false,
-  closeTime: undefined
-})
-
-// 双向绑定关闭时间
-const closeTime = ref<Dayjs>()
-
-// 保存到数据库中的对象
-const setting = ref<SysSetting>({
-  settingKey: componentName,
-  json: JSON.stringify(settingForm.value)
-})
 
 // 处理开关switch
 // antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
 const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
-    await init()
+    // 无权限不发请求：以加载时快照本地复位（含 closeTime 回显，等价 init 的重置效果）
+    if (initialSetting) {
+      nextTick(() => {
+        settingForm.value = cloneDeep(initialSetting)
+        closeTime.value = settingForm.value.closeTime ? dayjs(settingForm.value.closeTime) : undefined
+      })
+    }
     message.error("用户权限不足")
     return
   }

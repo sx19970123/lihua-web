@@ -21,18 +21,12 @@ import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import {message, type Rule} from "@/antd-adapter";
 import type {DefaultPassword} from "@/api/system/setting/type/default-password.ts";
 import PasswordInput from "@/components/password-input/index.vue";
+import {isAdmin} from "@/helpers/auth.ts";
 import {save} from "@/api/system/setting/setting.ts";
 
 const settingStore = useSettingStore();
 const componentName = getCurrentInstance()?.type.__name
 const submitLoading = ref<boolean>(false);
-// 加载配置，已保存的系统配置中没有当前配置的话会进行创建
-const init = async () => {
-  const settingData = await settingStore.getSettingInfo<DefaultPassword>(componentName);
-  if (settingData) {
-    settingForm.value = settingData
-  }
-}
 
 // 默认密码配置表单对象
 const settingForm = ref<DefaultPassword>({
@@ -52,7 +46,19 @@ const rules: Record<string, Rule[]> = {
   ]
 }
 
+// 加载配置，已保存的系统配置中没有当前配置的话会进行创建
+const init = async () => {
+  const settingData = await settingStore.getSettingInfo<DefaultPassword>(componentName);
+  if (settingData) {
+    settingForm.value = settingData
+  }
+}
+
 const handleFinish = async () => {
+  if (!isAdmin()) {
+    message.error("用户权限不足")
+    return
+  }
   try {
     submitLoading.value = true
     setting.value.json = JSON.stringify(settingForm.value)

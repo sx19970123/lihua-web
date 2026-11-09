@@ -32,23 +32,18 @@
 <script setup lang="ts">
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import {useSettingStore} from "@/stores/setting.ts";
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, nextTick, onMounted, ref} from "vue";
 import type {IntervalUpdatePassword} from "@/api/system/setting/type/interval-update-password.ts";
 import {message, type Rule} from "@/antd-adapter";
 import {useThemeStore} from "@/stores/theme.ts";
 import {isAdmin} from "@/helpers/auth.ts";
+import {cloneDeep} from "lodash-es";
 import {save} from "@/api/system/setting/setting.ts";
 
 const themeStore = useThemeStore()
 const componentName = getCurrentInstance()?.type.__name
 const settingStore = useSettingStore();
 const submitLoading = ref<boolean>(false);
-const init = async () => {
-  const settingData = await settingStore.getSettingInfo<IntervalUpdatePassword>(componentName);
-  if (settingData) {
-    settingForm.value = settingData
-  }
-}
 
 // 周期单位选项
 const unitOptions = [
@@ -64,6 +59,9 @@ const settingForm = ref<IntervalUpdatePassword>({
   unit: 'month'
 })
 
+// 加载完成后的配置快照（深拷贝），无权限操作时本地复位用，免二次请求
+let initialSetting: IntervalUpdatePassword | undefined
+
 // 保存到数据库中的对象
 const setting = ref<SysSetting>({
   settingKey: componentName,
@@ -77,11 +75,22 @@ const rules: Record<string, Rule[]> = {
   ]
 }
 
+const init = async () => {
+  const settingData = await settingStore.getSettingInfo<IntervalUpdatePassword>(componentName);
+  if (settingData) {
+    settingForm.value = settingData
+  }
+  initialSetting = cloneDeep(settingForm.value)
+}
+
 // 处理改变switch开关
 // antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
 const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
-    await init()
+    // 无权限不发请求：以加载时快照本地复位（等价 init 的重置效果，不依赖服务端可达）
+    if (initialSetting) {
+      nextTick(() => settingForm.value = cloneDeep(initialSetting))
+    }
     message.error("用户权限不足")
     return
   }

@@ -27,12 +27,13 @@
 
 <script setup lang="ts">
 import {useSettingStore} from "@/stores/setting.ts";
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, nextTick, onMounted, ref} from "vue";
 import type {SameAccountLoginSetting} from "@/api/system/setting/type/same-account-login-setting.ts";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import {useThemeStore} from "@/stores/theme.ts";
 import {message, type Rule} from "@/antd-adapter";
 import {isAdmin} from "@/helpers/auth.ts";
+import {cloneDeep} from "lodash-es";
 import {save} from "@/api/system/setting/setting.ts";
 
 const themeStore = useThemeStore()
@@ -40,18 +41,14 @@ const settingStore = useSettingStore();
 const componentName = getCurrentInstance()?.type.__name
 const submitLoading = ref<boolean>(false);
 
-const init = async () => {
-  const settingData = await settingStore.getSettingInfo<SameAccountLoginSetting>(componentName);
-  if (settingData) {
-    settingForm.value = settingData
-  }
-}
-
 // 同账号登录限制配置表单
 const settingForm = ref<SameAccountLoginSetting>({
   enable: false,
   maximum: 1
 })
+
+// 加载完成后的配置快照（深拷贝），无权限操作时本地复位用，免二次请求
+let initialSetting: SameAccountLoginSetting | undefined
 
 // 保存到数据库中的对象
 const setting = ref<SysSetting>({
@@ -59,12 +56,22 @@ const setting = ref<SysSetting>({
   json: JSON.stringify(settingForm.value)
 })
 
+const init = async () => {
+  const settingData = await settingStore.getSettingInfo<SameAccountLoginSetting>(componentName);
+  if (settingData) {
+    settingForm.value = settingData
+  }
+  initialSetting = cloneDeep(settingForm.value)
+}
 
 // 处理改变switch开关
 // antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
 const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
-    await init()
+    // 无权限不发请求：以加载时快照本地复位（等价 init 的重置效果，不依赖服务端可达）
+    if (initialSetting) {
+      nextTick(() => settingForm.value = cloneDeep(initialSetting))
+    }
     message.error("用户权限不足")
     return
   }

@@ -60,12 +60,13 @@
 
 <script setup lang="ts">
 import {useSettingStore} from "@/stores/setting.ts";
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, nextTick, onMounted, ref} from "vue";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import type {RestrictAccessIp} from "@/api/system/setting/type/restrict-access-ip.ts";
 import {message} from "@/antd-adapter";
 import {useThemeStore} from "@/stores/theme.ts";
 import {isAdmin} from "@/helpers/auth.ts";
+import {cloneDeep} from "lodash-es";
 import {save} from "@/api/system/setting/setting.ts";
 
 const themeStore = useThemeStore()
@@ -73,25 +74,29 @@ const settingStore = useSettingStore();
 const componentName = getCurrentInstance()?.type.__name
 const submitLoading = ref<boolean>(false);
 
-// 加载配置，已保存的系统配置中没有当前配置的话会进行创建
-const init = async () => {
-  const settingData = await settingStore.getSettingInfo<RestrictAccessIp>(componentName);
-  if (settingData) {
-    settingForm.value = settingData
-  }
-}
-
 // ip限制配置表单对象
 const settingForm = ref<RestrictAccessIp>({
   enable: false,
   ipList: ['']
 })
 
+// 加载完成后的配置快照（深拷贝），无权限操作时本地复位用，免二次请求
+let initialSetting: RestrictAccessIp | undefined
+
 // 保存到数据库中的对象
 const setting = ref<SysSetting>({
   settingKey: componentName,
   json: JSON.stringify(settingForm.value)
 })
+
+// 加载配置，已保存的系统配置中没有当前配置的话会进行创建
+const init = async () => {
+  const settingData = await settingStore.getSettingInfo<RestrictAccessIp>(componentName);
+  if (settingData) {
+    settingForm.value = settingData
+  }
+  initialSetting = cloneDeep(settingForm.value)
+}
 
 // 添加ip
 const handleAddIpItem = () => [
@@ -138,7 +143,10 @@ const handleFinish = async () => {
 // antdv-next 的 change 在 v-model:checked 写回前触发，需以事件参数取新值
 const handleChangeSwitch = async (checked: boolean | string | number) => {
   if (!isAdmin()) {
-    await init()
+    // 无权限不发请求：以加载时快照本地复位（等价 init 的重置效果，不依赖服务端可达）
+    if (initialSetting) {
+      nextTick(() => settingForm.value = cloneDeep(initialSetting))
+    }
     message.error("用户权限不足")
     return
   }
