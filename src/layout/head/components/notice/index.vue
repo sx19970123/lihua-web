@@ -11,7 +11,7 @@
         <!--通知列表（a-list 已被 vnext 移除，改用 a-listy；列表项布局自行排版；查询中由 a-spin 遮罩）-->
         <a-flex vertical>
           <a-spin :spinning="loading">
-            <a-listy v-if="userNoticeList.length > 0" :items="userNoticeList" :row-key="(item: SysUserNoticeVO) => item.noticeId" :height="400" :styles="{item: {borderBottom: 'none'}}" class="notice-list scrollbar">
+            <a-listy v-if="userNoticeList.length > 0" :items="userNoticeList" :row-key="(item: SysUserNoticeVO) => item.noticeId ?? ''" :height="400" :styles="{item: {borderBottom: 'none'}}" class="notice-list scrollbar">
               <template #itemRender="item">
                 <a-flex :gap="16" align="center" class="cursor-pointer"
                         @click="readNoticeDetail(item.readFlag, item.noticeId)">

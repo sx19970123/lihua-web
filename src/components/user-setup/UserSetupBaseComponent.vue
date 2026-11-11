@@ -5,7 +5,7 @@
         <LeftOutlined />
       </template>
     </a-button>
-    <a-flex justify="center" align="center" vertical="vertical" :gap="16">
+    <a-flex justify="center" align="center" vertical :gap="16">
 <!--        图标-->
       <component class="login-setting-icon" :is="icon" :style="{color: themeStore.getColorPrimary()}"/>
       <div class="login-setting-text">
@@ -19,7 +19,7 @@
         <slot name="content"/>
       </div>
       <div class="login-setting-bottom-btn">
-        <a-flex vertical="vertical" :gap="8">
+        <a-flex vertical :gap="8">
           <a-button type="primary" @click="handleNext" :loading="mainBtnLoading">
             {{mainBtnTitle}}
             <RightOutlined v-if="showMainBtnIcon"/>
