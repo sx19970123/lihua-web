@@ -22,6 +22,13 @@
     scrollbar-color: var(--lihua-sider-scrollbar-thumb-color);
 }
 
+/* 页签溢出下拉（"..." 纵向弹窗）滚动条对齐全局规格：弹层 teleport 至 body 无法经父级类覆盖，
+   全局点名其滚动容器（maxHeight 200 + overflowY auto 由组件样式提供）；thumb/track 取项目变量随主题 */
+.ant-tabs-dropdown-menu {
+    scrollbar-width: thin;
+    scrollbar-color: var(--lihua-scrollbar-thumb-color);
+}
+
 /* 反杀 antd 弹层滚动锁对 body 的 overflow 裁切（!important 可压过组件库的内联样式与动态样式
    标签两种形态）：OS 托管视口后 body→视口的 overflow 传播链已断，锁落在 body 盒子上叠加
    height:100% 会塌缩滚动高度、把视口 scrollTop 钳 0（开弹层跳顶）；body 永不裁切即永不塌缩，

@@ -2,6 +2,10 @@
 
 /* 亮色模式变量 */
 :root {
+    /* UA 配色方案声明：未显式套 .scrollbar 类的滚动容器（如页签轨道内层）与原生控件
+       按此渲染，暗色下不再出亮色滚动条；与 data-theme 同源切换（theme.ts applyThemeMode） */
+    color-scheme: light;
+
     /* ======================主题颜色 会由ts进行覆盖======================== */
     --colorPrimary: rgba(0, 0, 0, 0);
 
@@ -66,6 +70,8 @@
 
 /* 暗色模式变量 */
 [data-theme = 'dark'] {
+    color-scheme: dark;
+
     /* =========================模糊状态下背景颜色========================= */
     --lihua-backdrop-filter-on-color: rgba(20,20,20,0.6);
     --lihua-backdrop-filter-off-color: rgba(20,20,20,1);
