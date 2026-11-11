@@ -12,7 +12,7 @@
             size="small"
             hide-add
             :items="tabItems"
-            @edit="closeTab"
+            @edit="(key) => closeTab(key as string)"
             @change="routeSkip"
     >
       <!--每个tab的下拉菜单：label 由 #labelRender 插槽自定义渲染，SortableTabLabel 内注册 dnd-kit sortable（中键关闭也在其内拦截）-->

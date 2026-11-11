@@ -77,12 +77,13 @@ const rules: Record<string, Rule[]> = {
   ]
 }
 
-const handleFinish = async (data: passwordType) => {
+const handleFinish = async (data: Record<string, any>) => {
+  const {oldPassword, newPassword, confirmPassword} = data as passwordType
   submitLoading.value = true
   try {
-    const resp = await updatePassword(data.oldPassword, data.newPassword, data.confirmPassword)
+    const resp = await updatePassword(oldPassword, newPassword, confirmPassword)
     if (resp.code === 200) {
-      remember.updateRememberedPassword(data.newPassword)
+      remember.updateRememberedPassword(newPassword)
       message.success("修改成功")
     } else {
       message.error(resp.msg)

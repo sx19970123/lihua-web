@@ -133,8 +133,9 @@ const handleChangeSwitch = async (checked: boolean | string | number) => {
 }
 
 // 为日期赋值
-const handleChangeDate = (data?: Dayjs) => {
-  settingForm.value.closeTime = data?.toDate()
+const handleChangeDate = (data: Dayjs | Dayjs[] | null) => {
+  // 非范围选择器，载荷恒为 Dayjs | null（清空为 null）
+  settingForm.value.closeTime = (data as Dayjs | null)?.toDate()
 }
 
 // 处理选择日期时间
