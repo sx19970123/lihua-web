@@ -16,7 +16,7 @@
     </div>
     <a-form :model="loginForm" @finish="handleFinish" :rules="loginRoles">
       <a-form-item name="username" hasFeedback>
-        <a-tooltip placement="topLeft" trigger="contextmenu" title="用户名已自动填写" v-model:open="usernameTip">
+        <a-tooltip placement="topLeft" trigger="contextMenu" title="用户名已自动填写" v-model:open="usernameTip">
           <a-input class="login-form-item stagger-item" style="--si: 1"
                    autocomplete="off"
                    v-model:value="loginForm.username"

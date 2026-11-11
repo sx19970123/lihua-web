@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-row align="center" class="h-16">
+    <a-row justify="center" class="h-16">
       <sys-avatar class="modify relative inline-block"
                   :size="64"
                   :avatar-json="modelValueJson"

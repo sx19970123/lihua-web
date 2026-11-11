@@ -14,9 +14,9 @@
           <a-flex align="center" :gap="12">
             <user-avatar :size="48" :avatar-json="userStore.avatarJson"/>
             <a-flex vertical>
-              <a-typography-text ellipsis :copyable="{ tooltip: false }" strong :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.nickname }}</a-typography-text>
+              <a-typography-text ellipsis :copyable="{ tooltips: false }" strong :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.nickname }}</a-typography-text>
               <a-tooltip :title="'UID：' + userStore.$state.userId" placement="bottom" :getPopupContainer="(triggerNode: HTMLElement) => triggerNode.parentElement!">
-                <a-typography-text ellipsis :copyable="{ tooltip: false }" :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.userId }}</a-typography-text>
+                <a-typography-text ellipsis :copyable="{ tooltips: false }" :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.userId }}</a-typography-text>
               </a-tooltip>
             </a-flex>
             <RightOutlined class="input-prefix-icon-color absolute right-2"/>
