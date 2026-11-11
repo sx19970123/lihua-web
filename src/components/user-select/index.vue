@@ -34,7 +34,7 @@
                     v-model:expanded-keys="expandKeys"
                     @select="handleClickTree"
                 >
-                  <template #titleRender="{ name }">
+                  <template #titleRender="{ name = '' }">
                     <div v-if="name.indexOf(deptKeyword) > -1">
                       <span>{{name.substring(0,name.indexOf(deptKeyword))}}</span>
                       <span :style="{'color':  themeStore.getColorPrimary()}">{{deptKeyword}}</span>
@@ -346,11 +346,12 @@ const initUserTable = () => {
   }
 
   // 点击部门节点（select 事件载荷为选中 keys）
-  const handleClickTree = async (selectedKeys: string[]) => {
+  const handleClickTree = async (selectedKeys: Array<string | number>) => {
     if (selectedKeys.length > 0) {
       loadingUser.value = true
       try {
-        const resp = await getUserOption(selectedKeys[0])
+        // 部门树 key=id 恒为 string
+        const resp = await getUserOption(selectedKeys[0] as string)
         if (resp.code === 200) {
           userList.value = resp.data
         } else {
