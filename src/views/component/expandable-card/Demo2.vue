@@ -89,7 +89,7 @@ const columns = [
   {title: '用户', dataIndex: 'name', key: 'name'},
   {title: '部门', dataIndex: 'dept', key: 'dept'},
   {title: '登录时间', dataIndex: 'time', key: 'time'},
-  {title: '状态', dataIndex: 'state', key: 'state', align: 'right'},
+  {title: '状态', dataIndex: 'state', key: 'state', align: 'right' as const},
 ]
 
 const dataSource = [

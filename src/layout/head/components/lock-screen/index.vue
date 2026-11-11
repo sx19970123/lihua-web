@@ -28,7 +28,7 @@
               <a-flex
                   vertical
                   gap="8"
-                  :key="isCompactLockedLayout"
+                  :key="String(isCompactLockedLayout)"
                   class="absolute bottom-[64px] w-screen"
                   :class="{ 'user-compact': isCompactLockedLayout }"
                   align="center"
