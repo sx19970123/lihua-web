@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {theme} from "antdv-next";
+import {theme, type SizeType} from "antdv-next";
 import {nextTick} from "vue";
 import settings, {type ClickEffect, type ThemeMode} from "@/settings";
 import {debounce} from "lodash-es";
@@ -40,7 +40,7 @@ export const useThemeStore = defineStore('theme',{
         /**
          * 组件大小 small/ middle / large
          */
-        const componentSize: string = settings.componentSize
+        const componentSize: SizeType = settings.componentSize
 
         /**
          * 菜单分组
@@ -87,7 +87,7 @@ export const useThemeStore = defineStore('theme',{
         /**
          * 侧边颜色 light / dark
           */
-        const siderTheme: string = settings.siderTheme
+        const siderTheme: 'light' | 'dark' = settings.siderTheme
 
         /**
          * 侧边宽度
@@ -227,6 +227,11 @@ export const useThemeStore = defineStore('theme',{
                 for (let stateKey in state) {
                     for (let $stateKey in this.$state) {
                         if (stateKey === $stateKey) {
+                            // 存量主题 JSON 的 componentSize='default' 为旧档位值（antdv-next 的 SizeType 无此成员，
+                            // 运行时被组件当未知值忽略），读取时迁移为 'medium'；下次保存即落新值，自愈
+                            if (stateKey === 'componentSize' && state[stateKey] === 'default') {
+                                state[stateKey] = 'medium'
+                            }
                             // 使用类型断言告诉 TypeScript $stateKey 是 $state 对象的一个键
                             (this.$state as any)[$stateKey] = state[stateKey];
                         }

@@ -1,4 +1,4 @@
-import {theme, type ThemeConfig} from "antdv-next";
+import {theme, type SizeType, type ThemeConfig} from "antdv-next";
 
 /**
  * 应用主题配置：token 恒有值且 colorPrimary / borderRadius 必填（运行时由 settings/store 保证），
@@ -45,9 +45,9 @@ export default {
     layoutType: 'side-navigation',
 
     /**
-     * 组件大小 small / default / large
+     * 组件大小 small / medium / large
      */
-    componentSize: 'default',
+    componentSize: 'medium' as SizeType,
 
     /**
      * 菜单分组
@@ -120,7 +120,7 @@ export default {
     /**
      * 侧边颜色 light / dark
      */
-    siderTheme: 'light',
+    siderTheme: 'light' as 'light' | 'dark',
 
     /**
      * 侧边宽度

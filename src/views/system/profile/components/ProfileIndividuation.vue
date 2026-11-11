@@ -44,7 +44,7 @@
       <a-form-item label="组件尺寸">
         <a-radio-group v-model:value="themeStore.componentSize">
           <a-radio value="small">更小</a-radio>
-          <a-radio value="default">适中（推荐）</a-radio>
+          <a-radio value="medium">适中（推荐）</a-radio>
           <a-radio value="large">更大</a-radio>
         </a-radio-group>
       </a-form-item>
