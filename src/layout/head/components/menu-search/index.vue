@@ -7,8 +7,8 @@
             <SearchOutlined class="icon-default-color"/>
           </template>
           <template #suffix>
-            <a-tag class="title-search-tag" style="margin-right: var(--ant-margin-xxs)">{{osType() === 'MacOS' ? '⌘' : 'ctrl'}}</a-tag>
-            <a-tag class="title-search-tag" style="margin-right: 0">k</a-tag>
+            <a-tag class="title-search-tag" :class="{'title-search-tag-borderless': themeStore.componentSize === 'small'}" style="margin-right: var(--ant-margin-xxs)">{{osType() === 'MacOS' ? '⌘' : 'ctrl'}}</a-tag>
+            <a-tag class="title-search-tag" :class="{'title-search-tag-borderless': themeStore.componentSize === 'small'}" style="margin-right: 0">k</a-tag>
           </template>
         </a-input>
         <a-button type="text" v-else>
@@ -421,6 +421,10 @@ onBeforeUnmount(() => {
 }
 .title-search-input:hover {
   cursor: pointer !important;
+}
+/* 更小档：输入框高度收紧且官方无 small 档 tag 预设，suffix 内快捷键 tag 去边框融入输入区，避免与内边框贴挤 */
+.title-search-tag-borderless {
+  border: none;
 }
 /* margin 需压过 .ant-tag 根级 resetComponent margin:0，故留 scoped */
 .bottom-tag-tips {
