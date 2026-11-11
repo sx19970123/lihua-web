@@ -98,7 +98,7 @@ export interface SysDictTypeDTO {
   /**
    * 开始结束时间
    */
-  startEndTime?: [Dayjs?, Dayjs?];
+  startEndTime?: [Dayjs | null, Dayjs | null];
 
   /**
    * 当前页数

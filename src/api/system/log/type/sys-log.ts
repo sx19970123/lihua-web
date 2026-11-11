@@ -1,3 +1,4 @@
+import type {Dayjs} from "dayjs";
 export interface SysLog {
     /**
      * 日志主键
@@ -155,7 +156,7 @@ export interface SysLogDTO {
     /**
      * 创建时间集合
      */
-    createTimeList?: Date[];
+    createTimeList?: [Dayjs | null, Dayjs | null];
 
     /**
      * 当前页数

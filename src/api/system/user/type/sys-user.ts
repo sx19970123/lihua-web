@@ -1,3 +1,4 @@
+import type {Dayjs} from "dayjs";
 export interface SysUser {
 
     /**
@@ -109,5 +110,5 @@ export interface SysUserDTO extends SysUser {
     /**
      * 创建时间集合
      */
-    createTimeList?: Date[]
+    createTimeList?: [Dayjs | null, Dayjs | null]
 }

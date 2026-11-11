@@ -494,7 +494,7 @@ const initSearch = () => {
     nickname: undefined,
     username: undefined,
     status: undefined,
-    createTimeList: [],
+    createTimeList: undefined,
     pageNum: 1,
     pageSize: 10,
   })
@@ -538,7 +538,7 @@ const initSearch = () => {
       nickname: undefined,
       username: undefined,
       status: undefined,
-      createTimeList: [],
+      createTimeList: undefined,
       pageNum: 1,
       pageSize: 10
     }

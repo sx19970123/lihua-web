@@ -11,7 +11,7 @@
               @blur="isGetFocus = false"
               @change="handleChange"
     >
-      <template #suffixIcon>
+      <template #suffix>
         <EditOutlined class="input-prefix-icon-color" style="font-size: var(--ant-font-size-lg);"/>
       </template>
     </a-select>

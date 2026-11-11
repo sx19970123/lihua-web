@@ -326,7 +326,7 @@ const initSearch = () => {
   const dictTypeQuery = ref<SysDictTypeDTO>({
     name: '',
     code: '',
-    startEndTime: [],
+    startEndTime: undefined,
     pageNum: 1,
     pageSize: 10
   })
@@ -342,7 +342,7 @@ const initSearch = () => {
     dictTypeQuery.value = {
       name: '',
       code: '',
-      startEndTime: [],
+      startEndTime: undefined,
       pageNum: 1,
       pageSize: 10
     }
