@@ -64,7 +64,7 @@
       <div @click="() => open = true">
         <!-- 角标大小随主题组件大小联动（Badge 无 large 档，middle/large 均落 medium） -->
         <a-badge :count="unReadCount" :offset="[-5,8]" :size="themeStore.componentSize === 'small' ? 'small' : 'medium'" style="color: #FFFFFF">
-          <a-tooltip title="通知公告" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
+          <a-tooltip title="通知公告" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentElement!">
             <a-button type="text">
               <template #icon>
                   <BellOutlined class="icon-default-color"/>

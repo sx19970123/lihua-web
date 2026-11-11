@@ -107,8 +107,8 @@
             <!--            状态-->
             <template v-if="column.key === 'status'">
               <a-switch v-model:checked="record.statusIsNormal"
-                        @change="(checked: boolean | string | number, event: MouseEvent) => handleUpdateStatus(event, record ,text)"
-                        @click="(checked: boolean | string | number, event: MouseEvent) => { event.stopPropagation(); record.updateStatusLoading = true }"
+                        @change="(checked: boolean, event: MouseEvent | KeyboardEvent) => handleUpdateStatus(event, record ,text)"
+                        @click="(checked: boolean, event: MouseEvent | KeyboardEvent) => { event.stopPropagation(); record.updateStatusLoading = true }"
                         :loading="record.updateStatusLoading">
                 <template #checkedChildren>
                   {{sys_status.filter(item => item.value === text)[0]?.label}}
@@ -611,7 +611,7 @@ const initSave = () => {
   }
 
   // 修改菜单状态
-  const handleUpdateStatus = async (event: MouseEvent, sysMenuVO: SysMenuVO, status: string) => {
+  const handleUpdateStatus = async (event: MouseEvent | KeyboardEvent, sysMenuVO: SysMenuVO, status: string) => {
     event.stopPropagation()
     let menuIds
     if (status == '0') {

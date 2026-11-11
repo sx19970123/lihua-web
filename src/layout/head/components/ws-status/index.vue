@@ -1,6 +1,6 @@
 <template>
 <!--  健康即隐形：仅重连中/已断开时渲染（已连接不占位，头部无空槽；图标出现/消失时相邻图标随 flex 自然回流）-->
-  <a-tooltip v-if="wsStatus !== 'connected'" placement="bottom" :title="tooltipText" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
+  <a-tooltip v-if="wsStatus !== 'connected'" placement="bottom" :title="tooltipText" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentElement!">
     <a-button type="text" @click="handleReconnect">
       <template #icon>
         <DisconnectOutlined class="icon-default-color" v-if="wsStatus === 'disconnected'"/>

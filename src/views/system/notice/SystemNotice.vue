@@ -200,7 +200,7 @@
             <a-popover trigger="click"
                          destroy-on-hidden
                          :styles="{container: {maxWidth: 'calc(100vw - 48px)', marginLeft: 'var(--ant-margin-lg)', marginRight: 'var(--ant-margin-lg)'}}"
-                         :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
+                         :getPopupContainer="(triggerNode: HTMLElement) => triggerNode.parentElement!">
                 <template #content>
                   <user-select :bordered="false"
                                :width="700"

@@ -1,7 +1,7 @@
 <template>
   <a-flex>
     <template v-for="item in dataSource">
-      <a-tooltip :title="item.name" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
+      <a-tooltip :title="item.name" :getPopupContainer="(triggerNode: HTMLElement) => triggerNode.parentElement!">
         <div class="flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-ant-lg mr-ant-xs" :style="{ background: item.displayColor ?? item.color, boxShadow: swatchShadow(item.displayColor ?? item.color) }" @click="selectedColor(item)">
           <div v-if="color">
             <CheckOutlined class="c-white font-bold text-ant" :style="checkStyleFor(item)" v-if="item.color === color"/>
@@ -25,7 +25,7 @@
                     @open-change="handleCustomPanelOpen"
                     @change-complete="handleCustomChange"
     >
-      <a-tooltip title="自定义" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
+      <a-tooltip title="自定义" :getPopupContainer="(triggerNode: HTMLElement) => triggerNode.parentElement!">
         <div class="custom-swatch flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-ant-lg mr-ant-xs"
              :style="{ background: customBackground, boxShadow: swatchShadow(customBackground) }"
              @click="handleCustomSwatchClick"

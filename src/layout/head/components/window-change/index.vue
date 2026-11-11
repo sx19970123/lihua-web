@@ -1,6 +1,6 @@
 <template>
   <div v-if="!themeStore.isSmallWindow">
-    <a-tooltip placement="bottom" :title="isFullscreen ? '退出全屏' : '进入全屏'" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
+    <a-tooltip placement="bottom" :title="isFullscreen ? '退出全屏' : '进入全屏'" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentElement!">
       <a-button type="text" @click="toggleFullscreen">
         <template #icon>
           <FullscreenExitOutlined class="icon-default-color" v-if="isFullscreen"/>

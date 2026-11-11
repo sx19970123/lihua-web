@@ -13,7 +13,7 @@
             <div @mouseover="handleMouseOver(id)" @mouseleave="handleMouseLeave" @click="handleSetDefaultDept(id)">
               <a-space>
                 <a-flex :gap="8">
-                  <a-tooltip v-if="showTooltip" :title="userStore.defaultDept.id !== id ? '点击设为默认部门' : '默认部门'" placement="right" :arrow="false" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
+                  <a-tooltip v-if="showTooltip" :title="userStore.defaultDept.id !== id ? '点击设为默认部门' : '默认部门'" placement="right" :arrow="false" :getPopupContainer="(triggerNode: HTMLElement) => triggerNode.parentElement!">
                     <!-- 外层 span 为 tooltip 提供唯一子元素（tooltip 只渲染首个子节点） -->
                     <span>
                       <span v-for="(segment, index) in segments" :key="index"

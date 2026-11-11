@@ -1,7 +1,7 @@
 <template>
   <div>
     <!--  锁屏按钮  -->
-    <a-tooltip title="锁定屏幕" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
+    <a-tooltip title="锁定屏幕" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentElement!">
       <a-button type="text" @click="preLock">
         <template #icon>
           <LockOutlined class="icon-default-color"/>

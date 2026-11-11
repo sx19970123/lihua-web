@@ -1,6 +1,6 @@
 <template>
   <a-dropdown :trigger="['contextmenu', 'click']" :classes="{root: 'enable-glass'}">
-    <a-tooltip title="个人中心" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentNode">
+    <a-tooltip title="个人中心" placement="bottom" :get-popup-container="(triggerNode: HTMLElement) => triggerNode.parentElement!">
       <a-button type="link" class="btn">
         <!-- 权限数据已变更红点：Badge dot + offset 定位（offset=[x, y]，x 右移、y 下移为正） -->
         <a-badge :dot="userStore.$state.permissionUpdate" :offset="[2, 0]">
@@ -15,7 +15,7 @@
             <user-avatar :size="48" :avatar-json="userStore.avatarJson"/>
             <a-flex vertical>
               <a-typography-text ellipsis :copyable="{ tooltip: false }" strong :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.nickname }}</a-typography-text>
-              <a-tooltip :title="'UID：' + userStore.$state.userId" placement="bottom" :getPopupContainer="(triggerNode:Document) => triggerNode.parentNode">
+              <a-tooltip :title="'UID：' + userStore.$state.userId" placement="bottom" :getPopupContainer="(triggerNode: HTMLElement) => triggerNode.parentElement!">
                 <a-typography-text ellipsis :copyable="{ tooltip: false }" :styles="{root: {'max-width': '120px'}}">{{ userStore.$state.userId }}</a-typography-text>
               </a-tooltip>
             </a-flex>
