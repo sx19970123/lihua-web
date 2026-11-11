@@ -171,8 +171,8 @@ const initSearch = () => {
     preserveSelectedRowKeys: true,
     // 指定选中key的数据集合，操作完后可手动清空
     selectedRowKeys: logoutCacheKeys.value,
-    onChange: (keys: Array<string>) => {
-      logoutCacheKeys.value = keys
+    onChange: (keys: Array<string | number>) => {
+      logoutCacheKeys.value = keys as Array<string>
     }
   }))
 

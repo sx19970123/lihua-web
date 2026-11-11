@@ -231,8 +231,8 @@ const initSearch = () => {
     preserveSelectedRowKeys: true,
     // 指定选中id的数据集合，操作完后可手动清空
     selectedRowKeys: selectedIds.value,
-    onChange: (ids: Array<string>) => {
-      selectedIds.value = ids
+    onChange: (ids: Array<string | number>) => {
+      selectedIds.value = ids as Array<string>
     }
   }))
   const handleRowClick = (record:SysLog) => {

@@ -324,8 +324,8 @@ const initUserTable = () => {
     // 指定选中id的数据集合，操作完后可手动清空
     selectedRowKeys: selectedIds.value,
     // 点击复选框触发
-    onChange: (ids: Array<string>) => {
-      selectedIds.value = ids
+    onChange: (ids: Array<string | number>) => {
+      selectedIds.value = ids as Array<string>
     },
   }))
   // 点击数据行选中
