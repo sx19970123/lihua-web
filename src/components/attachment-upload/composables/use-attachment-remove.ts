@@ -19,10 +19,11 @@ export const useAttachmentRemove = (ctx: {
 
   // 处理附件删除
   const handleRemove = async (file: UploadFile) => {
-    return new Promise( (resolve, reject) => {
+    // 官方 onRemove 契约：Promise<boolean>，resolve 真值放行删除、reject 拦截
+    return new Promise<boolean>((resolve, reject) => {
       if (ctx.public) {
         cancelUpload?.(file)
-        resolve({})
+        resolve(true)
         return
       }
       if (file && file.url) {
@@ -39,7 +40,7 @@ export const useAttachmentRemove = (ctx: {
                 const resp = await deleteFromBusiness([id])
                 if (resp.code === 200) {
                   emits("remove", {id: id, status: "success"})
-                  resolve({})
+                  resolve(true)
                 } else {
                   reject()
                   emits("remove", {id: id, status: "error"})
@@ -59,14 +60,14 @@ export const useAttachmentRemove = (ctx: {
           })
         } else {
           removeIds.push(id)
-          resolve({})
+          resolve(true)
         }
       } else {
         // 无 id 条目（上传中/失败残留/秒传在途）：先取消后台上传链路（终止 hash worker、停止派片与合并，
         // 防已删文件传完后回写复活/发出成功事件）再放行，让 a-upload 直接移除本地条目
         // （reject 会取消移除，令残留条目永久滞留列表）
         cancelUpload?.(file)
-        resolve({})
+        resolve(true)
       }
     })
   }

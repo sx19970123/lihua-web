@@ -28,15 +28,11 @@
               :directory="chunk ? false : directory"
               :multiple="chunk ? false : multiple"
               :isImageUrl="handleShowThumbImage"
+              :show-upload-list="{previewIcon: renderPreviewIcon}"
               @preview="handlePreview"
               @change="handleChange"
               @remove="handleRemove"
     >
-      <!--      picture 模式预览图标按文件类型切换；动作按钮外框（text 型小按钮 + item-action hover 样式）与预览点击由 UploadList 统一渲染，插槽只提供图标-->
-      <template #previewIcon="data">
-        <CloudDownloadOutlined v-if="![imageExtensions, videoExtensions].some(list => list.includes(data.file.name.toLowerCase().split('.').pop() ?? ''))"/>
-        <EyeOutlined v-else/>
-      </template>
       <!--    按钮上传-->
       <a-button v-if="mode === 'button'">
         <component :is="icon ? icon : 'upload-outlined'"></component>
@@ -55,6 +51,7 @@
                       :custom-request="handleCustomRequest"
                       :directory="chunk ? false : directory"
                       :multiple="chunk ? false : multiple"
+                      :show-upload-list="{previewIcon: renderPreviewIcon}"
                       @preview="handlePreview"
                       @change="handleChange"
                       @remove="handleRemove"
@@ -75,8 +72,9 @@
 
 <script setup lang="ts">
 import {message, type UploadFile, type VcFile} from "@/antd-adapter";
-import {ref, watch} from "vue";
+import {h, ref, watch} from "vue";
 import {useRoute} from "vue-router";
+import {CloudDownloadOutlined, EyeOutlined} from "@antdv-next/icons";
 import {queryAttachmentInfoByIds} from "@/api/system/attachment/attachment-storage.ts";
 import type {SysAttachment} from "@/api/system/attachment/type/sys-attachment.ts";
 import {useThemeStore} from "@/stores/theme.ts";
@@ -88,6 +86,13 @@ import {useUploadCore} from "./composables/use-upload-core.ts";
 import {useChunkUpload} from "./composables/use-chunk-upload.ts";
 import {useUploadPreview} from "./composables/use-upload-preview.ts";
 import {useAttachmentRemove} from "./composables/use-attachment-remove.ts";
+
+// 1.8.1：预览图标由 #previewIcon 插槽迁入 showUploadList 配置（旧槽位不再被消费，图标会回退默认）；
+// 非图片/视频显示下载图标，媒体文件显示预览
+const renderPreviewIcon = (file: UploadFile) => {
+  const ext = file.name.toLowerCase().split('.').pop() ?? ''
+  return ![imageExtensions, videoExtensions].some(list => list.includes(ext)) ? h(CloudDownloadOutlined) : h(EyeOutlined)
+}
 
 const router = useRoute()
 const themeStore = useThemeStore()
