@@ -415,7 +415,7 @@ const initSearch = () => {
   // 点击数据行选中
   const handleRowClick = (record:SysUserVO) => {
     if (record.username === 'admin') {
-      return
+      return {}
     }
     return {
       onClick: () => {

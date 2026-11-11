@@ -248,7 +248,7 @@ const initSearch = () => {
   // 点击选中行
   const handleRowClick = (record:SysRoleVO) => {
     if (record.code === 'ROLE_admin') {
-      return
+      return {}
     }
     return {
       onClick: () => {
