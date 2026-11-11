@@ -30,7 +30,7 @@
       </template>
     </expandable-card>
 
-    <a-space direction="vertical" style="width: 200px">
+    <a-space orientation="vertical" style="width: 200px">
       <a-tag :color="expanded ? themeStore.getColorPrimary() : undefined">expanded = {{ expanded }}</a-tag>
       <a-button type="primary" @click="expanded = true">展开</a-button>
       <a-button @click="expanded = false">关闭</a-button>
