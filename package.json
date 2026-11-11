@@ -21,7 +21,7 @@
     "@fingerprintjs/fingerprintjs": "^5.3.0",
     "@tinymce/tinymce-vue": "6.3.0",
     "@vueuse/core": "^14.3.0",
-    "antdv-next": "1.5.6",
+    "antdv-next": "1.8.1",
     "axios": "1.21.0",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.21",
@@ -39,7 +39,7 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
-    "@antdv-next/unocss": "^1.1.1",
+    "@antdv-next/unocss": "^1.1.2",
     "@tsconfig/node22": "^22.0.6",
     "@unocss/vite": "^66.12.0",
     "@vitejs/plugin-vue": "^6.0.10",
