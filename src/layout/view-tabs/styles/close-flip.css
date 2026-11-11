@@ -1,0 +1,8 @@
+/* 关闭补位（FLIP）：提交后由 useCloseFlip 对幸存卡片先无过渡挂反向 translateX、再经
+   本类过渡归零——动画只作用于「右侧卡片滑过来补位」，被关卡片瞬时消失。
+   transform 挂在本体（补位的是卡片整体），播放的 180ms 内 antd 溢出测量（「…」收纳
+   按本体 rect 量取）可能读到偏移值，播完即清自愈；边缘表现以实测为准（入场动画先例：
+   本体 transform 污染测量曾致「…」误收纳滞留） */
+.tab-none-padding .ant-tabs-tab.view-tab-flip {
+  transition: transform 180ms ease-out;
+}

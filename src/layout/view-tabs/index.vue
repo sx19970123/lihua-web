@@ -44,12 +44,15 @@ import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {isSortable} from '@dnd-kit/vue/sortable'
 import {isMobile} from 'is-mobile'
 import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composables/useTrackModifiers";
+import {useCloseFlip} from "@/layout/view-tabs/composables/useCloseFlip";
 import SortableTabLabel, {activeDragKey} from "@/layout/view-tabs/components/SortableTabLabel.vue";
 import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
 
 const viewTabsStore = useViewTabsStore()
 const route = useRoute()
 const router = useRouter()
+// 关闭补位动画（FLIP）：提交即时 + 幸存卡片滑补位，实现全在 useCloseFlip.ts
+const {closeWithFlip} = useCloseFlip()
 
 /**
  * 初始化数据及变量
@@ -64,12 +67,11 @@ const init = () => {
 }
 const {activeKey} = init()
 
-/** 关闭标签：淡出退场后再提交——所有关闭路径（卡片按钮/中键/右键菜单）汇拢于此，
- *  先挂 view-tab-closing 播退场动画，期满再执行路由切换与 store/缓存清理；
- *  拖拽进行中、固定页签、节点解析失败（异常路径）或排在末位（右侧无补位邻居，
- *  收宽动画无从着力）时跳过动画直接关闭 */
+/** 关闭标签：所有关闭路径（卡片按钮/中键/右键菜单）汇拢于此——
+ *  关激活页跳邻页（首个跳后一张、其余跳前一张）+ store 移除 + keep-alive 清理，
+ *  提交即时，补位动画统一由 closeWithFlip 处理（见 composables/useCloseFlip.ts） */
 const closeTab = (key: string) => {
-  const commitClose = () => {
+  closeWithFlip([key], () => {
     if (key === activeKey.value) {
       const index = viewTabsStore.getIndex(key)
       // 删除的第一个元素，跳转到下一个
@@ -90,34 +92,18 @@ const closeTab = (key: string) => {
     viewTabsStore.closeViewTab(key)
     // 卸载组件
     cancelKeepAliveCache([key])
-  }
-  const closable = viewTabsStore.viewTabs.some(tab => tab.routerPathKey === key && !tab.affix)
-  // 排在末位的页签：右侧无补位邻居（收宽动画右侧没有卡片滑过来），跳过动画直接关
-  const isLastTab = viewTabsStore.viewTabs.findIndex(tab => tab.routerPathKey === key) === viewTabsStore.viewTabs.length - 1
-  const tabEl = document.querySelector<HTMLElement>(
-      `.tab-none-padding .ant-tabs-tab[data-node-key="${CSS.escape(key)}"]`)
-  if (!closable || isLastTab || !tabEl || document.querySelector('.tab-none-padding [data-dnd-dragging]')) {
-    commitClose()
-    return
-  }
-  // 退场动画（收宽+淡出）：起始宽度 JS 量取写入变量（纯 CSS 拿不到自身宽度），
-  // 收宽驱动真实布局，右侧页签随之后连续滑动补位而非瞬跳
-  tabEl.style.setProperty('--closing-w', `${tabEl.offsetWidth}px`)
-  tabEl.classList.add('view-tab-closing')
-  setTimeout(commitClose, 190)
+  })
 };
 
-/** 批量关闭标签（右键菜单/更多操作的关闭左边/右边/其他/全部）：与单张关闭同款退场动画——
- *  全部目标页签同时挂 view-tab-closing 并行收宽淡出（整排手风琴式收拢），期满统一提交；
+/** 批量关闭标签（右键菜单/更多操作的关闭左边/右边/其他/全部）：
  *  激活页在关闭集合中时跳转 fallbackKey（触发菜单的锚点页），未提供（关闭全部）则跳剩余第一张；
- *  拖拽进行中或节点解析失败（异常路径）跳过动画直接关闭 */
+ *  提交即时，补位动画统一走 closeWithFlip（无位移的关闭天然无动画） */
 const closeTabs = (keys: Array<string>, fallbackKey?: string) => {
   const validKeys = keys.filter(key => viewTabsStore.viewTabs.some(tab => tab.routerPathKey === key && !tab.affix))
   if (!validKeys.length) {
     return
   }
-
-  const commitBatch = () => {
+  closeWithFlip(validKeys, () => {
     if (validKeys.includes(activeKey.value)) {
       const fallbackTab = viewTabsStore.viewTabs.find(tab => tab.routerPathKey === fallbackKey)
       const remainTab = fallbackTab ?? viewTabsStore.viewTabs.find(tab => !validKeys.includes(tab.routerPathKey))
@@ -127,20 +113,7 @@ const closeTabs = (keys: Array<string>, fallbackKey?: string) => {
     }
     viewTabsStore.closeViewTabs(validKeys)
     cancelKeepAliveCache(validKeys)
-  }
-
-  const tabEls = validKeys
-      .map(key => document.querySelector<HTMLElement>(`.tab-none-padding .ant-tabs-tab[data-node-key="${CSS.escape(key)}"]`))
-      .filter((el): el is HTMLElement => !!el)
-  if (document.querySelector('.tab-none-padding [data-dnd-dragging]') || !tabEls.length) {
-    commitBatch()
-    return
-  }
-  tabEls.forEach(tabEl => {
-    tabEl.style.setProperty('--closing-w', `${tabEl.offsetWidth}px`)
-    tabEl.classList.add('view-tab-closing')
   })
-  setTimeout(commitBatch, 190)
 };
 
 /**
@@ -591,32 +564,5 @@ html:not([ground-glass='enable']) .ant-tabs-tab[data-dnd-dragging]:not(.ant-tabs
   .ant-tabs-tab {
     padding: 0 !important;
   }
-}
-
-/* 退场：收宽 + 淡出（手风琴）。宽度是布局属性——收窄驱动真实布局，右侧页签随之后
-   连续滑动补位（"右边滑过来"），与基线系统天然兼容（所有线片随各自的盒连续移动）。
-   终态几何精确对账：max-width 0 + 边框归零 + margin-inline -1px×2，让收完的卡在
-   双侧 2px 缝隙中净占 2px——恰等于摘除后左右邻居间的缝隙，落刀零跳动。
-   --closing-w 起始宽度由 closeTab 量取写入；overflow hidden 防内容在收窄中折行；
-   pointer-events 隔离防动画期间重复触发；!important 兜底压过可能的类级 animation 声明 */
-@keyframes view-tab-out {
-  from {
-    opacity: 1;
-    max-width: var(--closing-w, 200px);
-    margin-inline: 0;
-    border-inline-width: 1px;
-  }
-  to {
-    opacity: 0;
-    max-width: 0;
-    margin-inline: -1px;
-    border-inline-width: 0;
-  }
-}
-
-.tab-none-padding .ant-tabs-tab.view-tab-closing {
-  animation: view-tab-out 180ms ease-in both !important;
-  overflow: hidden;
-  pointer-events: none;
 }
 </style>
