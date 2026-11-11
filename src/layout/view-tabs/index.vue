@@ -43,15 +43,17 @@ import {DragDropManager, PointerActivationConstraints, Scroller} from '@dnd-kit/
 import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
 import {isSortable} from '@dnd-kit/vue/sortable'
 import {isMobile} from 'is-mobile'
-import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composables/useTrackModifiers";
-import {useCloseFlip} from "@/layout/view-tabs/composables/useCloseFlip";
+import {resetTrackBounds, snapshotTrackBounds} from "@/layout/view-tabs/composables/use-track-modifiers";
+import {useCloseFlip} from "@/layout/view-tabs/composables/use-close-flip";
+// 页签栏全部样式（布局/dnd 拖拽态/基线分片系统）在 styles/tabs.css
+import "@/layout/view-tabs/styles/tabs.css"
 import SortableTabLabel, {activeDragKey} from "@/layout/view-tabs/components/SortableTabLabel.vue";
 import TabRightMenu from "@/layout/view-tabs/components/TabRightMenu.vue";
 
 const viewTabsStore = useViewTabsStore()
 const route = useRoute()
 const router = useRouter()
-// 关闭补位动画（FLIP）：提交即时 + 幸存卡片滑补位，实现全在 useCloseFlip.ts
+// 关闭补位动画（FLIP）：提交即时 + 幸存卡片滑补位，实现全在 use-close-flip.ts
 const {closeWithFlip} = useCloseFlip()
 
 /**
@@ -69,7 +71,7 @@ const {activeKey} = init()
 
 /** 关闭标签：所有关闭路径（卡片按钮/中键/右键菜单）汇拢于此——
  *  关激活页跳邻页（首个跳后一张、其余跳前一张）+ store 移除 + keep-alive 清理，
- *  提交即时，补位动画统一由 closeWithFlip 处理（见 composables/useCloseFlip.ts） */
+ *  提交即时，补位动画统一由 closeWithFlip 处理（见 composables/use-close-flip.ts） */
 const closeTab = (key: string) => {
   closeWithFlip([key], () => {
     if (key === activeKey.value) {
@@ -403,166 +405,3 @@ watch(() => route.path,() => {
 })
 
 </script>
-<style>
-/* 页签栏与内容区的间距（收紧至 8px）。必须带 .tab-none-padding 前缀：
-   无前缀会波及全项目所有 a-tabs 的下边距 */
-.tab-none-padding .ant-tabs-nav {
-  margin-bottom: var(--ant-margin-xs) !important;
-}
-
-/* 拖拽中的页签：Feedback popover 化会剥离外观，按组件 token 恢复 */
-.ant-tabs-tab.view-tab-dragging {
-  background: var(--ant-tabs-card-bg);
-  border: var(--ant-line-width) var(--ant-line-type) var(--ant-color-border-secondary);
-  color: var(--ant-tabs-item-color);
-}
-
-/* 拖拽中的选中页签：active 背景与主色文字 */
-.ant-tabs-tab.view-tab-dragging.ant-tabs-tab-active {
-  background: var(--ant-color-bg-container);
-  color: var(--ant-tabs-item-selected-color);
-}
-
-/* 非玻璃模式的飞行未选中卡：静止底色 cardBg 是半透明 fill token，飞行悬浮于任意
-   内容之上会透底。以 bg-container 打底、同款 cardBg 渐变层叠顶——色相与静止态
-   完全一致但彻底不透明（玻璃模式不命中，保留半透明+磨砂的玻璃芯片观感）。
-   按 [data-dnd-dragging] 属性键控而非拖拽类：属性存续到落位，松手飞回段同样不透底 */
-html:not([ground-glass='enable']) .ant-tabs-tab[data-dnd-dragging]:not(.ant-tabs-tab-active) {
-  background-color: var(--ant-color-bg-container);
-  background-image: linear-gradient(var(--ant-tabs-card-bg), var(--ant-tabs-card-bg));
-  /* 拖起瞬间底色即挂：antd 对 background-color 有 0.3s 过渡，不禁则白底迟滞渐入 */
-  transition: none !important;
-}
-
-/* 玻璃主题下飞行卡的磨砂（纯 backdrop 模糊、不动底色）在 ground-glass.css：
-   以 .view-tab-dragging 类 + [data-dnd-dragging] 属性双钩子命中，存续到落位 */
-
-/* 拖拽中的文本色钉住：不依赖 :active/:focus 伪类（换位重渲染会打断伪类导致掉色） */
-.ant-tabs-tab.view-tab-dragging .ant-tabs-tab-btn {
-  color: var(--ant-tabs-item-active-color);
-}
-
-.ant-tabs-tab.view-tab-dragging.ant-tabs-tab-active .ant-tabs-tab-btn {
-  color: var(--ant-tabs-item-selected-color);
-}
-
-/* 页签间距用 flex gap（2px = cardGutter）：与 DOM 相邻关系解耦，拖拽换位时间距恒定 */
-.tab-none-padding .ant-tabs-nav-list {
-  gap: 0 2px;
-}
-
-.tab-none-padding .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
-  margin-left: 0 !important;
-}
-
-/* 基线分片：整线退役，线只在缝隙/首尾延伸/操作区生来画，卡片正下方不画——
-   普通模式不透明卡片盖线、视觉与整线时代一致；玻璃模式幽灵选中卡下方是真·空。
-   线行 = 卡片 border-box 底行 == nav 底行：缝隙片挂在卡上（bottom:-1px 落进底边框行），
-   首尾延伸挂 nav-list（bottom:0），越界部分由 nav-wrap overflow:hidden 裁掉正合所需 */
-.tab-none-padding .ant-tabs-nav::before {
-  display: none;
-}
-
-/* 相邻卡之间 2px 缝隙分片（右卡画自己左侧的缝）。
-   排除"飞行中"的拖拽源（position:fixed 跟手，不排除缝会跟着卡片满天飞）；
-   以 [data-dnd-dragging] 属性为准——比拖拽类存续更久，飞回落位全程排除；
-   占位克隆无该属性，槽位处的缝仍由它承担 */
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab + .ant-tabs-tab:not([data-dnd-dragging])::before {
-  content: "";
-  position: absolute;
-  right: calc(100% + 1px);
-  bottom: -1px;
-  width: 2px;
-  height: 1px;
-  background: var(--ant-color-border-secondary);
-}
-
-/* 拖拽槽位闭合线：占位克隆被 dnd-kit 设为 visibility:hidden（槽位呈空），卡被拖走后
-   底行应补回基线（选中卡的窗口随卡闭合、线穿过原位置）；卡落回槽位时克隆移除、
-   不透明卡自然盖线，此条随之失效。
-   left/right:-1px 外扩到 border-box：克隆自身边框（与线同色，本可补位）也随 visibility
-   隐形，不外扩则左右边框列下方各留一个 1px 断点 */
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::after {
-  content: "";
-  position: absolute;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  height: 1px;
-  background: var(--ant-color-border-secondary);
-}
-
-/* 让位滑行熄片：换位时唯一"自由飞行"的线片是被越卡携带的缝隙分片（伪元素随宿主的
-   WAAPI 一体，CSS 无法解耦）——由 evaluateEdgeSwap 挂 view-tab-sliding 类（240ms 自摘）
-   在飞行窗口内就地熄灭；卡底边框与槽位线属随体运动，保留。
-   更彻底的调和方案（底边框置透+三路静态补线）见 stash（让位动画全套实验），
-   因落位边框 0.3s 淡入无法与补线无缝衔接而弃用 */
-.ant-tabs-tab.view-tab-sliding::before {
-  content: none !important;
-}
-
-/* dnd-kit 给占位克隆设的是 visibility:hidden（槽位呈空），visibility 可继承——
-   克隆携带的缝隙片与上面的槽位线都会跟着隐形，须对其伪元素显式恢复可见 */
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::before,
-.tab-none-padding .ant-tabs-nav-list .ant-tabs-tab[data-dnd-placeholder]::after {
-  visibility: visible;
-}
-
-/* 落位残影抑制：克隆若在源卡落位（[data-dnd-dragging] 摘除）之后仍残留，
-   其槽位线会从落定的透明选中卡下透出闪现——源卡属性已摘时克隆不再画线。
-   按属性而非拖拽类判据：属性存续到落位，飞回全程槽位线都在（右端不再空缺），
-   只截收尾残影 */
-.tab-none-padding .ant-tabs-nav-list:not(:has([data-dnd-dragging])) .ant-tabs-tab[data-dnd-placeholder]::before,
-.tab-none-padding .ant-tabs-nav-list:not(:has([data-dnd-dragging])) .ant-tabs-tab[data-dnd-placeholder]::after {
-  content: none;
-}
-
-/* 首尾长延伸挂在 nav-list 自身（list 左右缘即首尾卡外缘，越界部分由 wrap 裁掉）：
-   与具体卡片解耦——不随拖拽源飞行、不依赖谁是首卡/尾卡（列表末尾恒跟 ink-bar，
-   :last-child 类选择器选不中卡），换位/滚轮/占位克隆全程稳定 */
-.tab-none-padding .ant-tabs-nav-list::before,
-.tab-none-padding .ant-tabs-nav-list::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  height: 1px;
-  width: 9999px;
-  background: var(--ant-color-border-secondary);
-}
-.tab-none-padding .ant-tabs-nav-list::before {
-  right: 100%;
-}
-.tab-none-padding .ant-tabs-nav-list::after {
-  left: 100%;
-}
-
-/* wrap 之后两区各自补线（原整线一直画到 nav 右缘）；
-   extra 需 stretch+flex 居中保持按钮竖直位置不变，同时盒子满高、线落位 nav 底行。
-   operations 的 position 必须让过 hidden 态：antd 靠 -hidden 类将其 absolute 脱流，
-   强设 relative 会让隐形盒子占位，其内不可见的 ::before 造成线段空缺 */
-.tab-none-padding .ant-tabs-nav .ant-tabs-nav-operations:not(.ant-tabs-nav-operations-hidden),
-.tab-none-padding .ant-tabs-nav .ant-tabs-extra-content {
-  position: relative;
-}
-.tab-none-padding .ant-tabs-nav .ant-tabs-extra-content {
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-}
-.tab-none-padding .ant-tabs-nav .ant-tabs-nav-operations:not(.ant-tabs-nav-operations-hidden)::before,
-.tab-none-padding .ant-tabs-nav .ant-tabs-extra-content::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--ant-color-border-secondary);
-}
-
-.tab-none-padding {
-  .ant-tabs-tab {
-    padding: 0 !important;
-  }
-}
-</style>

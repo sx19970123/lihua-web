@@ -65,7 +65,7 @@ import {useRouter} from "vue-router";
 import {cloneDeep, debounce} from "lodash-es"
 import {message} from "@/antd-adapter";
 import SettingRow from "@/components/table-setting/SettingRow.vue";
-import type {SettingColumnType, TableSettingType} from "@/components/table-setting/TableSettingType.ts";
+import type {SettingColumnType, TableSettingType} from "@/components/table-setting/table-setting-type.ts";
 
 const router = useRouter();
 // 控制弹出卡片是否显示

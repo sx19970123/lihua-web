@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import ImageCropper from "@/components/image-cropper/index.vue"
 import {ref, useTemplateRef} from "vue";
-import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
+import type {CropperDataType} from "@/components/image-cropper/cropper-type.ts";
 // 图片裁剪组件的ref
 const imageCropperRef = useTemplateRef<InstanceType<typeof ImageCropper>>("imageCropperRef")
 const value = ref<CropperDataType>()

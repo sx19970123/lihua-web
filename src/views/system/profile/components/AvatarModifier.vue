@@ -67,7 +67,7 @@ import {computed, onMounted, onUnmounted, ref, useTemplateRef} from "vue";
 import ColorSelect from "@/components/color-select/index.vue"
 import IconSelect from "@/components/icon-select/index.vue"
 import ImageCropper from "@/components/image-cropper/index.vue"
-import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
+import type {CropperDataType} from "@/components/image-cropper/cropper-type.ts";
 import SysAvatar from "@/components/user-avatar/index.vue"
 import {useUserStore} from "@/stores/user";
 import {AVATAR_AUTO_BACKGROUND, resolveAvatarBackgroundColor} from "@/helpers/avatar.ts";

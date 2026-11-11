@@ -42,7 +42,7 @@ import {useSortable} from "@dnd-kit/vue/sortable";
 import {RestrictToVerticalAxis} from "@dnd-kit/abstract/modifiers";
 import {PushpinOutlined} from "@antdv-next/icons";
 import {useThemeStore} from "@/stores/theme.ts";
-import type {TableSettingType} from "@/components/table-setting/TableSettingType.ts";
+import type {TableSettingType} from "@/components/table-setting/table-setting-type.ts";
 
 const {setting, index, enableWidthSetting, minWidth, maxWidth} = defineProps<{
   // 该行的列配置

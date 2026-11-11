@@ -1,5 +1,5 @@
 import {createApp, defineComponent, h} from "vue";
-import type {SpinConfig, SpinInstance} from "./Type.ts";
+import type {SpinConfig, SpinInstance} from "./type.ts";
 import {Spin} from "antdv-next";
 import {useThemeStore} from "@/stores/theme.ts";
 

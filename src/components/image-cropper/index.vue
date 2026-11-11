@@ -71,7 +71,7 @@
 import {VueCropper} from "vue-cropper";
 import 'vue-cropper/dist/index.css'
 import {onUnmounted, ref, useTemplateRef} from 'vue';
-import type {CropperDataType} from "@/components/image-cropper/CropperType.ts";
+import type {CropperDataType} from "@/components/image-cropper/cropper-type.ts";
 import {message, type UploadRequestOption} from "@/antd-adapter";
 
 const cropperRef = useTemplateRef<InstanceType<typeof VueCropper>>("cropperRef")

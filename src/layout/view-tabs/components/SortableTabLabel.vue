@@ -33,7 +33,7 @@ export const activeDragKey = ref<string | null>(null)
 import {computed, onUnmounted, watch} from 'vue';
 import {useSortable} from '@dnd-kit/vue/sortable';
 import type {StarViewType} from '@/api/system/view-tab/type/sys-view-tab.ts';
-import {trackModifiers} from '@/layout/view-tabs/composables/useTrackModifiers';
+import {trackModifiers} from '@/layout/view-tabs/composables/use-track-modifiers';
 import TabPaneMenu from '@/layout/view-tabs/components/TabPaneMenu.vue';
 
 const props = defineProps<{
