@@ -5,7 +5,6 @@
               :options="options"
               :field-names="fieldNames"
               variant="borderless"
-              size="large"
               :loading="loading"
               :style="{'border-color': bordered || isGetFocus ? themeStore.getColorPrimary() : 'var(--lihua-alpha-0)'}"
               @focus="isGetFocus = true"

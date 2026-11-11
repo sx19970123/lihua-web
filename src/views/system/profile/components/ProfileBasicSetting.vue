@@ -5,7 +5,6 @@
       :model="profileInfo"
       :rules="userRoles"
       :colon="false"
-      :label-col="{ style: { marginTop: 'var(--ant-margin-xxs)' } }"
   >
     <a-flex gap="small" wrap="wrap">
       <!--      个人中心卡片-->
@@ -27,9 +26,9 @@
                                @reset="handleClearValidate"/>
           </a-form-item>
           <a-form-item label="电子邮箱" name="email">
-            <inline-edit-input v-model="profileInfo.email"
-                               :on-submit="(value?: string) => handleSave({email : value})"
-                               @reset="handleClearValidate"/>
+            <inline-email-auto-complete v-model="profileInfo.email"
+                                        :on-submit="(value?: string) => handleSave({email : value})"
+                                        @reset="handleClearValidate"/>
           </a-form-item>
           <a-form-item label="用户性别">
             <inline-edit-select v-model="profileInfo.gender"
@@ -88,6 +87,7 @@ import {nextTick, reactive, ref, useTemplateRef, watch} from "vue";
 import {useUserStore} from "@/stores/user";
 import AvatarModifier from "@/views/system/profile/components/AvatarModifier.vue";
 import InlineEditInput from "@/views/system/profile/components/InlineEditInput.vue";
+import InlineEmailAutoComplete from "@/views/system/profile/components/InlineEmailAutoComplete.vue";
 import InlineEditSelect from "@/views/system/profile/components/InlineEditSelect.vue";
 import {message, type FormInstance, type Rule} from "@/antd-adapter";
 import type {ProfileInfo} from "@/api/system/profile/type/sys-profile.ts";

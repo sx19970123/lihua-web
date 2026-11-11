@@ -208,7 +208,7 @@
           </a-col>
           <a-col :span="12">
             <a-form-item label="电子邮箱" :label-col="{span: 8}" name="email">
-              <a-input placeholder="请输入电子邮箱" v-model:value="sysPost.email" allow-clear/>
+              <email-auto-complete placeholder="请输入电子邮箱" v-model:value="sysPost.email"/>
             </a-form-item>
           </a-col>
         </a-row>
@@ -222,6 +222,7 @@
 
 <script setup lang="ts">
 
+import EmailAutoComplete from "@/components/email-auto-complete/index.vue";
 import {getDeptOption} from "@/api/system/dept/dept.ts";
 import {computed, ref, useTemplateRef, watch} from "vue";
 import {initDict} from "@/helpers/dict.ts";

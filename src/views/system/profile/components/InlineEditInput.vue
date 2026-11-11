@@ -1,6 +1,5 @@
 <template>
   <a-input v-model:value="value"
-           size="large"
            :class="bordered || isGetFocus ? 'inline-edit-active' : 'inline-edit-idle'"
            :readonly="loading"
            ref="inputRef"

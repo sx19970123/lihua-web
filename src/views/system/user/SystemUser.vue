@@ -230,7 +230,7 @@
             </a-col>
             <a-col :span="12">
               <a-form-item label="邮箱" :label-col="{span: 5}" name="email">
-                <a-input v-model:value="sysUserDTO.email" placeholder="请输入邮箱" allowClear/>
+                <email-auto-complete v-model:value="sysUserDTO.email" placeholder="请输入邮箱"/>
               </a-form-item>
             </a-col>
           </a-row>
@@ -354,6 +354,7 @@ import {
   save,
   updateStatus
 } from "@/api/system/user/user.ts"
+import EmailAutoComplete from "@/components/email-auto-complete/index.vue";
 import {initDict} from "@/helpers/dict.ts"
 import {computed, h, onMounted, ref, useTemplateRef} from "vue";
 import SelectableCard from "@/components/selectable-card/index.vue"

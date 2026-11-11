@@ -16,16 +16,8 @@
           <a-input class="form-item-width" placeholder="请输入手机号码（非必填）" v-model:value="profileInfo.phoneNumber" allow-clear></a-input>
         </a-form-item>
         <a-form-item name="email" validate-first>
-          <a-auto-complete class="form-item-width" placeholder="请输入电子邮箱（非必填）"
-                           v-model:value="profileInfo.email"
-                           @search="emailHandleSearch"
-                           :options="emailOptions"
-                           allow-clear>
-            <template #optionRender="{ option }">
-              {{ (option.value as string).split('@')[0] }} @
-              <span style="font-weight: bold">{{ (option.value as string).split('@')[1] }}</span>
-            </template>
-          </a-auto-complete>
+          <email-auto-complete class="form-item-width" placeholder="请输入电子邮箱（非必填）"
+                               v-model:value="profileInfo.email"/>
         </a-form-item>
         <a-form-item name="gender">
           <a-radio-group class="form-item-width" v-model:value="profileInfo.gender">
@@ -39,6 +31,7 @@
 
 <script setup lang="ts">
 import UserSetupBaseComponent from "@/components/user-setup/UserSetupBaseComponent.vue";
+import EmailAutoComplete from "@/components/email-auto-complete/index.vue";
 import {type FormInstance, type Rule, message} from '@/antd-adapter';
 import {initDict} from "@/helpers/dict.ts";
 import {reactive, type Ref, ref, useTemplateRef} from "vue";
@@ -148,17 +141,6 @@ const handleNext = async (loading:Ref<boolean>) => {
     loading.value = false
   }
 }
-
-const emailOptions = ref<{ value: string }[]>([]);
-const emailHandleSearch = (val: string) => {
-  let res: { value: string }[];
-  if (!val || val.indexOf('@') >= 0) {
-    res = [];
-  } else {
-    res = ['qq.com','126.com', '163.com','aliyun.com','sina.com','sohu.com','gmail.com','outlook.com','hotmail.com'].map(domain => ({ value: `${val}@${domain}` }));
-  }
-  emailOptions.value = res;
-};
 </script>
 
 <style scoped>
