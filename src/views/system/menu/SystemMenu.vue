@@ -197,9 +197,9 @@
                          v-model:value="sysMenu.parentId"
                          show-search
           >
-            <template #titleRender="{ label, menuType }">
+            <template #treeTitleRender="{ label, menuType }">
               {{label}}
-              <dict-tag :dict-data-value="menuType" :dict-data-option="sys_menu_type" variant="filled"/>
+              <dict-tag :dict-data-value="menuType ?? ''" :dict-data-option="sys_menu_type" variant="filled"/>
             </template>
           </a-tree-select>
         </a-form-item>

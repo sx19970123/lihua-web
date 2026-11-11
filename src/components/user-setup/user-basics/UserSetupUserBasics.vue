@@ -21,9 +21,9 @@
                            @search="emailHandleSearch"
                            :options="emailOptions"
                            allow-clear>
-            <template #option="{ value: val }">
-              {{ val.split('@')[0] }} @
-              <span style="font-weight: bold">{{ val.split('@')[1] }}</span>
+            <template #optionRender="{ option }">
+              {{ (option.value as string).split('@')[0] }} @
+              <span style="font-weight: bold">{{ (option.value as string).split('@')[1] }}</span>
             </template>
           </a-auto-complete>
         </a-form-item>
