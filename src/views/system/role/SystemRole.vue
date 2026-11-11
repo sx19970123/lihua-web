@@ -374,7 +374,7 @@ const handleQueryPage = () => {
 
 // 数据保存相关
 const initSave = () => {
-  const modalActive = reactive<BaseModalActiveType>({
+  const modalActive = ref<BaseModalActiveType>({
     open: false,
     saveLoading: false,
     title: ''
@@ -383,11 +383,11 @@ const initSave = () => {
   let role = ref<SysRole>({})
   // 修改模态框状态
   const handleModelStatus = async (title?: string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
-    if (modalActive.open) {
+    if (modalActive.value.open) {
       // 加载菜单树
       initMenuTree()
       // 重置表单
@@ -428,7 +428,7 @@ const initSave = () => {
 
   // 保存角色
   const saveRole = async () => {
-    modalActive.saveLoading = true
+    modalActive.value.saveLoading = true
     // 开关父子联动绑定赋值不同，进行处理
     if (!Array.isArray(role.value.menuIds)) {
       role.value.menuIds = role.value.menuIds?.checked
@@ -437,13 +437,13 @@ const initSave = () => {
       const resp = await save(role.value)
       if (resp.code === 200) {
         message.success(resp.msg)
-        modalActive.open = false
+        modalActive.value.open = false
         await initPage()
       } else {
         message.error(resp.msg)
       }
     } finally {
-      modalActive.saveLoading = false
+      modalActive.value.saveLoading = false
     }
   }
 

@@ -233,7 +233,7 @@ import {
   save,
   updateStatus
 } from "@/api/system/dept/dept.ts";
-import {computed, reactive, ref, useTemplateRef} from "vue";
+import {computed, ref, useTemplateRef} from "vue";
 import {message, type FormInstance, type Rule, type TableColumnsType} from "@/antd-adapter";
 import {initDict} from "@/helpers/dict.ts";
 import {cloneDeep} from "lodash-es";
@@ -425,7 +425,7 @@ const initSave = () => {
   // 表单
   const formRef = useTemplateRef<FormInstance>("formRef")
 
-  const modalActive = reactive<BaseModalActiveType>({
+  const modalActive = ref<BaseModalActiveType>({
     open: false,
     saveLoading: false,
     title: ""
@@ -478,12 +478,12 @@ const initSave = () => {
 
   // 修改模态框状态，打开关闭模态框
   const handleModelStatus = (title?: string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
 
-    if (modalActive.open) {
+    if (modalActive.value.open) {
       resetForm()
     }
   }
@@ -512,7 +512,7 @@ const initSave = () => {
 
   const saveDept = async () => {
     await formRef.value?.validate()
-    modalActive.saveLoading = true
+    modalActive.value.saveLoading = true
     try {
       const resp = await save(sysDept.value)
       if (resp.code === 200) {
@@ -525,7 +525,7 @@ const initSave = () => {
         message.error(resp.msg)
       }
     } finally {
-      modalActive.saveLoading = false
+      modalActive.value.saveLoading = false
     }
   }
 

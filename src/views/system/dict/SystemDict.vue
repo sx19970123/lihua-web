@@ -407,7 +407,7 @@ const initSave = () => {
     ],
   }
 
-  const modalActive = reactive<BaseModalActiveType>( {
+  const modalActive = ref<BaseModalActiveType>({
     open: false,
     saveLoading: false,
     title: ''
@@ -415,11 +415,11 @@ const initSave = () => {
 
   // 控制模态框开关
   const handleModelStatus = (title?: string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
-    if (modalActive.open) {
+    if (modalActive.value.open) {
       resetForm()
     }
   }
@@ -436,7 +436,7 @@ const initSave = () => {
       if (!valid) {
         return
       }
-      modalActive.saveLoading = true
+      modalActive.value.saveLoading = true
       try {
         const resp = await save(dictTypeData)
         if (resp.code === 200) {
@@ -447,7 +447,7 @@ const initSave = () => {
           message.error(resp.msg)
         }
       } finally {
-        modalActive.saveLoading = false
+        modalActive.value.saveLoading = false
       }
   }
 

@@ -313,7 +313,7 @@
 
 // 列表查询相关
 import {deleteData, queryById, queryList, queryMenuTreeOption, save, updateStatus} from "@/api/system/menu/menu.ts";
-import {computed, reactive, ref, useTemplateRef} from "vue";
+import {computed, ref, useTemplateRef} from "vue";
 import {initDict} from "@/helpers/dict.ts";
 import DictTag from "@/components/dict-tag/index.vue"
 import IconSelect from "@/components/icon-select/index.vue"
@@ -540,7 +540,7 @@ const initSave = () => {
     ]
   }
 
-  const modalActive = reactive<BaseModalActiveType & {moreSetting: boolean}>( {
+  const modalActive = ref<BaseModalActiveType & {moreSetting: boolean}>({
     open: false,
     saveLoading: false,
     title: '',
@@ -552,13 +552,13 @@ const initSave = () => {
 
   // 打开模态框（打开modal时会重制表单，应在方法最开始调用）
   const handleModelStatus = (title?: string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
 
-    if (modalActive.open) {
-      modalActive.moreSetting = false
+    if (modalActive.value.open) {
+      modalActive.value.moreSetting = false
       resetForm()
     }
   }
@@ -703,19 +703,19 @@ const initSave = () => {
   // 保存菜单
   const saveMenu = async () => {
     await formRef.value?.validate()
-    modalActive.saveLoading = true
+    modalActive.value.saveLoading = true
     try {
       const resp = await save(sysMenu.value)
       if (resp.code === 200) {
         message.success(resp.msg)
         await initList()
         await initTreeData()
-        modalActive.open = false
+        modalActive.value.open = false
       } else {
         message.error(resp.msg)
       }
     } finally {
-      modalActive.saveLoading = false
+      modalActive.value.saveLoading = false
     }
   }
 

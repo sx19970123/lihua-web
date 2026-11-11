@@ -223,7 +223,7 @@
 <script setup lang="ts">
 
 import {getDeptOption} from "@/api/system/dept/dept.ts";
-import {computed, reactive, ref, useTemplateRef, watch} from "vue";
+import {computed, ref, useTemplateRef, watch} from "vue";
 import {initDict} from "@/helpers/dict.ts";
 import {deleteData, exportExcel, queryById, queryPage, save, updateStatus} from "@/api/system/post/post.ts";
 import {useRoute} from "vue-router";
@@ -434,7 +434,7 @@ const initSave = () => {
     ]
   }
 
-  const modalActive = reactive<BaseModalActiveType>({
+  const modalActive = ref<BaseModalActiveType>({
     open: false,
     saveLoading: false,
     title: ''
@@ -442,10 +442,10 @@ const initSave = () => {
 
   // 修改模态框状态
   const handleModalStatus = (title?: string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
 
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
 
     sysPost.value = {
@@ -467,7 +467,7 @@ const initSave = () => {
   // 保存岗位数据
   const savePost = async () => {
     await formRef.value?.validate()
-    modalActive.saveLoading = true
+    modalActive.value.saveLoading = true
 
     // 设置岗位编码
     const flattenTreeList = flattenTree(deptTree.value)
@@ -481,13 +481,13 @@ const initSave = () => {
       const resp = await save(sysPost.value)
       if (resp.code === 200) {
         message.success(resp.msg)
-        modalActive.open = false
+        modalActive.value.open = false
         await initPage()
       } else {
         message.error(resp.msg)
       }
     } finally {
-      modalActive.saveLoading = false
+      modalActive.value.saveLoading = false
     }
   }
 

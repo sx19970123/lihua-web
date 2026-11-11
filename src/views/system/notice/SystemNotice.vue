@@ -230,7 +230,7 @@
 </template>
 <script setup lang="ts">
 import {initDict} from "@/helpers/dict.ts";
-import {computed, reactive, ref, useTemplateRef} from "vue";
+import {computed, ref, useTemplateRef} from "vue";
 import type {SysNotice, SysNoticeDTO, SysNoticeVO} from "@/api/system/notice/type/sys-notice.ts";
 import {deleteByIds, queryById, queryPage, release, revoke, save} from "@/api/system/notice/notice.ts";
 import DictTag from "@/components/dict-tag/index.vue"
@@ -384,7 +384,7 @@ const {selectedIds, noticeRowSelectionType, noticeColumn, noticeQuery, noticeLis
 const initSave = () => {
   const formRef = useTemplateRef<FormInstance>("formRef")
 
-  const modalActive = reactive<BaseModalActiveType>({
+  const modalActive = ref<BaseModalActiveType>({
     open: false,
     saveLoading: false,
     title: ""
@@ -427,9 +427,9 @@ const initSave = () => {
 
   // 处理模态框状态
   const handleModalStatus = (title?: string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
     // 重置表单
     sysNoticeVO.value = {
@@ -460,18 +460,18 @@ const initSave = () => {
     }
 
     // 请求期锁 OK 按钮（confirm-loading），防连点重复公告
-    modalActive.saveLoading = true
+    modalActive.value.saveLoading = true
     try {
       const resp = await save(sysNoticeVO.value);
       if (resp.code === 200) {
         message.success(resp.msg)
-        modalActive.open = false
+        modalActive.value.open = false
         await initPage()
       } else {
         message.error(resp.msg)
       }
     } finally {
-      modalActive.saveLoading = false
+      modalActive.value.saveLoading = false
     }
   }
 

@@ -355,7 +355,7 @@ import {
   updateStatus
 } from "@/api/system/user/user.ts"
 import {initDict} from "@/helpers/dict.ts"
-import {computed, h, onMounted, reactive, ref, useTemplateRef} from "vue";
+import {computed, h, onMounted, ref, useTemplateRef} from "vue";
 import SelectableCard from "@/components/selectable-card/index.vue"
 import PasswordInput from "@/components/password-input/index.vue"
 import DictTag from "@/components/dict-tag/index.vue"
@@ -606,7 +606,7 @@ const initSave = () => {
   const segmented = ref<string>(segmentedOption[0].value)
 
   // 模态框状态
-  const modalActive = reactive<BaseModalActiveType>({
+  const modalActive = ref<BaseModalActiveType>({
     open: false,
     saveLoading: false,
     title: ''
@@ -614,12 +614,12 @@ const initSave = () => {
 
   // 修改模态框状态等信息
   const handleModelStatus = (title?:string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
 
-    if (modalActive.open) {
+    if (modalActive.value.open) {
       resetForm()
     }
   }
@@ -681,12 +681,12 @@ const initSave = () => {
 
     const userId = sysUserDTO.value.id
     // loading 只覆盖网络请求期：原先校验段 finally 无条件复位，save() 在途反而无保护可连点重复提交
-    modalActive.saveLoading = true
+    modalActive.value.saveLoading = true
     try {
       // 调用保存接口
       const resp = await save(userDTO)
       if (resp.code === 200) {
-        modalActive.open = false
+        modalActive.value.open = false
         // 保存的用户如果为当前用户，则触发刷新数据，否则重新查询页面
         if (userId === userStore.userId) {
           await refreshApp(route)
@@ -698,7 +698,7 @@ const initSave = () => {
         message.error(resp.msg)
       }
     } finally {
-      modalActive.saveLoading = false
+      modalActive.value.saveLoading = false
     }
   }
 

@@ -259,7 +259,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, reactive, ref, useTemplateRef} from "vue";
+import {computed, ref, useTemplateRef} from "vue";
 import {initDict} from "@/helpers/dict.ts";
 import {deleteData, offline, publish, queryById, queryPage, save} from "@/api/system/app-version/app-version.ts";
 import {resolvePathDownloadUrl} from "@/api/system/attachment/attachment-storage.ts";
@@ -475,7 +475,7 @@ const initSave = () => {
     ]
   }))
 
-  const modalActive = reactive<BaseModalActiveType>({
+  const modalActive = ref<BaseModalActiveType>({
     open: false,
     saveLoading: false,
     title: ''
@@ -483,9 +483,9 @@ const initSave = () => {
 
   // 修改模态框状态（重置表单；title 由调用方声明新增/编辑）
   const handleModalStatus = (title?: string) => {
-    modalActive.open = !modalActive.open
+    modalActive.value.open = !modalActive.value.open
     if (title) {
-      modalActive.title = title
+      modalActive.value.title = title
     }
     sysAppVersion.value = {
       platform: 'android',
@@ -522,19 +522,19 @@ const initSave = () => {
   // 保存版本数据
   const saveAppVersion = async () => {
     await formRef.value?.validate()
-    modalActive.saveLoading = true
+    modalActive.value.saveLoading = true
 
     try {
       const resp = await save(sysAppVersion.value)
       if (resp.code === 200) {
         message.success(resp.msg)
-        modalActive.open = false
+        modalActive.value.open = false
         await initPage()
       } else {
         message.error(resp.msg)
       }
     } finally {
-      modalActive.saveLoading = false
+      modalActive.value.saveLoading = false
     }
   }
 
