@@ -31,7 +31,7 @@ import {useSettingStore} from "@/stores/setting.ts";
 import {clickEffectWaveConfig} from "@/helpers/wave-effects";
 import {HappyProvider} from "@antdv-next/happy-work-theme";
 import zhCN from 'antdv-next/locale/zh_CN';
-import {onMounted, onUnmounted, ref, useTemplateRef, watch, computed} from "vue";
+import {onMounted, ref, useTemplateRef, watch, computed} from "vue";
 import 'dayjs/locale/zh-cn';
 import dayjs from 'dayjs';
 import {bindAppApi, type AppApi} from "@/antd-adapter";

@@ -45,9 +45,9 @@ export default {
     layoutType: 'side-navigation',
 
     /**
-     * 组件大小 small / medium / large
+     * 组件大小
      */
-    componentSize: 'medium' as SizeType,
+    componentSize: undefined as SizeType,
 
     /**
      * 菜单分组
