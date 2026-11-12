@@ -1,5 +1,6 @@
 import {createRouter, createWebHistory} from 'vue-router'
 import Layout from '@/layout/index.vue'
+import {setupScrollMemory} from '@/utils/scrollbar.ts'
 /**
  * 说明：静态路由基于vue router，在项目中进行了逻辑定制
  * 1. meta 中 visible 设置为 true 的菜单/页面将会在导航中显示
@@ -121,6 +122,9 @@ const router = createRouter({
   history: createWebHistory(),
   routes: routers
 })
+
+// 页签滚动位置记忆（记录侧；恢复侧在 layout/content 过渡 @before-enter，见 utils/scrollbar.ts）
+setupScrollMemory(router)
 
 export default router
 

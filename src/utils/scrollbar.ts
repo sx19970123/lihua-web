@@ -1,4 +1,5 @@
 import {OverlayScrollbars} from 'overlayscrollbars';
+import type {Router} from 'vue-router';
 
 /**
  * 页面级悬浮滚动条中枢（body 作为 target：html 成为库管理视口并隐藏原生滚动条，滚动仍原生，
@@ -91,4 +92,44 @@ export const bridgeAntdScrollLock = () => {
     bridgeInited = true;
     new MutationObserver(mirrorAntdLock).observe(document.body, {attributes: true, attributeFilter: ['style']});
     new MutationObserver(mirrorAntdLock).observe(document.head, {childList: true});
+};
+
+/* ==============================页签滚动位置记忆============================== */
+
+// keep-alive 只缓存组件实例，视口滚动位置全局唯一、跨页签共享（OS 接管的是视口、滚动仍原生，
+// 滚动容器即 window），切页签回来位置丢失。以路由 path（= view-tabs 页签身份键 routerPathKey）
+// 为键记录各页签离开时的 scrollY：切回恢复、首次打开归顶；keep-alive 官方无滚动位置能力，
+// 属应用层职责。Map 为模块级内存态、不持久化——刷新后 keep-alive 缓存也没了，记录无处附着，
+// 随模块重置即「刷新后归顶」语义本身。
+// 接线三处：setupScrollMemory（router/index.ts）记录；restorePageScroll（layout/content 过渡
+// @enter——Vue 渲染器顺序 beforeEnter→insert→enter，且 mode=out-in 下新组件进场时旧组件已
+// 移除，@before-enter 时文档只剩骨架（≈一屏高）、scrollTo 会被暂态高度钳到 0（「永远回顶」
+// 踩坑实证）；@enter 在插入后同 flush 触发，keep-alive 缓存子树高度即时正确，恢复精确且先于
+// 首帧绘制不可见）；clearScrollMemory（view-tabs cancelKeepAliveCache 汇拢点，关闭即清=重开归顶）。
+// 边界：页面内部滚动容器随 keep-alive 整体缓存、位置天然保留，不经此节；:max 驱逐的冷组件
+// 切回时重挂载+异步加载数据，恢复被暂态高度钳制（best effort，与缓存驱逐同语义）；同页
+// query/hash 变化组件原位复用（keep-alive key=path），不记录不打扰。
+const scrollMemory = new Map<string, number>();
+
+export const setupScrollMemory = (router: Router): void => {
+    // 浏览器后退/前进的默认滚动恢复（auto）与手动恢复叠加会二次跳动，统一交由本节管理
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    router.afterEach((to, from) => {
+        // afterEach 时 DOM 尚未切换，scrollY 即离开页签的最终位置
+        if (from.path && to.path !== from.path) {
+            scrollMemory.set(from.path, window.scrollY);
+        }
+    });
+};
+
+/** 新页签进场前恢复其滚动位置（无记录=首次打开，归顶）；瞬时滚动不与进场动画纠缠 */
+export const restorePageScroll = (path: string): void => {
+    window.scrollTo(0, scrollMemory.get(path) ?? 0);
+};
+
+/** 页签关闭时清理对应记录；keys 为 routerPathKey 列表 */
+export const clearScrollMemory = (keys: Array<string>): void => {
+    keys.forEach(key => scrollMemory.delete(key));
 };

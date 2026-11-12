@@ -38,6 +38,7 @@
 import {computed, onUnmounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
+import {clearScrollMemory} from "@/utils/scrollbar.ts";
 import type {DragEndEvent, DragMoveEvent, DragOverEvent, DragStartEvent} from '@dnd-kit/vue'
 import {DragDropManager, PointerActivationConstraints, Scroller} from '@dnd-kit/dom'
 import {DragDropProvider, KeyboardSensor, PointerSensor} from '@dnd-kit/vue'
@@ -132,6 +133,8 @@ const addKeepAliveCache = () => {
  * @param keys
  */
 const cancelKeepAliveCache = (keys: Array<string>) => {
+  // 滚动位置记忆随页签关闭清理（重开=首次打开归顶）
+  clearScrollMemory(keys)
   const closeTabRoutes = router.getRoutes().filter(route => keys.includes(route.path))
   closeTabRoutes?.forEach(closeTabRoute => {
     if (closeTabRoute?.meta?.cache && closeTabRoute?.name) {

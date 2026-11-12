@@ -2,7 +2,7 @@
   <section>
     <router-view v-slot="{ Component, route}">
       <!-- zoom： 变焦 pop：弹入 fade：浮现 blur：模糊 slide-right：右滑 slide-left：左滑 slide-up：上滑 slide-down：下滑-->
-      <transition :name="themeStore.routeTransition" mode="out-in">
+      <transition :name="themeStore.routeTransition" mode="out-in" @enter="onContentEnter">
         <keep-alive :include = "viewTabsStore.$state.componentAlive" :max="5">
           <component :is="Component" :key="route.path + viewTabsStore.$state.contentComponentKey"/>
         </keep-alive>
@@ -16,12 +16,22 @@
 </template>
 
 <script setup lang="ts">
+import {useRoute} from "vue-router";
 import {useThemeStore} from "@/stores/theme";
 import {useViewTabsStore} from "@/stores/view-tabs.ts";
+import {restorePageScroll} from "@/utils/scrollbar.ts";
 import PageFooter from "@/layout/footer/index.vue";
 
+const route = useRoute()
 const themeStore = useThemeStore()
 const viewTabsStore = useViewTabsStore()
+
+/* 新页签进场时恢复其滚动位置。必须挂 @enter 而非 @before-enter：Vue 渲染器顺序为
+   beforeEnter→insert→enter，且 mode=out-in 下新组件进场时旧组件已移除——before-enter 时
+   文档只剩布局骨架（≈一屏高），scrollTo(保存值) 被暂态高度钳到 0，组件插入后停在顶部
+   （「永远回顶」根因）；@enter 在插入后同 flush 触发（keep-alive 缓存子树同步恢复、高度
+   立即正确）， scrollTo 精确且先于首帧绘制不可见。机制见 utils/scrollbar.ts 对应节 */
+const onContentEnter = () => restorePageScroll(route.path)
 </script>
 
 <style scoped>
