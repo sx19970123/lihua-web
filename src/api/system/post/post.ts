@@ -73,6 +73,15 @@ export const getPostOptionByDeptId = (deptIds: string[]) => {
     })
 }
 
+// 获取岗位选项（含停用，注册配置页专用）
+export const getPostOptionAllByDeptId = (deptIds: string[]) => {
+    return request<MapResponseType<String,SysPost>>({
+        url: 'system/post/option/all',
+        method: 'post',
+        data: deptIds
+    })
+}
+
 /**
  * excel导出
  * @param data

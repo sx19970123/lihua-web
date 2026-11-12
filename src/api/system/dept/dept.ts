@@ -70,6 +70,14 @@ export const getDeptOption = () => {
   })
 }
 
+// 获取部门树选项（含停用，注册配置页专用）
+export const getDeptOptionAll = () => {
+  return request<Array<SysDept>>({
+    url: 'system/dept/option/all',
+    method: 'get',
+  })
+}
+
 /**
  * 部门导出excel
  * @param data

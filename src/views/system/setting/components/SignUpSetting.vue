@@ -19,7 +19,14 @@
                     :options="sysRoleList"
                     mode="multiple"
                     optionFilterProp="name"
-                    :fieldNames="{label: 'name', value: 'id'}"/>
+                    :fieldNames="{label: 'name', value: 'id'}">
+                  <template #optionRender="{ option }">
+                    {{ option.label }}{{ isDisabledRole(option.value as string) ? '（停用）' : '' }}
+                  </template>
+                  <template #labelRender="{ label, value }">
+                    {{ label }}{{ isDisabledRole(value as string) ? '（停用）' : '' }}
+                  </template>
+                </a-select>
               </a-form-item>
             </a-card>
             <a-card class="flex-1 min-w-[300px]">
@@ -30,7 +37,12 @@
                                   v-model="settingForm.deptIds"
                                   :field-names="{children:'children', title:'name', key: 'id' }"
                                   @change="loadPost"
-                />
+                >
+                  <template #title="{ segments, status }">
+                    <span v-for="(segment, index) in segments" :key="index"
+                          :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>{{ status === '1' ? '（停用）' : '' }}
+                  </template>
+                </easy-tree-select>
               </a-form-item>
             </a-card>
             <a-card v-if="settingForm.deptIds && settingForm.deptIds.length > 0" class="flex-1 min-w-[300px]">
@@ -47,7 +59,7 @@
                 >
                   <template #content="{item, isSelected}">
                     <a-flex align="center" justify="space-between">
-                      <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}</a-typography-title>
+                      <a-typography-title :level="5" style="margin: 0">{{item?.deptName}}{{ item?.status === '1' ? '（停用）' : '' }}</a-typography-title>
                       <a-tag v-if="isSelected" variant="solid" :color="themeStore.getColorPrimary()">默认</a-tag>
                     </a-flex>
                     <div style="margin-top: var(--ant-margin);">
@@ -57,7 +69,7 @@
                                          @click.stop="() => {}"
                                          :key="post.id"
                                          v-model:checked="post.checked">
-                          {{post.name}}
+                          {{post.name}}{{ post.status === '1' ? '（停用）' : '' }}
                         </a-checkable-tag>
                       </div>
                       <div v-else>
@@ -85,11 +97,11 @@ import {getCurrentInstance, nextTick, onMounted, ref} from "vue";
 import type {SysSetting} from "@/api/system/setting/type/sys-setting.ts";
 import type {SignUp} from "@/api/system/setting/type/sign-up.ts";
 import type {SysRole} from "@/api/system/role/type/sys-role.ts";
-import {getRoleOption} from "@/api/system/role/role.ts";
+import {getRoleOptionAll} from "@/api/system/role/role.ts";
 import type {SysDept} from "@/api/system/dept/type/sys-dept.ts";
-import {getDeptOption} from "@/api/system/dept/dept.ts";
+import {getDeptOptionAll} from "@/api/system/dept/dept.ts";
 import {traverse} from "@/utils/tree.ts";
-import {getPostOptionByDeptId} from "@/api/system/post/post.ts";
+import {getPostOptionAllByDeptId} from "@/api/system/post/post.ts";
 import type {SysPost} from "@/api/system/post/type/sys-post.ts";
 import SelectableCard from "@/components/selectable-card/index.vue";
 import EasyTreeSelect from "@/components/easy-tree-select/index.vue"
@@ -135,7 +147,7 @@ const init = async () => {
 const sysRoleList = ref<Array<SysRole>>([])
 // 加载角色选项
 const initRole = async () => {
-  const resp = await getRoleOption()
+  const resp = await getRoleOptionAll()
   if (resp.code === 200) {
     sysRoleList.value = resp.data
   } else {
@@ -143,11 +155,14 @@ const initRole = async () => {
   }
 }
 
+// 角色是否停用（选中回显 chip 标记用，按 id 从选项源查）
+const isDisabledRole = (id: string) => sysRoleList.value.some(role => role.id === id && role.status === '1')
+
 // 部门选项
 const sysDeptList = ref<Array<SysDept>>([])
 // 加载部门选项
 const initDept = async () => {
-  const resp = await getDeptOption()
+  const resp = await getDeptOptionAll()
   if (resp.code === 200) {
     sysDeptList.value = resp.data
   } else {
@@ -159,6 +174,7 @@ const initDept = async () => {
 type PostOptional = {
   id?: string,
   name?: string,
+  status?: string,
   checked: boolean
 }
 
@@ -166,6 +182,7 @@ type PostOptional = {
 type PostType = {
   deptName: string,
   deptId: string,
+  status?: string,
   postList: Array<PostOptional>,
 }
 
@@ -201,14 +218,15 @@ const initPostByDeptIds = async (deptIds: string[]) => {
 
 // 获取部门选项集合
 const getDeptOptions = (deptIds: string[]) => {
-  const options: { value: string; label: string }[] = []
+  const options: { value: string; label: string; status?: string }[] = []
 
   deptIds.forEach(id => {
     traverse(sysDeptList.value, (dept) => {
       if (dept.id === id && dept.name) {
         options.push({
           value: dept.id,
-          label: dept.name
+          label: dept.name,
+          status: dept.status
         })
         return true
       }
@@ -218,7 +236,7 @@ const getDeptOptions = (deptIds: string[]) => {
   return options
 }
 
-const initPostByDeptIdOption = async (deptIds: string[], options: { label: string; value: string }[]) => {
+const initPostByDeptIdOption = async (deptIds: string[], options: { label: string; value: string; status?: string }[]) => {
 
   const originDeptIds = sysPostList.value.map(post => post.deptId)
 
@@ -233,7 +251,7 @@ const initPostByDeptIdOption = async (deptIds: string[], options: { label: strin
     return
   }
 
-  const resp = await getPostOptionByDeptId(newDeptIds)
+  const resp = await getPostOptionAllByDeptId(newDeptIds)
 
   if (resp.code !== 200) {
     message.error(resp.msg)
@@ -248,6 +266,7 @@ const initPostByDeptIdOption = async (deptIds: string[], options: { label: strin
     sysPostList.value.push({
       deptId,
       deptName: dept?.label ?? '',
+      status: dept?.status,
       postList: sysPostsToPostOptional(data[deptId])
     })
   })
@@ -279,6 +298,7 @@ const sysPostsToPostOptional = (postList?: SysPost[]): PostOptional[] => {
   return postList.map(post => ({
     id: post.id,
     name: post.name,
+    status: post.status,
     checked: false
   }))
 }

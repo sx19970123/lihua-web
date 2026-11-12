@@ -53,6 +53,14 @@ export const getRoleOption = () => {
   })
 }
 
+// 获取全部角色选项（含停用，注册配置页专用）
+export const getRoleOptionAll = () => {
+  return request<Array<SysRole>>({
+    url: 'system/role/option/all',
+    method: 'get'
+  })
+}
+
 // 查询角色用户授权分页（全量用户 + 授权标记）
 export const queryUserPage = (roleId: string, data: SysRoleUserDTO) => {
   return request<PageResponseType<SysRoleUserVO>>({
