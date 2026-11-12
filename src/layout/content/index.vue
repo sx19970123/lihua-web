@@ -3,7 +3,7 @@
     <router-view v-slot="{ Component, route}">
       <!-- zoom： 变焦 pop：弹入 fade：浮现 blur：模糊 slide-right：右滑 slide-left：左滑 slide-up：上滑 slide-down：下滑-->
       <transition :name="themeStore.routeTransition" mode="out-in" @enter="onContentEnter">
-        <keep-alive :include = "viewTabsStore.$state.componentAlive" :max="5">
+        <keep-alive :include = "viewTabsStore.$state.componentAlive" :max="aliveCacheMax">
           <component :is="Component" :key="route.path + viewTabsStore.$state.contentComponentKey"/>
         </keep-alive>
       </transition>
@@ -25,6 +25,10 @@ import PageFooter from "@/layout/footer/index.vue";
 const route = useRoute()
 const themeStore = useThemeStore()
 const viewTabsStore = useViewTabsStore()
+
+/* keep-alive 页签缓存上限：按设备内存分档（≥8G 或读不到→20 / 4G→10 / ≤2G→5；Safari/Firefox 无 deviceMemory 取高档） */
+const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory
+const aliveCacheMax = !deviceMemory || deviceMemory >= 8 ? 20 : deviceMemory >= 4 ? 10 : 5
 
 /* 新页签进场时恢复其滚动位置。必须挂 @enter 而非 @before-enter：Vue 渲染器顺序为
    beforeEnter→insert→enter，且 mode=out-in 下新组件进场时旧组件已移除——before-enter 时
