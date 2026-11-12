@@ -32,17 +32,19 @@
             <a-card class="flex-1 min-w-[300px]">
               <a-typography-title :level="5">部门</a-typography-title>
               <a-form-item class="w-[270px]">
-                <easy-tree-select :tree-data="sysDeptList"
-                                  defaultExpandAll
-                                  v-model="settingForm.deptIds"
-                                  :field-names="{children:'children', title:'name', key: 'id' }"
-                                  @change="loadPost"
-                >
-                  <template #title="{ segments, status }">
-                    <span v-for="(segment, index) in segments" :key="index"
-                          :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>{{ status === '1' ? '（停用）' : '' }}
-                  </template>
-                </easy-tree-select>
+                <a-spin :spinning="postLoading">
+                  <easy-tree-select :tree-data="sysDeptList"
+                                    defaultExpandAll
+                                    v-model="settingForm.deptIds"
+                                    :field-names="{children:'children', title:'name', key: 'id' }"
+                                    @change="handleTreeChange"
+                  >
+                    <template #title="{ segments, status }">
+                      <span v-for="(segment, index) in segments" :key="index"
+                            :style="segment.hit ? {color: themeStore.getColorPrimary()} : undefined">{{segment.text}}</span>{{ status === '1' ? '（停用）' : '' }}
+                    </template>
+                  </easy-tree-select>
+                </a-spin>
               </a-form-item>
             </a-card>
             <a-card v-if="settingForm.deptIds && settingForm.deptIds.length > 0" class="flex-1 min-w-[300px]">
@@ -138,8 +140,14 @@ const init = async () => {
   const settingData = await settingStore.getSettingInfo<SignUp>(componentName);
   if (settingData) {
     settingForm.value = settingData
-    await loadPost()
+    // 回显编排：表单赋值后等树挂载定稿（prune 会把不在树中的悬空 id 从 deptIds 剔除并同步回 v-model），
+    // 再按定稿后的部门集合统一加载一次岗位，避免回显与挂载修正两路并发重复建卡
+    if (settingForm.value.enable) {
+      await nextTick()
+      await loadPost()
+    }
   }
+  treeSettled = true
   initialSetting = cloneDeep(settingForm.value)
 }
 
@@ -191,7 +199,10 @@ const sysPostList = ref<Array<PostType>>([])
 // 岗位加载 loading
 const postLoading = ref<boolean>(false)
 
-// 按已选部门加载岗位分组
+// 树挂载定稿门闩：回显期的首轮挂载 prune 修正不触发岗位加载，统一由 init 编排加载（见 init）
+let treeSettled = false
+
+// 按已选部门加载岗位分组（加载期间树被 Spin 遮罩锁住，一个动作完成才能下一个）
 const loadPost = async () => {
   try {
     if (settingForm.value.deptIds) {
@@ -200,6 +211,13 @@ const loadPost = async () => {
     }
   } finally {
     postLoading.value = false
+  }
+}
+
+// 树勾选变更 → 加载岗位（树挂载定稿后生效）
+const handleTreeChange = () => {
+  if (treeSettled) {
+    loadPost()
   }
 }
 
@@ -237,7 +255,6 @@ const getDeptOptions = (deptIds: string[]) => {
 }
 
 const initPostByDeptIdOption = async (deptIds: string[], options: { label: string; value: string; status?: string }[]) => {
-
   const originDeptIds = sysPostList.value.map(post => post.deptId)
 
   // 删除未选中的部门
@@ -354,6 +371,10 @@ const handleChangeSwitch = async (checked: boolean | string | number) => {
 
   if (!settingForm.value.enable) {
     await handleSubmit()
+  } else {
+    // 开启时岗位面板随树挂载出现，统一加载一次
+    await nextTick()
+    loadPost()
   }
 }
 
