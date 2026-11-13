@@ -5,11 +5,10 @@
                     @drag-over="onDragOver" @drag-move="onDragMove">
     <!--右侧留出滚动条槽安全间距（layout 满幅 100vw 后滚动条悬浮于应用右缘，约 0~17px），避免 extras 按钮被覆盖/裁切-->
     <a-tabs :activeKey="activeKey"
-            class="unselectable tab-none-padding enable-glass"
+            class="unselectable tab-none-padding enable-glass layout-soft-shadow"
             style="padding: var(--ant-padding-xs) 18px 0;"
             type="card"
             size="small"
-            hide-add
             :items="tabItems"
             @edit="(key) => closeTab(key as string)"
             @change="routeSkip"
