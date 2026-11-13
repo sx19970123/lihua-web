@@ -275,5 +275,14 @@ const replaceLoadingElement = () => {
   .slider-move-track::after {
     color: rgba(255, 255, 255, 0.45);
   }
+  /* POW 验证面板（tac.css 硬编码米白底，会盖住暗色背景图） */
+  #tianai-captcha.tianai-captcha-pow .verify-loading {
+    background-color: #1f1f1f !important;
+  }
+  /* POW 转圈轨道（浅奶油轨道暗色下刺眼，保留黄色高亮头） */
+  #tianai-captcha.tianai-captcha-pow .verify-loading::before {
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    border-top-color: #f7b645 !important;
+  }
 }
 </style>
