@@ -5,18 +5,39 @@
 
 export const versionInfo = {
     /** 单体后端仓库版本 */
-    lihuaVersion: '3.0.0',
+    lihuaVersion: '3.1.0',
     /** 单体后端 Spring Boot 版本 */
-    springBootVersion: '4.1.1',
+    springBootVersion: '4.1.2',
     /** 微服务仓库版本 */
-    cloudVersion: '3.0.0',
+    cloudVersion: '3.1.0',
     /** 微服务版 lihua-cloud 的 Spring Cloud 框架版本 */
-    springCloudVersion: '2025.1.3',
+    springCloudVersion: '2025.1.4',
     /** 微服务版 lihua-cloud 的 Spring Boot 版本 */
-    springBootCloudVersion: '4.0.8',
-    vueVersion: '3.5.38',
+    springBootCloudVersion: '4.0.9',
+    vueVersion: '3.5.45',
     lihuaUpdateLog: [
         // 每次更新版本在集合头部新增一条
+        {
+            version: '3.1.0',
+            updateDate: '2026-11-13',
+            platforms: ['boot', 'cloud', 'web', 'app'],
+            title: "🎉🎉3.1.0 验证码分端配置与 POW 验证、注册配置安全加固、响应链统一收口；前后端与 App 依赖全面升级",
+            updateContent: [
+                '1. 验证码分端配置：Web 与 App 独立设置开关与类型勾选池，取码按各端勾选池随机出题，两端互不影响；新增 POW（工作量证明）验证码类型，App 端三平台自研实现',
+                '2. 注册配置安全加固：注册链路自动过滤已删除的部门 / 角色 / 岗位，不再产生脏关联；删除被注册配置引用的数据时拦截提示；配置页停用项显示「（停用）」标记',
+                '3. 响应链收口：后端统一 typed 响应模型（ResponseModel + Responses 工厂），全局异常处理全 typed 化；过滤器 / 拦截器等围栏层响应支持内容协商，非 JSON 的 Accept 返回对应状态码空体，引入 jackson-dataformat-xml 后全链自动支持 XML',
+                '4. 微服务网关 IP 黑名单过滤非阻塞化：Redis 抖动不再阻塞网关事件循环，消除全站请求停摆风险',
+                '5. Web 端组件库 antdv-next 1.5.6 → 1.8.1，适配升级并修复附件预览图标、邮箱候选格式化、菜单树标签等运行时回归；TypeScript 类型红线清零',
+                '6. 页签体验升级：页签滚动位置记忆（切回停在原位）、关闭页签补位动画、keep-alive 缓存上限按设备内存自适应分档',
+                '7. 邮箱输入自动补全：用户 / 岗位 / 部门等弹窗与个人中心行内编辑均支持常用域名候选',
+                '8. 全应用声明 color-scheme：暗色模式下滚动条与原生控件正确渲染，页签溢出弹窗滚动条随主题适配',
+                '9. 系统设置页无权限开关点击后本地回滚，不再误显示为已开启',
+                '10. 后端主要组件升级：Spring Boot 4.1.2 / 4.0.9、Spring Cloud 2025.1.4、MyBatis-Plus 3.5.18.1、Redisson 4.8.0、fesod 2.1.0、tianai-captcha 1.5.6、MySQL Connector/J 26.10.0、java-jwt 4.6.2',
+                '11. Web 主要组件升级：Vue 3.5.45、Vite 8.3.6、Pinia 4.1.0、VueUse 15、Vue Router 5.5.0；日志导出操作时间列升级为真日期格式单元格',
+                '12. App 主要组件升级：UniApp 编译器 5.03.04、Vue 3.5.45',
+                '13. 其他依赖版本更新和细节优化',
+            ]
+        },
         {
             version: '3.0.0',
             updateDate: '2026-09-28',
