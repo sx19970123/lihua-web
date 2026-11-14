@@ -57,12 +57,12 @@ const settingStore = useSettingStore()
 const local = ref(zhCN)
 dayjs.locale(zhCN.locale)
 
-// dayjs 全局序列化：JSON.stringify（如 POST body 的日期范围）默认 toJSON 输出 UTC ISO 串，
-// 东八区 0 点落在前一天，后端 LocalDate 截字面日期后查询整体差一天；统一输出本地日期串对齐契约。
-// 需要携带时分的场景须在业务侧显式 format，勿依赖本序列化
+// dayjs 全局序列化：JSON.stringify（如 POST body）默认 toJSON 输出 UTC ISO 串，东八区 0 点落在前一天，
+// 后端截字面日期后查询整体差一天；统一输出本地 ISO 日期时间串（无时区标记，前后端同时区约定），
+// 后端 LocalDate 自动截日期部分、LocalDateTime 完整接收（jackson 2.21 实测），业务侧无需预裁剪
 dayjs.extend((_, DayjsClass) => {
   DayjsClass.prototype.toJSON = function (this: Dayjs) {
-    return this.format('YYYY-MM-DD')
+    return this.format('YYYY-MM-DD[T]HH:mm:ss')
   }
 })
 
