@@ -32,8 +32,8 @@ import {clickEffectWaveConfig} from "@/helpers/wave-effects";
 import {HappyProvider} from "@antdv-next/happy-work-theme";
 import zhCN from 'antdv-next/locale/zh_CN';
 import {onMounted, ref, watch, computed} from "vue";
+import dayjs, {type Dayjs} from 'dayjs';
 import 'dayjs/locale/zh-cn';
-import dayjs from 'dayjs';
 import {bindAppApi, type AppApi} from "@/antd-adapter";
 import {initPageScrollbar, bridgeAntdScrollLock} from "@/utils/scrollbar.ts";
 
@@ -56,6 +56,15 @@ const settingStore = useSettingStore()
 // 配置中文
 const local = ref(zhCN)
 dayjs.locale(zhCN.locale)
+
+// dayjs 全局序列化：JSON.stringify（如 POST body 的日期范围）默认 toJSON 输出 UTC ISO 串，
+// 东八区 0 点落在前一天，后端 LocalDate 截字面日期后查询整体差一天；统一输出本地日期串对齐契约。
+// 需要携带时分的场景须在业务侧显式 format，勿依赖本序列化
+dayjs.extend((_, DayjsClass) => {
+  DayjsClass.prototype.toJSON = function (this: Dayjs) {
+    return this.format('YYYY-MM-DD')
+  }
+})
 
 // 弹层 mask 毛玻璃统一走组件库原生 mask.blur，跟随高级材质开关（仅影响其后新打开的弹层）。
 // 仅 Modal/Drawer：二者遮罩独立于内容动画，模糊自第一帧恒定生效。
