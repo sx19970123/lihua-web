@@ -104,12 +104,11 @@ watch(()=> route.matched,()=> {
   setOpenKeys()
 })
 
-// 收起/展开
-watch(() => permissionStore.collapsed,(value) => {
+// 收起/展开（宽度走 Sider 原生 collapsed 机制渲染，不写 theme state——折叠属会话内 UI 态，写入会误触发主题保存）
+watch(() => permissionStore.collapsed,() => {
   if (isMixTop) {
     return
   }
-  value? themeStore.foldSiderWidth(): themeStore.unfoldSiderWidth()
   setOpenKeys()
 })
 

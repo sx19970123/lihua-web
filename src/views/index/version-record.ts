@@ -18,6 +18,15 @@ export const versionInfo = {
     lihuaUpdateLog: [
         // 每次更新版本在集合头部新增一条
         {
+            version: '3.1.1',
+            updateDate: '2026-11-17',
+            platforms: ['web'],
+            updateContent: [
+                '1. 修复折叠/展开侧边栏会误触发一次主题保存请求的 bug（折叠宽度改由 Sider 原生 collapsed 机制渲染，不再写入主题状态）',
+                '2. 修复折叠侧边栏后打开设置面板，导航宽度滑杆显示折叠宽度而非真实配置宽度的问题',
+            ]
+        },
+        {
             version: '3.1.0',
             updateDate: '2026-11-13',
             platforms: ['boot', 'cloud', 'web', 'app'],

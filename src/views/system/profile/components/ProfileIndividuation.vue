@@ -20,7 +20,7 @@
         <nav-select v-model="themeStore.layoutType"/>
       </a-form-item>
       <a-form-item label="导航宽度" v-if="themeStore.layoutType !== 'top-navigation' || themeStore.isSmallWindow">
-        <a-slider class="w-[230px]" v-model:value="themeStore.siderWith" @change="themeStore.changeSiderWidth" dots :max="400" :min="80" :step="20"></a-slider>
+        <a-slider class="w-[230px]" v-model:value="themeStore.siderWith" dots :max="400" :min="80" :step="20"></a-slider>
       </a-form-item>
       <a-form-item label="分组导航" v-if="themeStore.layoutType !== 'top-navigation' || themeStore.isSmallWindow">
         <a-switch v-model:checked="themeStore.siderGroup"/>

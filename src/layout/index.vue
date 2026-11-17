@@ -17,7 +17,7 @@
       <Head/>
     </Teleport>
 
-    <!--  使用传送组件加载多任务栏，避免布局切换销毁重建（重播开场动画、丢失页签栏内状态）  -->
+    <!--  使用传送组件加载多任务栏，避免布局切换销毁重建  -->
     <Teleport :to="viewTabsContainer" v-if="viewTabsContainer !== null">
       <ViewTabs v-if="themeStore.showViewTabs && !themeStore.isMiniWindow"/>
     </Teleport>
@@ -124,11 +124,10 @@ const {observeHeaderHeight, disconnect: disconnectHeaderObserve} = initHeaderObs
 
 // 组件切换时重新加载菜单，刷新分组导航
 watch(() =>[themeStore.isSmallWindow, themeStore.layoutType], () => {
-  // 离开小窗模式时恢复侧栏展开态与宽度：小窗抽屉自动关闭会把 collapsed 置 true、siderWith 折到 80，
+  // 离开小窗模式时恢复侧栏展开态：小窗抽屉自动关闭会把 collapsed 置 true，
   // 而 Sider 重新挂载时只读不写 collapsed、breakpoint 也只在挂载期间跨界才触发，不复位会以收起态渲染
   if (!themeStore.isSmallWindow) {
     permissionStore.collapsed = false
-    themeStore.unfoldSiderWidth()
   }
   if (themeStore.siderGroup) {
     permissionStore.reloadMenu()

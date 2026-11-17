@@ -128,11 +128,6 @@ export default {
     siderWith: 200,
 
     /**
-     * 原侧边宽度，用于调整侧边栏时保存临时变量
-     */
-    originSiderWith: 200,
-
-    /**
      * 切换路由时的过渡动画 zoom / pop / fade / blur / slide-right / slide-left / slide-up / slide-down
      */
     routeTransition: 'zoom',

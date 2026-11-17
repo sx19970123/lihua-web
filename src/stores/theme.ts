@@ -106,11 +106,6 @@ export const useThemeStore = defineStore('theme',{
         const isMiniWindow: boolean = window.location.href.includes("miniWindow=true")
 
         /**
-         * 原侧边宽度，用于调整侧边栏时保存临时变量
-         */
-        const originSiderWith: number = settings.originSiderWith
-
-        /**
          * 切换路由时的过渡动画 zoom / pop / fade / blur / slide-right / slide-left / slide-up / slide-down
          */
         const routeTransition: string = settings.routeTransition
@@ -156,7 +151,6 @@ export const useThemeStore = defineStore('theme',{
             isMiniWindow,
             siderGroup,
             siderWith,
-            originSiderWith,
             routeTransition,
             clickEffect,
             grayModel,
@@ -271,10 +265,6 @@ export const useThemeStore = defineStore('theme',{
         changeFooter() {
             document.documentElement.style.setProperty('--footer-display-height', this.$state.showFooter ? 'var(--footer-height)' : '0px')
         },
-        // 修改导航宽度时同时修改原始值（取事件新值而非读绑定状态：change 可能先于 v-model 写回；仅用户拖动触发，编程式修改 siderWith 不经过此通道）
-        changeSiderWidth(value: number) {
-          this.$state.originSiderWith = value
-        },
         // 切换主要颜色
         changeColorPrimary() {
             this.themeConfig.token.colorPrimary = this.$state.colorPrimary
@@ -318,7 +308,6 @@ export const useThemeStore = defineStore('theme',{
             this.$state.groundGlass = settings.groundGlass
             this.$state.affixHead = settings.affixHead
             this.$state.siderWith = settings.siderWith
-            this.$state.originSiderWith = settings.originSiderWith
             this.$state.routeTransition = settings.routeTransition
             this.$state.clickEffect = settings.clickEffect
             this.$state.themeConfig = { ...settings.themeConfig, token: { ...settings.themeConfig.token } }
@@ -327,15 +316,6 @@ export const useThemeStore = defineStore('theme',{
             this.changeGroundGlass()
             this.changeShowViewTabs()
             this.changeFooter()
-        },
-        // 折叠侧边栏
-        foldSiderWidth()  {
-            this.originSiderWith = this.siderWith
-            this.siderWith = 80
-        },
-        // 展开侧边栏
-        unfoldSiderWidth() {
-            this.siderWith = this.originSiderWith
         },
         // 是否开启灰色模式
         enableGrayModel(enable?: boolean) {
